@@ -399,24 +399,27 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
           </table>
         </div>
       </UCard>
-    </div>
-
+    </div>    
+    
     <!-- Import Modal -->
     <UModal v-model="showImportModal">
-      <UCard>
+      
         <template #header>
           <h3 class="text-lg font-semibold">Import Schedule</h3>
         </template>
 
-        <div class="space-y-4">
-          <UFormGroup label="JSON Data">            <UTextarea
+        <template #body>
+          <UFormField label="JSON Data">
+            <UTextarea
               v-model="importData"
               :rows="10"
               placeholder="Paste schedule JSON data here..."
             />
-          </UFormGroup>
+          </UFormField>
+        </template>
 
-          <div class="flex gap-2 justify-end">
+        <template #footer>
+          
             <UButton
               variant="ghost"
               @click="showImportModal = false"
@@ -429,9 +432,7 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
             >
               Import
             </UButton>
-          </div>
-        </div>
-      </UCard>
+        </template>
     </UModal>
   </div>
 </template>

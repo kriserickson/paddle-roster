@@ -123,39 +123,37 @@ watch(gameSchedule, (newSchedule) => {
 
       <div class="space-y-4">
         <!-- Header Configuration -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormGroup label="Event Name">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">          <UFormField label="Event Name">
             <UInput
               v-model="printOptions.eventTitle"
               placeholder="Pickleball League"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Event Date">
+          <UFormField label="Event Date">
             <UInput
               v-model="printOptions.eventDate"
               type="date"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Location">
+          <UFormField label="Location">
             <UInput
               v-model="printOptions.location"
               placeholder="Community Center"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Organizer">
+          <UFormField label="Organizer">
             <UInput
               v-model="printOptions.organizer"
               placeholder="League Coordinator"
             />
-          </UFormGroup>
+          </UFormField>
         </div>
 
         <!-- Print Options -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <UFormGroup label="Include Options">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">          <UFormField label="Include Options">
             <div class="space-y-2">
               <UCheckbox
                 v-model="printOptions.includePlayerList"
@@ -174,9 +172,9 @@ watch(gameSchedule, (newSchedule) => {
                 label="Court Assignments"
               />
             </div>
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Layout Options">
+          <UFormField label="Layout Options">
             <div class="space-y-2">
               <URadioGroup
                 v-model="printOptions.orientation"
@@ -188,9 +186,8 @@ watch(gameSchedule, (newSchedule) => {
               <UCheckbox
                 v-model="printOptions.compactLayout"
                 label="Compact Layout"
-              />
-            </div>
-          </UFormGroup>
+              />            </div>
+          </UFormField>
         </div>
 
         <!-- Action Buttons -->

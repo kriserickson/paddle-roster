@@ -169,26 +169,24 @@ onMounted(() => {
 
         <div class="space-y-4">
           <!-- Event Label -->
-          <UFormGroup label="Event Label" help="Optional label for the schedule (e.g., 'Tuesday May 28th')">
+          <UFormField label="Event Label" help="Optional label for the schedule (e.g., 'Tuesday May 28th')">
             <UInput
               v-model="eventLabel"
               placeholder="e.g., John Henry Secondary School Tuesday May 9th"
             />
-          </UFormGroup>
+          </UFormField>
 
           <!-- Number of Courts -->
-          <UFormGroup label="Number of Courts" help="How many courts are available for games">
+          <UFormField label="Number of Courts" help="How many courts are available for games">
             <USelect
               v-model="matchingOptions.numberOfCourts"
               :options="courtOptions"
               option-attribute="label"
               value-attribute="value"
             />
-          </UFormGroup>
-
-          <!-- Number of Rounds -->
-          <UFormGroup label="Number of Rounds" help="How many rounds to generate (typically 7-9)">
-            <URange
+          </UFormField>          <!-- Number of Rounds -->
+          <UFormField label="Number of Rounds" help="How many rounds to generate (typically 7-9)">
+            <USlider
               v-model="matchingOptions.numberOfRounds"
               :min="1"
               :max="15"
@@ -198,11 +196,11 @@ onMounted(() => {
             <div class="text-sm text-gray-600 text-center">
               {{ matchingOptions.numberOfRounds }} rounds
             </div>
-          </UFormGroup>
+          </UFormField>
 
           <!-- Max Skill Difference -->
-          <UFormGroup label="Maximum Skill Difference" help="Maximum allowed skill difference between teams">
-            <URange
+          <UFormField label="Maximum Skill Difference" help="Maximum allowed skill difference between teams">
+            <USlider
               v-model="matchingOptions.maxSkillDifference"
               :min="0.5"
               :max="4.0"
@@ -212,7 +210,7 @@ onMounted(() => {
             <div class="text-sm text-gray-600 text-center">
               {{ matchingOptions.maxSkillDifference }}
             </div>
-          </UFormGroup>
+          </UFormField>
         </div>
       </UCard>
 
@@ -223,38 +221,36 @@ onMounted(() => {
             <UIcon name="i-heroicons-adjustments-horizontal" class="mr-2" />
             Algorithm Options
           </h3>
-        </template>
-
-        <div class="space-y-4">
-          <UFormGroup 
+        </template>        <div class="space-y-4">
+          <UFormField 
             label="Balance Skill Levels"
             help="Attempt to create balanced teams by skill level"
           >
-            <UToggle
+            <USwitch
               v-model="matchingOptions.balanceSkillLevels"
               :label="matchingOptions.balanceSkillLevels ? 'Enabled' : 'Disabled'"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup 
+          <UFormField 
             label="Respect Partner Preferences"
             help="Try to pair players with their preferred partners in at least one game"
           >
-            <UToggle
+            <USwitch
               v-model="matchingOptions.respectPartnerPreferences"
               :label="matchingOptions.respectPartnerPreferences ? 'Enabled' : 'Disabled'"
             />
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup 
+          <UFormField 
             label="Distribute Rest Equally"
             help="Ensure all players get equal rest periods"
           >
-            <UToggle
+            <USwitch
               v-model="matchingOptions.distributeRestEqually"
               :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'"
             />
-          </UFormGroup>
+          </UFormField>
 
           <!-- Reset Options -->
           <div class="pt-4 border-t">

@@ -24,5 +24,9 @@
     "typescript": "^5.8.3",
     "vue": "^3.5.15",
     "vue-router": "^4.5.1"
+  },
+  "devDependencies": {
+    "@iconify-json/heroicons": "^1.2.2",
+    "@iconify-json/lucide": "^1.2.45"
   }
 }

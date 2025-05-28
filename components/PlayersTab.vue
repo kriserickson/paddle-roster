@@ -69,7 +69,7 @@ const playersWithPartners = computed(() => {
 
 const filteredPlayers = computed(() => {
   if (!searchQuery.value) return playerStore.players;
-  
+
   const query = searchQuery.value.toLowerCase();
   return playerStore.players.filter((player: Player) =>
     player.name.toLowerCase().includes(query)
@@ -78,10 +78,10 @@ const filteredPlayers = computed(() => {
 
 const partnerOptions = computed(() => {
   const currentPlayerId = editingPlayer.value?.id;
-  const availablePartners = currentPlayerId 
+  const availablePartners = currentPlayerId
     ? playerStore.getAvailablePartners(currentPlayerId)
     : playerStore.activePlayers;
-  
+
   return [
     { label: 'No Partner', value: '' },
     ...availablePartners.map((player: Player) => ({
@@ -148,14 +148,14 @@ const togglePlayerActive = (player: Player): void => {
 const savePlayer = async (): Promise<void> => {
   try {
     const partnerIdToSave = playerForm.value.partnerId || undefined;
-      if (editingPlayer.value) {
+    if (editingPlayer.value) {
       const success = playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
         skillLevel: playerForm.value.skillLevel,
         partnerId: partnerIdToSave,
         active: playerForm.value.active
       });
-      
+
       if (success) {
         toast.add({
           title: 'Player updated',
@@ -169,14 +169,14 @@ const savePlayer = async (): Promise<void> => {
         playerForm.value.skillLevel,
         partnerIdToSave
       );
-      
+
       toast.add({
         title: 'Player added',
         description: `${playerForm.value.name} has been added.`,
         color: 'success'
       });
     }
-    
+
     cancelPlayerForm();
   } catch (error) {
     console.error('Error saving player:', error);
@@ -203,7 +203,7 @@ const performImport = async (): Promise<void> => {
   try {
     const playersData = JSON.parse(importData.value);
     const result = playerStore.importPlayers(playersData);
-    
+
     if (result.success) {
       toast.add({
         title: 'Import successful',
@@ -239,7 +239,7 @@ const exportPlayers = (): void => {
     link.download = `pickleball-players-${new Date().toISOString().split('T')[0]}.json`;
     link.click();
     URL.revokeObjectURL(url);
-    
+
     toast.add({
       title: 'Export successful',
       description: 'Players data has been downloaded.',
@@ -262,25 +262,13 @@ const exportPlayers = (): void => {
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-semibold text-gray-900">Player Management</h2>
       <div class="flex gap-2">
-        <UButton
-          icon="i-heroicons-plus"
-          color="primary"
-          @click="showAddPlayer = true"
-        >
+        <UButton icon="i-heroicons-plus" color="primary" @click="showAddPlayer = true">
           Add Player
         </UButton>
-        <UButton
-          icon="i-heroicons-arrow-up-tray"
-          variant="outline"
-          @click="showImportModal = true"
-        >
+        <UButton icon="i-heroicons-arrow-up-tray" variant="outline" @click="showImportModal = true">
           Import
         </UButton>
-        <UButton
-          icon="i-heroicons-arrow-down-tray"
-          variant="outline"
-          @click="exportPlayers"
-        >
+        <UButton icon="i-heroicons-arrow-down-tray" variant="outline" @click="exportPlayers">
           Export
         </UButton>
       </div>
@@ -319,29 +307,15 @@ const exportPlayers = (): void => {
       <template #header>
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-medium">Players List</h3>
-          <UInput
-            v-model="searchQuery"
-            icon="i-heroicons-magnifying-glass"
-            placeholder="Search players..."
-            class="w-64"
-          />
+          <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
+            class="w-64" />
         </div>
       </template>
 
-      <UTable
-        :rows="filteredPlayers"
-        :columns="columns"
-        :loading="false"
-        class="w-full"
-      >
+      <UTable :rows="filteredPlayers" :columns="columns" :loading="false" class="w-full">
         <template #name-data="{ row }">
           <div class="flex items-center gap-2">
-            <UBadge
-              v-if="!row.getValue('active')"
-              color="neutral"
-              variant="subtle"
-              size="xs"
-            >
+            <UBadge v-if="!row.getValue('active')" color="neutral" variant="subtle" size="xs">
               Inactive
             </UBadge>
             <span :class="{ 'text-gray-500': !row.getValue('active') }">{{ row.getValue('name') }}</span>
@@ -349,10 +323,7 @@ const exportPlayers = (): void => {
         </template>
 
         <template #skillLevel-data="{ row }">
-          <UBadge
-            :color="getSkillLevelColor(row.getValue('skillLevel'))"
-            variant="subtle"
-          >
+          <UBadge :color="getSkillLevelColor(row.getValue('skillLevel'))" variant="subtle">
             {{ row.getValue('skillLevel') }}
           </UBadge>
         </template>
@@ -366,163 +337,112 @@ const exportPlayers = (): void => {
 
         <template #actions-data="{ row }">
           <div class="flex gap-1">
-            <UButton
-              icon="i-heroicons-pencil"
-              size="xs"
-              variant="ghost"
-              @click="editPlayer(row.original)"
-            />
-            <UButton
-              icon="i-heroicons-trash"
-              size="xs"
-              variant="ghost"
-              color="error"
-              @click="confirmDelete(row.original)"
-            />
-            <UButton
-              :icon="row.getValue('active') ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'"
-              size="xs"
-              variant="ghost"
-              :color="row.getValue('active') ? 'primary' : 'secondary'"
-              @click="togglePlayerActive(row.original)"
-            />
+            <UButton icon="i-heroicons-pencil" size="xs" variant="ghost" @click="editPlayer(row.original)" />
+            <UButton icon="i-heroicons-trash" size="xs" variant="ghost" color="error"
+              @click="confirmDelete(row.original)" />
+            <UButton :icon="row.getValue('active') ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
+              variant="ghost" :color="row.getValue('active') ? 'primary' : 'secondary'"
+              @click="togglePlayerActive(row.original)" />
           </div>
         </template>
       </UTable>
     </UCard>
 
+
     <!-- Add/Edit Player Modal -->
-    <UModal v-model="showAddPlayer">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">
-            {{ editingPlayer ? 'Edit Player' : 'Add New Player' }}
-          </h3>
-        </template>
+    <UModal v-model:open="showAddPlayer">
 
-        <UForm
-          :schema="playerSchema"
-          :state="playerForm"
-          class="space-y-4"
-          @submit="savePlayer"
-        >
-          <UFormGroup label="Name" name="name" required>
-            <UInput
-              v-model="playerForm.name"
-              placeholder="Enter player name"
-            />
-          </UFormGroup>
+      <template #header>
+        <h3 class="text-lg font-semibold">
+          {{ editingPlayer ? 'Edit Player' : 'Add New Player' }}
+        </h3>
+      </template>
 
-          <UFormGroup label="Skill Level" name="skillLevel" required>
-            <UInput
-              v-model.number="playerForm.skillLevel"
-              type="number"
-              step="0.25"
-              min="1"
-              max="5"
-              placeholder="1.0 - 5.0"
-            />
+      <template #body>
+
+        <UForm :schema="playerSchema" :state="playerForm" class="space-y-4" @submit="savePlayer">
+          <UFormField label="Name" name="name" required>
+            <UInput v-model="playerForm.name" placeholder="Enter player name" />
+          </UFormField>
+
+          <UFormField label="Skill Level" name="skillLevel" required>
+            <UInput v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
+              placeholder="1.0 - 5.0" />
             <template #help>
               Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
             </template>
-          </UFormGroup>
+          </UFormField>
 
-          <UFormGroup label="Partner" name="partnerId">
-            <USelect
-              v-model="playerForm.partnerId"
-              :options="partnerOptions"
-              option-attribute="label"
-              value-attribute="value"
-              placeholder="Select a partner (optional)"
-            />
-          </UFormGroup>
+          <UFormField label="Partner" name="partnerId">
+            <USelect v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label"
+              value-attribute="value" placeholder="Select a partner (optional)" />
+          </UFormField>
 
-          <UFormGroup label="Status" name="active">
-            <UToggle
-              v-model="playerForm.active"
-              :label="playerForm.active ? 'Active' : 'Inactive'"
-            />
-          </UFormGroup>
+          <UFormField label="Status" name="active">
+            <USwitch v-model="playerForm.active" :label="playerForm.active ? 'Active' : 'Inactive'" />
+          </UFormField>
 
-          <div class="flex gap-2 justify-end">
-            <UButton
-              variant="ghost"
-              @click="cancelPlayerForm"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              type="submit"
-              color="primary"
-            >
-              {{ editingPlayer ? 'Update' : 'Add' }} Player
-            </UButton>
-          </div>
         </UForm>
-      </UCard>
+      </template>
+      <template #footer>
+        <UButton variant="ghost" @click="cancelPlayerForm">
+          Cancel
+        </UButton>
+        <UButton type="submit" color="primary">
+          {{ editingPlayer ? 'Update' : 'Add' }} Player
+        </UButton>
+      </template>
     </UModal>
 
     <!-- Import Modal -->
-    <UModal v-model="showImportModal">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold">Import Players</h3>
-        </template>
+    <UModal v-model:open="showImportModal">
+      <template #header>
+        <h3 class="text-lg font-semibold">Import Players</h3>
+      </template>
 
-        <div class="space-y-4">
-          <UFormGroup label="JSON Data">
-            <UTextarea
-              v-model="importData"
-              :rows="10"
-              placeholder="Paste JSON data here..."
-            />
-          </UFormGroup>
+      <template #body>
 
-          <div class="flex gap-2 justify-end">
-            <UButton
-              variant="ghost"
-              @click="showImportModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="primary"
-              @click="performImport"
-            >
-              Import
-            </UButton>
-          </div>
-        </div>
-      </UCard>
+        <UFormField label="JSON Data">
+          <UTextarea v-model="importData" :rows="10" placeholder="Paste JSON data here..." />
+        </UFormField>
+      </template>
+      <template #footer>
+
+        <UButton variant="ghost" @click="showImportModal = false">
+          Cancel
+        </UButton>
+        <UButton color="primary" @click="performImport">
+          Import
+        </UButton>
+
+      </template>
+
     </UModal>
 
     <!-- Delete Confirmation Modal -->
     <UModal v-model="showDeleteConfirm">
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-semibold text-red-600">Confirm Delete</h3>
-        </template>
 
+      <template #header>
+        <h3 class="text-lg font-semibold text-red-600">Confirm Delete</h3>
+      </template>
+
+      <template #body>
         <div class="space-y-4">
           <p>Are you sure you want to delete <strong>{{ playerToDelete?.name }}</strong>?</p>
           <p class="text-sm text-gray-600">This action cannot be undone.</p>
-
-          <div class="flex gap-2 justify-end">
-            <UButton
-              variant="ghost"
-              @click="showDeleteConfirm = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              color="error"
-              @click="deletePlayer"
-            >
-              Delete
-            </UButton>
-          </div>
         </div>
-      </UCard>
+      </template>
+
+      <template #footer>
+        <div class="flex gap-2 justify-end">
+          <UButton variant="ghost" @click="showDeleteConfirm = false">
+            Cancel
+          </UButton>
+          <UButton color="error" @click="deletePlayer">
+            Delete
+          </UButton>
+        </div>
+      </template>
     </UModal>
   </div>
 </template>
