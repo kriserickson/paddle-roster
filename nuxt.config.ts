@@ -11,5 +11,9 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@pinia/nuxt'
   ],
-  css: ['~/assets/css/main.css']
+  css: ['~/assets/css/main.css'],
+
+  typescript: {
+    typeCheck: true
+  }
 });

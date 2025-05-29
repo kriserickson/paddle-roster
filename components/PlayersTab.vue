@@ -34,7 +34,7 @@ const playerSchema = z.object({
 });
 
 
-const columns = [
+const columns: TableColumn<Player>[] = [
   {
     id: 'name',
     header: 'Name'
@@ -52,6 +52,7 @@ const columns = [
     header: 'Actions'
   }
 ];
+
 // Computed properties
 const totalPlayers = computed(() => playerStore.players.length);
 
@@ -96,12 +97,12 @@ const partnerOptions = computed(() => {
 });
 
 // Methods
-const getPlayerName = (playerId: string): string => {
+function getPlayerName(playerId: string): string {
   const player = playerStore.getPlayer(playerId);
   return player ? player.name : 'Unknown';
-};
+}
 
-const editPlayer = (player: Player): void => {
+function editPlayer(player: Player): void {
   editingPlayer.value = player;
   playerForm.value = {
     name: player.name,
@@ -110,16 +111,16 @@ const editPlayer = (player: Player): void => {
     active: player.active
   };
   showAddPlayer.value = true;
-};
+}
 
-const confirmDelete = (player: Player): void => {
+function confirmDelete(player: Player): void {
   playerToDelete.value = player;
   showDeleteConfirm.value = true;
-};
+}
 
-const deletePlayer = (): void => {
+async function deletePlayer(): Promise<void> {
   if (playerToDelete.value) {
-    const success = playerStore.removePlayer(playerToDelete.value.id);
+    const success = await playerStore.removePlayer(playerToDelete.value.id);
     if (success) {
       toast.add({
         title: 'Player deleted',
@@ -136,10 +137,10 @@ const deletePlayer = (): void => {
   }
   showDeleteConfirm.value = false;
   playerToDelete.value = null;
-};
+}
 
-const togglePlayerActive = (player: Player): void => {
-  const success = playerStore.updatePlayer(player.id, { active: !player.active });
+async function togglePlayerActive(player: Player): Promise<void> {
+  const success = await playerStore.updatePlayer(player.id, { active: !player.active });
   if (success) {
     toast.add({
       title: player.active ? 'Player deactivated' : 'Player activated',
@@ -147,13 +148,13 @@ const togglePlayerActive = (player: Player): void => {
       color: 'info'
     });
   }
-};
+}
 
-const savePlayer = async (): Promise<void> => {
+async function savePlayer(): Promise<void> {
   try {
     const partnerIdToSave = playerForm.value.partnerId || undefined;
     if (editingPlayer.value) {
-      const success = playerStore.updatePlayer(editingPlayer.value.id, {
+      const success = await playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
         skillLevel: playerForm.value.skillLevel,
         partnerId: partnerIdToSave,
@@ -168,17 +169,21 @@ const savePlayer = async (): Promise<void> => {
         });
       }
     } else {
-      playerStore.addPlayer(
+      const newPlayer = await playerStore.addPlayer(
         playerForm.value.name,
         playerForm.value.skillLevel,
         partnerIdToSave
       );
 
-      toast.add({
-        title: 'Player added',
-        description: `${playerForm.value.name} has been added.`,
-        color: 'success'
-      });
+      if (newPlayer) {
+        toast.add({
+          title: 'Player added',
+          description: `${playerForm.value.name} has been added.`,
+          color: 'success'
+        });
+      } else {
+        throw new Error('Failed to add player');
+      }
     }
 
     cancelPlayerForm();
@@ -190,9 +195,9 @@ const savePlayer = async (): Promise<void> => {
       color: 'error'
     });
   }
-};
+}
 
-const cancelPlayerForm = (): void => {
+function cancelPlayerForm(): void {
   showAddPlayer.value = false;
   editingPlayer.value = null;
   playerForm.value = {
@@ -201,12 +206,12 @@ const cancelPlayerForm = (): void => {
     partnerId: '',
     active: true
   };
-};
+}
 
-const performImport = async (): Promise<void> => {
+async function performImport(): Promise<void> {
   try {
     const playersData = JSON.parse(importData.value);
-    const result = playerStore.importPlayers(playersData);
+    const result = await playerStore.importPlayers(playersData);
 
     if (result.success) {
       toast.add({
@@ -231,9 +236,9 @@ const performImport = async (): Promise<void> => {
       color: 'error'
     });
   }
-};
+}
 
-const exportPlayers = (): void => {
+function exportPlayers(): void {
   try {
     const data = playerStore.exportPlayers();
     const blob = new Blob([data], { type: 'application/json' });
@@ -342,10 +347,12 @@ const exportPlayers = (): void => {
         <template #actions-cell="{ row }">
           <div class="flex gap-1">
             <UButton icon="i-heroicons-pencil" size="xs" variant="ghost" @click="editPlayer(row.original)" />
-            <UButton icon="i-heroicons-trash" size="xs" variant="ghost" color="error"
+            <UButton
+icon="i-heroicons-trash" size="xs" variant="ghost" color="error"
               @click="confirmDelete(row.original)" />
-            <UButton :icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
-              variant="ghost" :color="row.original.active ? 'primary' : 'secondary'"
+            <UButton
+:icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
+              variant="ghost" :color="row.getValue('active') ? 'primary' : 'secondary'"
               @click="togglePlayerActive(row.original)" />
           </div>
         </template>
@@ -370,7 +377,8 @@ const exportPlayers = (): void => {
           </UFormField>
 
           <UFormField label="Skill Level" name="skillLevel" required>
-            <UInput v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
+            <UInput
+v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
               placeholder="1.0 - 5.0" />
             <template #help>
               Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
@@ -378,7 +386,8 @@ const exportPlayers = (): void => {
           </UFormField>
 
           <UFormField label="Partner" name="partnerId">
-            <USelect v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label"
+            <USelect
+v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label"
               value-attribute="value" placeholder="Select a partner (optional)" />
           </UFormField>
 

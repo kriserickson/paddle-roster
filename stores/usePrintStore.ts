@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GameSchedule, PrintOptions } from '~/types';
+import type { Game, GameSchedule, PrintOptions } from '~/types';
 
 export const usePrintStore = defineStore('print', () => {
   /**
@@ -26,16 +26,16 @@ export const usePrintStore = defineStore('print', () => {
   /**
    * Actions
    */
-  const generatePrintHTML = (schedule: GameSchedule, options: PrintOptions): string => {
+  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
     const playerStore = usePlayerStore();
     
-    const playerName = (id: string): string => {
+    function playerName(id: string): string {
       return playerStore.getPlayer(id)?.name || 'Unknown Player';
-    };
+    }
 
-    const formatSkillLevel = (level: number): string => {
+    function formatSkillLevel(level: number): string {
       return level % 1 === 0 ? level.toString() : level.toFixed(2);
-    };
+    }
 
     let html = `
 <!DOCTYPE html>
@@ -264,14 +264,14 @@ export const usePrintStore = defineStore('print', () => {
 </html>`;
 
     return html;
-  };
+  }
 
-  const generateGameHTML = (
-    game: any, 
+  function generateGameHTML(
+    game: Game, 
     playerName: (id: string) => string, 
     formatSkillLevel: (level: number) => string, 
     options: PrintOptions
-  ): string => {
+  ): string {
     const team1Player1 = playerName(game.team1[0]);
     const team1Player2 = playerName(game.team1[1]);
     const team2Player1 = playerName(game.team2[0]);
@@ -286,9 +286,9 @@ export const usePrintStore = defineStore('print', () => {
     }
     
     return html;
-  };
+  }
 
-  const generateStatsSection = (schedule: GameSchedule): string => {
+  function generateStatsSection(schedule: GameSchedule): string {
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
     const allGames = schedule.rounds.flat();
     const avgSkillDiff = allGames.length > 0 
@@ -305,9 +305,9 @@ export const usePrintStore = defineStore('print', () => {
             <div>Avg Skill Difference: ${avgSkillDiff}</div>
         </div>
     </div>`;
-  };
+  }
 
-  const printSchedule = (schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void => {
+  function printSchedule(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
     
@@ -334,9 +334,9 @@ export const usePrintStore = defineStore('print', () => {
       link.click();
       URL.revokeObjectURL(url);
     }
-  };
+  }
 
-  const downloadScheduleHTML = (schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void => {
+  function downloadScheduleHTML(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
     
@@ -347,15 +347,15 @@ export const usePrintStore = defineStore('print', () => {
     link.download = `pickleball-schedule-${new Date().toISOString().split('T')[0]}.html`;
     link.click();
     URL.revokeObjectURL(url);
-  };
+  }
 
-  const updatePrintOptions = (newOptions: Partial<PrintOptions>): void => {
+  function updatePrintOptions(newOptions: Partial<PrintOptions>): void {
     printOptions.value = { ...printOptions.value, ...newOptions };
-  };
+  }
 
-  const resetPrintOptions = (): void => {
+  function resetPrintOptions(): void {
     printOptions.value = { ...defaultPrintOptions };
-  };
+  }
 
   return {
     // State

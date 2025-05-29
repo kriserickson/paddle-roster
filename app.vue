@@ -28,7 +28,7 @@ const activeTab = ref('players');
 
 // SEO
 useHead({
-  title: 'Pickleball Player Matching System',
+  title: 'Paddle Roster',
   meta: [
     { name: 'description', content: 'Intelligent player matching system for recreational pickleball leagues' }
   ]
@@ -41,8 +41,7 @@ useHead({
       <!-- Header -->
       <div class="mb-8 text-center">
         <h1 class="text-4xl font-bold text-gray-900 mb-2">
-          <UIcon name="i-heroicons-trophy" class="mr-2" />
-          Pickleball Player Matching System
+          Paddle Roster
         </h1>
         <p class="text-lg text-gray-600 mb-4">
           Intelligent player matching for recreational pickleball leagues
@@ -71,13 +70,13 @@ useHead({
             <button
               v-for="tab in tabs"
               :key="tab.key"
-              @click="activeTab = tab.key"
               :class="[
                 'flex-1 py-4 px-6 text-center font-medium text-sm flex items-center justify-center gap-2 transition-colors relative',
                 activeTab === tab.key
                   ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50'
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               ]"
+              @click="activeTab = tab.key"
             >
               <UIcon :name="tab.icon" class="w-5 h-5" />
               <span class="hidden sm:inline">{{ tab.label }}</span>

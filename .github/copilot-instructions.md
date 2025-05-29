@@ -24,7 +24,8 @@ pickleball leagues by intelligently matching players across multiple game rounds
 
 ## Code Style Guidelines
 
-- Use TypeScript interfaces for all data structures
+- Use TypeScript interfaces for all data structures, don't use `any` type
+- Follow Vue 3 Composition API patterns for component logic
 - Implement reactive state management with Vue 3 Composition API
 - Follow Nuxt.js best practices for SSR/SSG compatibility
 - Write comprehensive JSDoc comments for complex algorithms
@@ -35,6 +36,7 @@ pickleball leagues by intelligently matching players across multiple game rounds
 - Ue functions for methods and and arrow functions for computed properties.
 - Use template syntax for declarative rendering.
 - In Vue files have the script first, then the template, and finally the style section.
+- The functions should use function declarations rather than constants with lambdas.
 
 
 ## Data Models
