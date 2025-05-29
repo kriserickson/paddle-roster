@@ -34,21 +34,21 @@ const playerSchema = z.object({
 });
 
 
-const columns: TableColumn<Player>[] = [
+const columns = [
   {
-    accessorKey: 'name',
+    id: 'name',
     header: 'Name'
   },
   {
-    accessorKey: 'skillLevel',
+    id: 'skillLevel',
     header: 'Skill Level'
   },
   {
-    accessorKey: 'partner',
+    id: 'partnerId',
     header: 'Partner'
   },
   {
-    accessorKey: 'actions',
+    id: 'actions',
     header: 'Actions'
   }
 ];
@@ -58,7 +58,9 @@ const totalPlayers = computed(() => playerStore.players.length);
 const activePlayers = computed(() => playerStore.activePlayers);
 
 const averageSkillLevel = computed(() => {
-  if (activePlayers.value.length === 0) return '0.0';
+  if (activePlayers.value.length === 0) {
+    return '0.0';
+  }
   const total = activePlayers.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
   return (total / activePlayers.value.length).toFixed(1);
 });
@@ -68,12 +70,14 @@ const playersWithPartners = computed(() => {
 });
 
 const filteredPlayers = computed(() => {
-  if (!searchQuery.value) return playerStore.players;
+  if (!searchQuery.value) {
+    return playerStore.players.slice();
+  }
 
   const query = searchQuery.value.toLowerCase();
   return playerStore.players.filter((player: Player) =>
     player.name.toLowerCase().includes(query)
-  );
+  ).slice();
 });
 
 const partnerOptions = computed(() => {
@@ -312,36 +316,36 @@ const exportPlayers = (): void => {
         </div>
       </template>
 
-      <UTable :rows="filteredPlayers" :columns="columns" :loading="false" class="w-full">
-        <template #name-data="{ row }">
+      <UTable :data="filteredPlayers" :columns="columns" class="w-full">
+        <template #name-cell="{ row }">
           <div class="flex items-center gap-2">
-            <UBadge v-if="!row.getValue('active')" color="neutral" variant="subtle" size="xs">
+            <UBadge v-if="!row.original.active" color="neutral" variant="subtle" size="xs">
               Inactive
             </UBadge>
-            <span :class="{ 'text-gray-500': !row.getValue('active') }">{{ row.getValue('name') }}</span>
+            <span :class="{ 'text-gray-500': !row.original.active }">{{ row.original.name }}</span>
           </div>
         </template>
 
-        <template #skillLevel-data="{ row }">
-          <UBadge :color="getSkillLevelColor(row.getValue('skillLevel'))" variant="subtle">
-            {{ row.getValue('skillLevel') }}
+        <template #skillLevel-cell="{ row }">
+          <UBadge :color="getSkillLevelColor(row.original.skillLevel)" variant="subtle">
+            {{ row.original.skillLevel }}
           </UBadge>
         </template>
 
-        <template #partner-data="{ row }">
-          <span v-if="row.getValue('partnerId')" class="text-sm text-gray-600">
-            {{ getPlayerName(row.getValue('partnerId')) }}
+        <template #partnerId-cell="{ row }">
+          <span v-if="row.original.partnerId" class="text-sm text-gray-600">
+            {{ getPlayerName(row.original.partnerId) }}
           </span>
           <span v-else class="text-sm text-gray-400">None</span>
         </template>
 
-        <template #actions-data="{ row }">
+        <template #actions-cell="{ row }">
           <div class="flex gap-1">
             <UButton icon="i-heroicons-pencil" size="xs" variant="ghost" @click="editPlayer(row.original)" />
             <UButton icon="i-heroicons-trash" size="xs" variant="ghost" color="error"
               @click="confirmDelete(row.original)" />
-            <UButton :icon="row.getValue('active') ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
-              variant="ghost" :color="row.getValue('active') ? 'primary' : 'secondary'"
+            <UButton :icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
+              variant="ghost" :color="row.original.active ? 'primary' : 'secondary'"
               @click="togglePlayerActive(row.original)" />
           </div>
         </template>
@@ -388,7 +392,7 @@ const exportPlayers = (): void => {
         <UButton variant="ghost" @click="cancelPlayerForm">
           Cancel
         </UButton>
-        <UButton type="submit" color="primary">
+        <UButton type="submit" color="primary" @click="savePlayer">
           {{ editingPlayer ? 'Update' : 'Add' }} Player
         </UButton>
       </template>
