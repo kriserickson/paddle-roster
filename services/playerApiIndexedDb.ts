@@ -17,6 +17,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Initialize the IndexedDB database
    */
   async initialize(): Promise<ApiResponse> {
+    if (!process.client) {
+      return { success: true, message: 'IndexedDB not available on server. Skipping initialization.' };
+    }
     try {
       if (this.db) {
         return { success: true, message: 'Database already initialized' };
@@ -57,6 +60,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Get all players from IndexedDB
    */
   async getPlayers(): Promise<ApiResponse<Player[]>> {
+    if (!process.client) {
+      return { success: true, data: [], message: 'IndexedDB not available on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -84,6 +90,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Create a new player
    */
   async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
+    if (!process.client) {
+      return { success: false, message: 'Cannot create player on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -116,6 +125,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Update an existing player
    */
   async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
+    if (!process.client) {
+      return { success: false, message: 'Cannot update player on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -159,6 +171,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Delete a player
    */
   async deletePlayer(id: string): Promise<ApiResponse> {
+    if (!process.client) {
+      return { success: false, message: 'Cannot delete player on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -185,6 +200,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Bulk import players
    */
   async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
+    if (!process.client) {
+      return { success: false, message: 'Cannot import players on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -215,6 +233,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    * Clear all players
    */
   async clearAllPlayers(): Promise<ApiResponse> {
+    if (!process.client) {
+      return { success: false, message: 'Cannot clear all players on server.' };
+    }
     try {
       await this.ensureInitialized();
 
@@ -243,7 +264,8 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   private async ensureInitialized(): Promise<void> {
     if (!this.db) {
       const result = await this.initialize();
-      if (!result.success) {
+      // Only throw an error if initialization fails on the client
+      if (!result.success && process.client) {
         throw new Error(result.error || result.message);
       }
     }

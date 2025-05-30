@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
+import { ref, computed } from 'vue';
 import { container } from 'tsyringe';
+import { TOKENS, type IPlayerApi } from '~/types/api';
 import type { Player } from '~/types';
-import type { IPlayerApi } from '~/types/api';
-import { TOKENS } from '~/types/api';
+
 
 export const usePlayerStore = defineStore('player', () => {
   // Get API instance from DI container
@@ -23,7 +24,7 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function getAvailablePartners(currentPlayerId: string): Player[] {
-    return players.value.filter(p => p.id !== currentPlayerId && p.active);
+    return players.value.filter(p => p.id !== currentPlayerId);
   }
 
   function canGenerateGames(numberOfCourts: number): { valid: boolean; message?: string } {
@@ -67,13 +68,13 @@ export const usePlayerStore = defineStore('player', () => {
         players.value = result.data;
         return { success: true, message: `Loaded ${result.data.length} players` };
       }
-      
+      players.value = []; // Ensure it's reset if no data
       return { success: true, message: 'No saved players found' };
     } catch (error) {
       console.error('Error loading players:', error);
-      return { 
-        success: false, 
-        message: 'Failed to load players' 
+      return {
+        success: false,
+        message: 'Failed to load players'
       };
     }
   }
@@ -95,7 +96,7 @@ export const usePlayerStore = defineStore('player', () => {
         return result.data;
       }
       
-      throw new Error(result.message);
+      throw new Error(result.message || 'Failed to add player');
     } catch (error) {
       console.error('Error adding player:', error);
       return null;
@@ -122,12 +123,11 @@ export const usePlayerStore = defineStore('player', () => {
       if (result.success && result.data) {
         const index = players.value.findIndex(p => p.id === id);
         if (index !== -1) {
-          players.value[index] = result.data;
+          players.value[index] = { ...players.value[index], ...result.data };
         }
         return true;
       }
-      
-      throw new Error(result.message);
+      return false;
     } catch (error) {
       console.error('Error updating player:', error);
       return false;
@@ -152,16 +152,11 @@ export const usePlayerStore = defineStore('player', () => {
       }
 
       const result = await playerApi.deletePlayer(id);
-      
       if (result.success) {
-        const index = players.value.findIndex(p => p.id === id);
-        if (index !== -1) {
-          players.value.splice(index, 1);
-        }
+        players.value = players.value.filter(p => p.id !== id);
         return true;
       }
-      
-      throw new Error(result.message);
+      return false;
     } catch (error) {
       console.error('Error removing player:', error);
       return false;
@@ -179,10 +174,9 @@ export const usePlayerStore = defineStore('player', () => {
         players.value = [];
         return true;
       }
-      
-      throw new Error(result.message);
+      return false;
     } catch (error) {
-      console.error('Error clearing players:', error);
+      console.error('Error clearing all players:', error);
       return false;
     }
   }
@@ -192,48 +186,22 @@ export const usePlayerStore = defineStore('player', () => {
    */
   async function importPlayers(playersData: Player[]): Promise<{ success: boolean; message: string }> {
     try {
-      // Validate the imported data
-      if (!Array.isArray(playersData)) {
-        return { success: false, message: 'Invalid data format' };
-      }
 
-      const validPlayers: Player[] = [];
-      
-      for (const playerData of playersData) {
-        if (playerData.name && 
-            typeof playerData.skillLevel === 'number' && 
-            playerData.skillLevel >= 1 && 
-            playerData.skillLevel <= 5) {
-          validPlayers.push({
-            id: playerData.id || crypto.randomUUID(),
-            name: playerData.name.trim(),
-            skillLevel: Math.max(1, Math.min(5, playerData.skillLevel)),
-            partnerId: undefined, // Reset partner references on import
-            active: playerData.active ?? true
-          });
-        }
-      }
-
-      if (validPlayers.length === 0) {
-        return { success: false, message: 'No valid players found in import data' };
-      }
+      const validPlayers = playersData.filter(p => 
+        p.name && 
+        typeof p.skillLevel === 'number' && 
+        p.skillLevel >= 1 && 
+        p.skillLevel <= 5
+      );
 
       const result = await playerApi.importPlayers(validPlayers);
-      
       if (result.success && result.data) {
-        // Refresh local state
-        const refreshResult = await playerApi.getPlayers();
-        if (refreshResult.success && refreshResult.data) {
-          players.value = refreshResult.data;
-        }
-        
-        return { 
-          success: true, 
-          message: `Successfully imported ${validPlayers.length} players` 
-        };
+        // Assuming importPlayers from API returns the full list or successfully imported ones
+        // For simplicity, let's reload all players after import, or merge carefully
+        await loadPlayers(); 
+        return { success: true, message: `Imported ${result.data.length} players.` };
       }
-      
-      throw new Error(result.message);
+      return { success: false, message: result.message || 'Failed to import players' };
     } catch (error) {
       console.error('Error importing players:', error);
       return { 
@@ -251,9 +219,15 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   return {
-    // State
-    players: readonly(players),
-    
+    // State: Expose the ref directly, or use a computed for readonly access
+    // Option 1: Expose ref directly (actions within store modify it)
+    players,
+    // Option 2 (Safer for consumers): Expose a readonly computed property
+    // allPlayers: computed(() => players.value), 
+    // And keep the internal 'players' ref for modifications within actions.
+    // If choosing Option 2, components would use 'store.allPlayers'.
+    // For this fix, let's try Option 1 first to directly address the error.
+
     // Getters
     activePlayers,
     getPlayer,

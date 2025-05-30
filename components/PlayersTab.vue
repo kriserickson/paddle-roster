@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
 import { z } from 'zod';
 import type { Player } from '~/types';
@@ -21,7 +22,7 @@ const importData = ref('');
 const playerForm = ref({
   name: '',
   skillLevel: 3.0,
-  partnerId: '',
+  partnerId: 'none',
   active: true
 });
 
@@ -88,11 +89,13 @@ const partnerOptions = computed(() => {
     : playerStore.activePlayers;
 
   return [
-    { label: 'No Partner', value: '' },
-    ...availablePartners.map((player: Player) => ({
-      label: player.name,
-      value: player.id
-    }))
+    { label: 'No Partner', value: 'none' },
+    ...availablePartners.map((player: Player) => {
+      return {
+        label: player.name,
+        value: player.id
+      };
+    })
   ];
 });
 
@@ -104,10 +107,16 @@ function getPlayerName(playerId: string): string {
 
 function editPlayer(player: Player): void {
   editingPlayer.value = player;
+  
+  // Check if the player's current partner is still available
+  const currentPartnerId = player.partnerId;
+  const availablePartners = playerStore.getAvailablePartners(player.id);
+  const isPartnerAvailable = currentPartnerId && availablePartners.some(p => p.id === currentPartnerId);
+  
   playerForm.value = {
     name: player.name,
     skillLevel: player.skillLevel,
-    partnerId: player.partnerId || '',
+    partnerId: isPartnerAvailable ? currentPartnerId : 'none',
     active: player.active
   };
   showAddPlayer.value = true;
@@ -119,8 +128,15 @@ function confirmDelete(player: Player): void {
 }
 
 async function deletePlayer(): Promise<void> {
+  console.log('deletePlayer called with:', playerToDelete.value); // Debug log
+  
   if (playerToDelete.value) {
+    console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
+    
     const success = await playerStore.removePlayer(playerToDelete.value.id);
+    
+    console.log('Remove result:', success); // Debug log
+    
     if (success) {
       toast.add({
         title: 'Player deleted',
@@ -152,7 +168,7 @@ async function togglePlayerActive(player: Player): Promise<void> {
 
 async function savePlayer(): Promise<void> {
   try {
-    const partnerIdToSave = playerForm.value.partnerId || undefined;
+    const partnerIdToSave = playerForm.value.partnerId === 'none' ? undefined : playerForm.value.partnerId;
     if (editingPlayer.value) {
       const success = await playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
@@ -162,6 +178,14 @@ async function savePlayer(): Promise<void> {
       });
 
       if (success) {
+        // Update partner relationship
+        if (partnerIdToSave) {
+          await playerStore.updatePlayer(partnerIdToSave, { partnerId: editingPlayer.value.id });
+        } else if (editingPlayer.value.partnerId) {
+          // Clear previous partner's partnerId
+          await playerStore.updatePlayer(editingPlayer.value.partnerId, { partnerId: undefined });
+        }
+
         toast.add({
           title: 'Player updated',
           description: `${playerForm.value.name} has been updated.`,
@@ -176,6 +200,11 @@ async function savePlayer(): Promise<void> {
       );
 
       if (newPlayer) {
+        // Update partner relationship for new player
+        if (partnerIdToSave) {
+          await playerStore.updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
+        }
+
         toast.add({
           title: 'Player added',
           description: `${playerForm.value.name} has been added.`,
@@ -203,7 +232,7 @@ function cancelPlayerForm(): void {
   playerForm.value = {
     name: '',
     skillLevel: 3.0,
-    partnerId: '',
+    partnerId: 'none',
     active: true
   };
 }
@@ -263,6 +292,8 @@ function exportPlayers(): void {
     });
   }
 };
+
+
 </script>
 
 <template>
@@ -286,28 +317,61 @@ function exportPlayers(): void {
     <!-- Players Summary -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
       <UCard>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">{{ totalPlayers }}</div>
-          <div class="text-sm text-gray-600">Total Players</div>
-        </div>
+        <ClientOnly>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-blue-600">{{ totalPlayers }}</div>
+            <div class="text-sm text-gray-600">Total Players</div>
+          </div>
+          <template #placeholder>
+            <!-- Placeholder content to match server-rendered or show loading -->
+            <div class="text-center">
+              <div class="text-2xl font-bold text-blue-600">0</div>
+              <div class="text-sm text-gray-600">Total Players</div>
+            </div>
+          </template>
+        </ClientOnly>
       </UCard>
       <UCard>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">{{ activePlayers.length }}</div>
-          <div class="text-sm text-gray-600">Active Players</div>
-        </div>
+        <ClientOnly>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-green-600">{{ activePlayers.length }}</div>
+            <div class="text-sm text-gray-600">Active Players</div>
+          </div>
+          <template #placeholder>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-green-600">0</div>
+              <div class="text-sm text-gray-600">Active Players</div>
+            </div>
+          </template>
+        </ClientOnly>
       </UCard>
       <UCard>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-yellow-600">{{ averageSkillLevel }}</div>
-          <div class="text-sm text-gray-600">Avg Skill Level</div>
-        </div>
+        <ClientOnly>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-yellow-600">{{ averageSkillLevel }}</div>
+            <div class="text-sm text-gray-600">Avg Skill Level</div>
+          </div>
+          <template #placeholder>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-yellow-600">0.0</div>
+              <div class="text-sm text-gray-600">Avg Skill Level</div>
+            </div>
+          </template>
+        </ClientOnly>
       </UCard>
       <UCard>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-purple-600">{{ playersWithPartners }}</div>
-          <div class="text-sm text-gray-600">With Partners</div>
-        </div>
+        <ClientOnly>
+          <div class="text-center">
+            <div class="text-2xl font-bold text-purple-600">{{ playersWithPartners }}</div>
+            <div class="text-sm text-gray-600">With Partners</div>
+          </div>
+          <template #placeholder>
+            <div class="text-center">
+              <div class="text-2xl font-bold text-purple-600">0</div>
+              <div class="text-sm text-gray-600">With Partners</div>
+            </div>
+          </template>
+        </ClientOnly>
       </UCard>
     </div>
 
@@ -321,64 +385,59 @@ function exportPlayers(): void {
         </div>
       </template>
 
-      <UTable :data="filteredPlayers" :columns="columns" class="w-full">
-        <template #name-cell="{ row }">
-          <div class="flex items-center gap-2">
-            <UBadge v-if="!row.original.active" color="neutral" variant="subtle" size="xs">
-              Inactive
+      <ClientOnly>
+        <UTable :data="filteredPlayers" :columns="columns" class="w-full">
+          <template #name-cell="{ row }">
+            <div class="flex items-center gap-2">
+              <span class="text-lg" :class="{ 'text-gray-500': !row.original.active }">{{ row.original.name }}</span>
+              <UBadge v-if="!row.original.active" color="warning" variant="subtle">
+                Inactive
+              </UBadge>
+            </div>
+          </template>
+
+          <template #skillLevel-cell="{ row }">
+            <UBadge :color="getSkillLevelColor(row.original.skillLevel)" variant="subtle">
+              {{ row.original.skillLevel }}
             </UBadge>
-            <span :class="{ 'text-gray-500': !row.original.active }">{{ row.original.name }}</span>
-          </div>
-        </template>
+          </template>
 
-        <template #skillLevel-cell="{ row }">
-          <UBadge :color="getSkillLevelColor(row.original.skillLevel)" variant="subtle">
-            {{ row.original.skillLevel }}
-          </UBadge>
-        </template>
+          <template #partnerId-cell="{ row }">
+            <span v-if="row.original.partnerId" class="text-sm text-gray-600">
+              {{ getPlayerName(row.original.partnerId) }}
+            </span>
+            <span v-else class="text-sm text-gray-400">None</span>
+          </template>
 
-        <template #partnerId-cell="{ row }">
-          <span v-if="row.original.partnerId" class="text-sm text-gray-600">
-            {{ getPlayerName(row.original.partnerId) }}
-          </span>
-          <span v-else class="text-sm text-gray-400">None</span>
+          <template #actions-cell="{ row }">
+            <div class="flex gap-1 button-container">
+              <UButton icon="i-heroicons-pencil" variant="ghost" @click="editPlayer(row.original)" />
+              <UButton icon="i-heroicons-trash" variant="ghost" color="error" @click="confirmDelete(row.original)" />
+              <UButton :icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" variant="ghost"
+                :color="row.original.active ? 'primary' : 'secondary'" @click="togglePlayerActive(row.original)" />
+            </div>
+          </template>
+        </UTable>
+        <template #placeholder>
+          <!-- Placeholder for the table, e.g., a loading message or an empty state -->
+          <div class="p-4 text-center text-gray-500">Loading players...</div>
         </template>
-
-        <template #actions-cell="{ row }">
-          <div class="flex gap-1">
-            <UButton icon="i-heroicons-pencil" size="xs" variant="ghost" @click="editPlayer(row.original)" />
-            <UButton
-icon="i-heroicons-trash" size="xs" variant="ghost" color="error"
-              @click="confirmDelete(row.original)" />
-            <UButton
-:icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" size="xs"
-              variant="ghost" :color="row.getValue('active') ? 'primary' : 'secondary'"
-              @click="togglePlayerActive(row.original)" />
-          </div>
-        </template>
-      </UTable>
+      </ClientOnly>
     </UCard>
 
-
     <!-- Add/Edit Player Modal -->
-    <UModal v-model:open="showAddPlayer">
-
-      <template #header>
-        <h3 class="text-lg font-semibold">
-          {{ editingPlayer ? 'Edit Player' : 'Add New Player' }}
-        </h3>
-      </template>
-
+    <UModal v-model:open="showAddPlayer" 
+      :title="editingPlayer ? 'Edit Player' : 'Add New Player'"
+      description="Fill in the details below to add or edit a player."
+      >
       <template #body>
-
         <UForm :schema="playerSchema" :state="playerForm" class="space-y-4" @submit="savePlayer">
           <UFormField label="Name" name="name" required>
             <UInput v-model="playerForm.name" placeholder="Enter player name" />
           </UFormField>
 
           <UFormField label="Skill Level" name="skillLevel" required>
-            <UInput
-v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
+            <UInput v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
               placeholder="1.0 - 5.0" />
             <template #help>
               Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
@@ -386,17 +445,15 @@ v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
           </UFormField>
 
           <UFormField label="Partner" name="partnerId">
-            <USelect
-v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label"
-              value-attribute="value" placeholder="Select a partner (optional)" />
+            <USelect v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" />
           </UFormField>
 
           <UFormField label="Status" name="active">
             <USwitch v-model="playerForm.active" :label="playerForm.active ? 'Active' : 'Inactive'" />
           </UFormField>
-
         </UForm>
       </template>
+      
       <template #footer>
         <UButton variant="ghost" @click="cancelPlayerForm">
           Cancel
@@ -408,37 +465,31 @@ v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label
     </UModal>
 
     <!-- Import Modal -->
-    <UModal v-model:open="showImportModal">
-      <template #header>
-        <h3 class="text-lg font-semibold">Import Players</h3>
-      </template>
-
+    <UModal 
+      v-model:open="showImportModal" 
+      title="Import Players" 
+      description="Paste JSON data to import players."
+    >
+      
       <template #body>
-
         <UFormField label="JSON Data">
           <UTextarea v-model="importData" :rows="10" placeholder="Paste JSON data here..." />
         </UFormField>
       </template>
+      
       <template #footer>
-
         <UButton variant="ghost" @click="showImportModal = false">
           Cancel
         </UButton>
         <UButton color="primary" @click="performImport">
           Import
         </UButton>
-
       </template>
-
     </UModal>
 
     <!-- Delete Confirmation Modal -->
-    <UModal v-model="showDeleteConfirm">
-
-      <template #header>
-        <h3 class="text-lg font-semibold text-red-600">Confirm Delete</h3>
-      </template>
-
+    <UModal v-model:open="showDeleteConfirm" title="Confirm Delete" description="Are you sure you want to delete this player?">
+      
       <template #body>
         <div class="space-y-4">
           <p>Are you sure you want to delete <strong>{{ playerToDelete?.name }}</strong>?</p>
@@ -458,4 +509,19 @@ v-model="playerForm.partnerId" :options="partnerOptions" option-attribute="label
       </template>
     </UModal>
   </div>
+  
+  
 </template>
+
+<style>
+.button-container {
+
+  .i-heroicons\:eye-slash,
+  .i-heroicons\:trash,
+  .i-heroicons\:pencil,
+  .i-heroicons\:eye {
+    width: 2rem;
+    height: 2rem;
+  }
+}
+</style>
