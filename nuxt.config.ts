@@ -11,9 +11,19 @@ export default defineNuxtConfig({
     '@nuxt/ui',
     '@pinia/nuxt'
   ],
+  
   css: ['~/assets/css/main.css'],
-
+  
   typescript: {
     typeCheck: true
+  },
+
+  // Add app configuration for default locale
+  app: {
+    head: {
+      htmlAttrs: {
+        lang: 'en'
+      }
+    }
   }
 });
