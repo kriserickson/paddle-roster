@@ -5,7 +5,7 @@ import { PickleballMatcher } from '~/utils/pickleballMatcher';
  * Composable for generating and managing game schedules
  */
 export const useGameGenerator = () => {
-  const { getActivePlayers } = usePlayerManager();
+  const { players } = usePlayerManager();
 
   /**
    * Current game schedule
@@ -41,14 +41,13 @@ export const useGameGenerator = () => {
     try {
       isGenerating.value = true;
 
-      const activePlayers = getActivePlayers();
       
-      if (activePlayers.length < matchingOptions.value.numberOfCourts * 4) {
+      if (players.value.length < matchingOptions.value.numberOfCourts * 4) {
         throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} active players`);
       }
 
       // Create matcher instance
-      const matcher = new PickleballMatcher(activePlayers, matchingOptions.value);
+      const matcher = new PickleballMatcher([...players.value], matchingOptions.value);
       
       // Generate schedule
       const schedule = matcher.generateSchedule(eventLabel);
@@ -91,17 +90,16 @@ export const useGameGenerator = () => {
    */
   const validateOptions = (): { valid: boolean; errors: string[] } => {
     const errors: string[] = [];
-    const activePlayers = getActivePlayers();
 
     // Check minimum players
     const minPlayers = matchingOptions.value.numberOfCourts * 4;
-    if (activePlayers.length < minPlayers) {
+    if (players.value.length < minPlayers) {
       errors.push(`Need at least ${minPlayers} active players for ${matchingOptions.value.numberOfCourts} courts`);
     }
 
     // Check maximum players (allowing up to 4 to sit out per round)
     const maxPlayers = matchingOptions.value.numberOfCourts * 4 + 4;
-    if (activePlayers.length > maxPlayers) {
+    if (players.value.length > maxPlayers) {
       errors.push(`Too many players for ${matchingOptions.value.numberOfCourts} courts. Maximum ${maxPlayers} players`);
     }
 

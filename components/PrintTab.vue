@@ -113,20 +113,22 @@ watch(gameSchedule, (newSchedule) => {
 <template>
   <div class="space-y-6">
     <!-- Print Configuration -->
-    <UCard>
-      <template #header>
-        <div class="flex items-center space-x-2">
-          <UIcon name="i-heroicons-printer" class="w-5 h-5" />
-          <h3 class="text-lg font-semibold">Print Configuration</h3>
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="flex items-center gap-3">
+          <Icon name="mdi:printer" class="text-paddle-teal text-3xl" />
+          <h3 class="text-2xl font-bold text-gray-900">Print Configuration</h3>
         </div>
-      </template>
+      </div>
 
-      <div class="space-y-4">
+      <div class="p-6 space-y-6">
         <!-- Header Configuration -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">          <UFormField label="Event Name">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <UFormField label="Event Name">
             <UInput
               v-model="printOptions.eventTitle"
               placeholder="Pickleball League"
+              class="form-input"
             />
           </UFormField>
 
@@ -134,6 +136,7 @@ watch(gameSchedule, (newSchedule) => {
             <UInput
               v-model="printOptions.eventDate"
               type="date"
+              class="form-input"
             />
           </UFormField>
 
@@ -141,6 +144,7 @@ watch(gameSchedule, (newSchedule) => {
             <UInput
               v-model="printOptions.location"
               placeholder="Community Center"
+              class="form-input"
             />
           </UFormField>
 
@@ -148,88 +152,102 @@ watch(gameSchedule, (newSchedule) => {
             <UInput
               v-model="printOptions.organizer"
               placeholder="League Coordinator"
+              class="form-input"
             />
           </UFormField>
         </div>
 
         <!-- Print Options -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">          <UFormField label="Include Options">
-            <div class="space-y-2">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <UFormField label="Include Options">
+            <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
               <UCheckbox
                 v-model="printOptions.includePlayerList"
                 label="Player List"
+                class="text-blue-800"
               />
               <UCheckbox
                 v-model="printOptions.includeStats"
                 label="Game Statistics"
+                class="text-blue-800"
               />
               <UCheckbox
                 v-model="printOptions.includeRestPeriods"
                 label="Rest Period Information"
+                class="text-blue-800"
               />
               <UCheckbox
                 v-model="printOptions.includeCourtAssignments"
                 label="Court Assignments"
+                class="text-blue-800"
               />
             </div>
           </UFormField>
 
           <UFormField label="Layout Options">
-            <div class="space-y-2">
+            <div class="space-y-3 bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20 p-4 rounded-xl">
               <URadioGroup
                 v-model="printOptions.orientation"
                 :options="[
                   { value: 'portrait', label: 'Portrait' },
                   { value: 'landscape', label: 'Landscape' }
                 ]"
+                class="text-paddle-teal-dark"
               />
               <UCheckbox
                 v-model="printOptions.compactLayout"
                 label="Compact Layout"
-              />            </div>
+                class="text-paddle-teal-dark"
+              />
+            </div>
           </UFormField>
         </div>
 
         <!-- Action Buttons -->
-        <div class="flex flex-wrap gap-3 pt-4 border-t">
+        <div class="flex flex-wrap gap-4 pt-6 border-t-2 border-paddle-teal/20">
           <UButton
             :disabled="!gameSchedule"
-            color="primary"
             icon="i-heroicons-eye"
             @click="generatePreview"
+            class="btn-primary"
+            size="lg"
           >
+            <Icon name="mdi:eye" class="mr-2" />
             Generate Preview
           </UButton>
 
           <UButton
             :disabled="!gameSchedule"
-            variant="outline"
             icon="i-heroicons-printer"
             @click="print"
+            class="btn-secondary"
           >
+            <Icon name="mdi:printer" class="mr-2" />
             Print
           </UButton>
 
           <UButton
             :disabled="!gameSchedule"
-            variant="outline"
             icon="i-heroicons-document-arrow-down"
             @click="downloadPdf"
+            class="btn-secondary"
           >
+            <Icon name="mdi:file-pdf-box" class="mr-2" />
             Download PDF
           </UButton>
 
           <UButton
             :disabled="!gameSchedule || !previewGenerated"
-            variant="outline"
             icon="i-heroicons-code-bracket"
             @click="exportHtml"
+            class="btn-secondary"
           >
+            <Icon name="mdi:code-tags" class="mr-2" />
             Export HTML
           </UButton>
         </div>
       </div>
-    </UCard>
+    </div>
 
     <!-- No Schedule Message -->
     <UCard v-if="!gameSchedule">

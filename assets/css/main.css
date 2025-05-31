@@ -1,2 +1,332 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
+
+/* Brand Colors and Custom Styles */
+:root {
+  --paddle-teal: #3ab6bb;
+  --paddle-red: #ff272b;
+  --paddle-teal-light: #4dd8de;
+  --paddle-teal-dark: #2a9fa3;
+  --paddle-red-light: #ff4c50;
+  --paddle-red-dark: #e01f23;
+}
+
+/* Global Background and Layout */
+body {
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  min-height: 100vh;
+}
+
+/* Header Styling */
+.app-header {
+  background: linear-gradient(90deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  box-shadow: 0 4px 20px rgba(58, 182, 187, 0.2);
+}
+
+.app-title {
+  color: white;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Tab Navigation */
+.tab-nav {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 4px;
+  margin: 1rem 0;
+}
+
+.tab-button {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  font-weight: 500;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3);
+}
+
+.tab-button:hover:not(.active) {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: var(--paddle-teal);
+}
+
+/* Card Components */
+.content-card {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(58, 182, 187, 0.1);
+  overflow: hidden;
+}
+
+.content-card-header {
+  background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid var(--paddle-teal);
+  padding: 1.5rem;
+}
+
+/* Button Styles */
+.btn-primary {
+  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, var(--paddle-teal-dark) 0%, var(--paddle-teal) 100%);
+  box-shadow: 0 6px 16px rgba(58, 182, 187, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, var(--paddle-red) 0%, var(--paddle-red-light) 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(255, 39, 43, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, var(--paddle-red-dark) 0%, var(--paddle-red) 100%);
+  box-shadow: 0 6px 16px rgba(255, 39, 43, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #64748b 0%, #94a3b8 100%);
+  border: none;
+  color: white;
+  font-weight: 600;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(100, 116, 139, 0.3);
+  transition: all 0.3s ease;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  box-shadow: 0 6px 16px rgba(100, 116, 139, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Form Elements */
+.form-input {
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.form-input:focus {
+  border-color: var(--paddle-teal);
+  box-shadow: 0 0 0 3px rgba(58, 182, 187, 0.1);
+  outline: none;
+}
+
+/* Player Cards */
+.player-card {
+  background: white;
+  border: 2px solid #f1f5f9;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.player-card:hover {
+  border-color: var(--paddle-teal);
+  box-shadow: 0 8px 24px rgba(58, 182, 187, 0.15);
+  transform: translateY(-2px);
+}
+
+.player-skill-badge {
+  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  color: white;
+  border-radius: 20px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  padding: 4px 12px;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3);
+}
+
+/* Game Schedule */
+.game-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  transition: all 0.3s ease;
+}
+
+.game-card:hover {
+  border-color: var(--paddle-teal);
+  box-shadow: 0 6px 20px rgba(58, 182, 187, 0.1);
+}
+
+.court-badge {
+  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  color: white;
+  border-radius: 8px;
+  font-weight: 600;
+  padding: 6px 12px;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3);
+}
+
+.round-header {
+  background: linear-gradient(90deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  color: white;
+  border-radius: 12px;
+  padding: 1rem;
+  text-align: center;
+  font-weight: 700;
+  font-size: 1.25rem;
+  box-shadow: 0 4px 16px rgba(58, 182, 187, 0.3);
+  margin-bottom: 1rem;
+}
+
+/* Rest Players */
+.rest-players {
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border: 2px solid #f59e0b;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.rest-title {
+  color: #92400e;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+}
+
+/* Alerts and Notifications */
+.alert-success {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  border: 2px solid #22c55e;
+  color: #166534;
+  border-radius: 8px;
+}
+
+.alert-error {
+  background: linear-gradient(135deg, #fef2f2 0%, #fecaca 100%);
+  border: 2px solid var(--paddle-red);
+  color: #991b1b;
+  border-radius: 8px;
+}
+
+.alert-warning {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #f59e0b;
+  color: #92400e;
+  border-radius: 8px;
+}
+
+/* Modal Styling */
+.modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  border: 2px solid rgba(58, 182, 187, 0.1);
+}
+
+.modal-header {
+  background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid var(--paddle-teal);
+  border-radius: 14px 14px 0 0;
+}
+
+/* Loading States */
+.loading-spinner {
+  border: 3px solid #e2e8f0;
+  border-top: 3px solid var(--paddle-teal);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Animations */
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s ease;
+}
+
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.slide-enter-active, .slide-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-enter-from, .slide-leave-to {
+  transform: translateY(-10px);
+}
+
+/* Print Styles - Keep black and white */
+@media print {
+  body {
+    background: white !important;
+  }
+  
+  .app-header,
+  .tab-nav,
+  .btn-primary,
+  .btn-danger,
+  .btn-secondary,
+  .player-skill-badge,
+  .court-badge,
+  .round-header,
+  .rest-players {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .content-card,
+  .player-card,
+  .game-card {
+    background: white !important;
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+  }
+  
+  .modal-overlay,
+  .tab-nav {
+    display: none !important;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-card {
+    border-radius: 12px;
+    margin: 0.5rem;
+  }
+  
+  .content-card-header {
+    padding: 1rem;
+  }
+  
+  .btn-primary,
+  .btn-danger,
+  .btn-secondary {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+}

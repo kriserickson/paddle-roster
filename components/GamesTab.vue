@@ -10,6 +10,11 @@ const toast = useToast();
 const eventLabel = ref('');
 const matchingOptions = ref<MatchingOptions>({ ...gameStore.matchingOptions });
 
+// Player filtering state
+const playerSearchQuery = ref('');
+const skillLevelFilter = ref('all');
+const partnerFilter = ref('all');
+
 // Watch for changes and update the game generator
 watch(matchingOptions, (newOptions) => {
   gameStore.updateOptions(newOptions);
@@ -23,8 +28,61 @@ const courtOptions = [
   { label: '4 Courts', value: 4 }
 ];
 
+// Filter options
+const skillLevelFilterOptions = [
+  { label: 'All Skill Levels', value: 'all' },
+  { label: 'Beginner (1.0-2.0)', value: 'beginner' },
+  { label: 'Intermediate (2.1-3.5)', value: 'intermediate' },
+  { label: 'Advanced (3.6-5.0)', value: 'advanced' }
+];
+
+const partnerFilterOptions = [
+  { label: 'All Players', value: 'all' },
+  { label: 'With Partner', value: 'with' },
+  { label: 'Without Partner', value: 'without' }
+];
+
 // Computed properties
-const activePlayers = computed(() => playerStore.activePlayers);
+const selectedPlayers = computed(() => playerStore.selectedPlayers);
+
+const filteredPlayers = computed(() => {
+  let filtered = playerStore.players;
+
+  // Apply search filter
+  if (playerSearchQuery.value) {
+    const query = playerSearchQuery.value.toLowerCase();
+    filtered = filtered.filter(player => 
+      player.name.toLowerCase().includes(query)
+    );
+  }
+
+  // Apply skill level filter
+  if (skillLevelFilter.value !== 'all') {
+    filtered = filtered.filter(player => {
+      const skill = player.skillLevel;
+      switch (skillLevelFilter.value) {
+        case 'beginner':
+          return skill >= 1.0 && skill <= 2.0;
+        case 'intermediate':
+          return skill > 2.0 && skill <= 3.5;
+        case 'advanced':
+          return skill > 3.5 && skill <= 5.0;
+        default:
+          return true;
+      }
+    });
+  }
+
+  // Apply partner filter
+  if (partnerFilter.value !== 'all') {
+    filtered = filtered.filter(player => {
+      const hasPartner = !!player.partnerId;
+      return partnerFilter.value === 'with' ? hasPartner : !hasPartner;
+    });
+  }
+
+  return filtered;
+});
 
 const scheduleStats = computed(() => gameStore.scheduleStats);
 
@@ -33,13 +91,13 @@ const playersPerRound = computed(() => {
 });
 
 const restingPerRound = computed(() => {
-  return Math.max(0, activePlayers.value.length - playersPerRound.value);
+  return Math.max(0, selectedPlayers.value.length - playersPerRound.value);
 });
 
 const averageSkillLevel = computed(() => {
-  if (activePlayers.value.length === 0) return '0.0';
-  const total = activePlayers.value.reduce((sum, player) => sum + player.skillLevel, 0);
-  return (total / activePlayers.value.length).toFixed(1);
+  if (selectedPlayers.value.length === 0) return '0.0';
+  const total = selectedPlayers.value.reduce((sum, player) => sum + player.skillLevel, 0);
+  return (total / selectedPlayers.value.length).toFixed(1);
 });
 
 const validationResult = computed(() => gameStore.validateOptions());
@@ -49,6 +107,28 @@ const canGenerate = computed(() => validationResult.value.valid);
 const validationErrors = computed(() => validationResult.value.errors);
 
 // Methods
+const selectFilteredPlayers = (): void => {
+  filteredPlayers.value.forEach(player => {
+    if (!playerStore.isPlayerSelected(player.id)) {
+      playerStore.togglePlayerSelection(player.id);
+    }
+  });
+};
+
+const deselectFilteredPlayers = (): void => {
+  filteredPlayers.value.forEach(player => {
+    if (playerStore.isPlayerSelected(player.id)) {
+      playerStore.togglePlayerSelection(player.id);
+    }
+  });
+};
+
+const clearAllFilters = (): void => {
+  playerSearchQuery.value = '';
+  skillLevelFilter.value = 'all';
+  partnerFilter.value = 'all';
+};
+
 const getSkillLevelColor = (skillLevel: number): "primary" | "secondary" | "success" | "info" | "warning" | "error" | "neutral" => {
   if (skillLevel < 2) return 'error';
   if (skillLevel < 3) return 'warning';
@@ -123,56 +203,68 @@ onMounted(() => {
 <template>
   <div class="space-y-6">
     <!-- Header -->
-    <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-semibold text-gray-900">Game Generation</h2>      <div class="flex gap-2">
-        <UButton
-          :disabled="!canGenerate || gameStore.isGenerating"
-          :loading="gameStore.isGenerating"
-          color="primary"
-          size="lg"
-          @click="generateGames"
-        >
-          <UIcon name="i-heroicons-play" class="mr-2" />
-          Generate Schedule
-        </UButton>
-        <UButton
-          v-if="gameStore.currentSchedule"
-          :disabled="gameStore.isGenerating"
-          variant="outline"
-          @click="regenerateGames"
-        >
-          <UIcon name="i-heroicons-arrow-path" class="mr-2" />
-          Regenerate
-        </UButton>
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="flex justify-between items-center">
+          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Icon name="mdi:tennis" class="text-paddle-teal text-3xl" />
+            Game Generation
+          </h2>
+          <div class="flex gap-3">
+            <UButton
+              :disabled="!canGenerate || gameStore.isGenerating"
+              :loading="gameStore.isGenerating"
+              size="lg"
+              class="btn-primary"
+              @click="generateGames"
+            >
+              <UIcon name="i-heroicons-play" class="mr-2" />
+              Generate Schedule
+            </UButton>
+            <UButton
+              v-if="gameStore.currentSchedule"
+              :disabled="gameStore.isGenerating"
+              class="btn-secondary"
+              @click="regenerateGames"
+            >
+              <UIcon name="i-heroicons-arrow-path" class="mr-2" />
+              Regenerate
+            </UButton>
+          </div>
+        </div>
       </div>
     </div>
 
     <!-- Validation Messages -->
-    <UAlert
+    <div
       v-if="validationErrors.length > 0"
-      color="error"
-      variant="solid"
-      :title="'Cannot Generate Games'"
-      :description="validationErrors.join(', ')"
-    />
+      class="alert-error p-4 rounded-xl flex items-start gap-3"
+    >
+      <Icon name="mdi:alert-circle" class="text-xl text-paddle-red mt-1" />
+      <div>
+        <p class="font-semibold">Cannot Generate Games</p>
+        <p class="text-sm">{{ validationErrors.join(', ') }}</p>
+      </div>
+    </div>
 
     <!-- Configuration -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Game Settings -->
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-medium flex items-center">
-            <UIcon name="i-heroicons-cog-6-tooth" class="mr-2" />
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="text-xl font-semibold flex items-center gap-2">
+            <Icon name="mdi:cog" class="text-paddle-teal" />
             Game Settings
           </h3>
-        </template>
+        </div>
 
-        <div class="space-y-4">
+        <div class="p-6 space-y-6">
           <!-- Event Label -->
           <UFormField label="Event Label" help="Optional label for the schedule (e.g., 'Tuesday May 28th')">
             <UInput
               v-model="eventLabel"
               placeholder="e.g., John Henry Secondary School Tuesday May 9th"
+              class="form-input"
             />
           </UFormField>
 
@@ -183,18 +275,23 @@ onMounted(() => {
               :options="courtOptions"
               option-attribute="label"
               value-attribute="value"
+              class="form-input"
             />
-          </UFormField>          <!-- Number of Rounds -->
+          </UFormField>
+
+          <!-- Number of Rounds -->
           <UFormField label="Number of Rounds" help="How many rounds to generate (typically 7-9)">
             <USlider
               v-model="matchingOptions.numberOfRounds"
               :min="1"
               :max="15"
               :step="1"
-              class="mb-2"
+              class="mb-3"
             />
-            <div class="text-sm text-gray-600 text-center">
-              {{ matchingOptions.numberOfRounds }} rounds
+            <div class="text-center">
+              <span class="player-skill-badge">
+                {{ matchingOptions.numberOfRounds }} rounds
+              </span>
             </div>
           </UFormField>
 
@@ -205,23 +302,27 @@ onMounted(() => {
               :min="0.5"
               :max="4.0"
               :step="0.25"
-              class="mb-2"
+              class="mb-3"
             />
-            <div class="text-sm text-gray-600 text-center">
-              {{ matchingOptions.maxSkillDifference }}
+            <div class="text-center">
+              <span class="player-skill-badge">
+                {{ matchingOptions.maxSkillDifference }}
+              </span>
             </div>
           </UFormField>
         </div>
-      </UCard>
+      </div>
 
       <!-- Algorithm Options -->
-      <UCard>
-        <template #header>
-          <h3 class="text-lg font-medium flex items-center">
-            <UIcon name="i-heroicons-adjustments-horizontal" class="mr-2" />
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="text-xl font-semibold flex items-center gap-2">
+            <Icon name="mdi:tune" class="text-paddle-teal" />
             Algorithm Options
           </h3>
-        </template>        <div class="space-y-4">
+        </div>
+
+        <div class="p-6 space-y-6">
           <UFormField 
             label="Balance Skill Levels"
             help="Attempt to create balanced teams by skill level"
@@ -229,6 +330,7 @@ onMounted(() => {
             <USwitch
               v-model="matchingOptions.balanceSkillLevels"
               :label="matchingOptions.balanceSkillLevels ? 'Enabled' : 'Disabled'"
+              class="text-paddle-teal"
             />
           </UFormField>
 
@@ -239,6 +341,7 @@ onMounted(() => {
             <USwitch
               v-model="matchingOptions.respectPartnerPreferences"
               :label="matchingOptions.respectPartnerPreferences ? 'Enabled' : 'Disabled'"
+              class="text-paddle-teal"
             />
           </UFormField>
 
@@ -249,112 +352,305 @@ onMounted(() => {
             <USwitch
               v-model="matchingOptions.distributeRestEqually"
               :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'"
+              class="text-paddle-teal"
             />
           </UFormField>
 
           <!-- Reset Options -->
-          <div class="pt-4 border-t">
+          <div class="pt-6 border-t border-gray-200">
             <UButton
-              variant="ghost"
-              size="sm"
+              class="btn-secondary w-full"
               @click="resetToDefaults"
             >
+              <Icon name="mdi:refresh" class="mr-2" />
               Reset to Defaults
             </UButton>
           </div>
         </div>
-      </UCard>
+      </div>
+    </div>    <!-- Player Selection Interface -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-semibold flex items-center gap-2">
+            <Icon name="mdi:account-check" class="text-paddle-teal" />
+            Player Selection
+          </h3>
+          <div class="flex gap-2">
+            <UButton 
+              variant="ghost" 
+              size="sm" 
+              @click="playerStore.selectAllPlayers()"
+              class="btn-secondary"
+            >
+              Select All
+            </UButton>
+            <UButton 
+              variant="ghost" 
+              size="sm" 
+              @click="playerStore.deselectAllPlayers()"
+              class="btn-secondary"
+            >
+              Deselect All
+            </UButton>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-6">
+        <!-- Filter Controls -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+          <!-- Search -->
+          <div class="md:col-span-2">
+            <UFormField label="Search Players">
+              <UInput
+                v-model="playerSearchQuery"
+                icon="i-heroicons-magnifying-glass"
+                placeholder="Search by name..."
+                class="form-input"
+              />
+            </UFormField>
+          </div>
+
+          <!-- Skill Level Filter -->
+          <div>
+            <UFormField label="Skill Level">
+              <USelect
+                v-model="skillLevelFilter"
+                :options="skillLevelFilterOptions"
+                option-attribute="label"
+                value-attribute="value"
+                class="form-input"
+              />
+            </UFormField>
+          </div>
+
+          <!-- Partner Filter -->
+          <div>
+            <UFormField label="Partner Status">
+              <USelect
+                v-model="partnerFilter"
+                :options="partnerFilterOptions"
+                option-attribute="label"
+                value-attribute="value"
+                class="form-input"
+              />
+            </UFormField>
+          </div>
+        </div>
+
+        <!-- Filter Actions -->
+        <div class="flex justify-between items-center mb-4">
+          <div class="flex items-center gap-2 text-sm text-gray-600">
+            <Icon name="mdi:information" class="text-paddle-teal" />
+            <span>
+              Showing {{ filteredPlayers.length }} of {{ playerStore.players.length }} players.
+              You need at least {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).
+            </span>
+          </div>
+          
+          <div class="flex gap-2">
+            <UButton 
+              variant="ghost" 
+              size="sm" 
+              @click="selectFilteredPlayers()"
+              :disabled="filteredPlayers.length === 0"
+              class="btn-secondary"
+            >
+              Select Filtered
+            </UButton>
+            <UButton 
+              variant="ghost" 
+              size="sm" 
+              @click="deselectFilteredPlayers()"
+              :disabled="filteredPlayers.length === 0"
+              class="btn-secondary"
+            >
+              Deselect Filtered
+            </UButton>
+            <UButton 
+              variant="ghost" 
+              size="sm" 
+              @click="clearAllFilters()"
+              class="btn-secondary"
+            >
+              Clear Filters
+            </UButton>
+          </div>
+        </div>
+        
+        <div v-if="playerStore.players.length === 0" class="text-center py-8 text-gray-500">
+          <Icon name="mdi:account-plus" class="text-4xl text-gray-300 mb-3 mx-auto" />          <p class="text-lg mb-2">No players available</p>
+          <p class="text-sm">Add some players first in the Players tab.</p>
+        </div>
+
+        <div v-else-if="filteredPlayers.length === 0" class="text-center py-8 text-gray-500">
+          <Icon name="mdi:filter-off" class="text-4xl text-gray-300 mb-3 mx-auto" />
+          <p class="text-lg mb-2">No players match your filters</p>
+          <p class="text-sm">Try adjusting your search criteria or clearing filters.</p>
+        </div>
+
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div
+            v-for="player in filteredPlayers"
+            :key="player.id"
+            :class="[
+              'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
+              playerStore.isPlayerSelected(player.id) 
+                ? 'border-paddle-teal bg-paddle-teal/5' 
+                : 'border-gray-200 hover:border-paddle-teal/50'
+            ]"
+            @click="playerStore.togglePlayerSelection(player.id)"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <UCheckbox 
+                  :checked="playerStore.isPlayerSelected(player.id)"
+                  @change="playerStore.togglePlayerSelection(player.id)"
+                  class="pointer-events-none"
+                />
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                  {{ player.name.charAt(0).toUpperCase() }}
+                </div>
+                <span class="text-sm font-medium">{{ player.name }}</span>
+              </div>
+              <div class="player-skill-badge text-xs">
+                {{ player.skillLevel }}
+              </div>
+            </div>
+            <div v-if="player.partnerId" class="mt-2 text-xs text-gray-600 flex items-center gap-1">
+              <Icon name="mdi:account-heart" class="text-paddle-red" />
+              Partner: {{ playerStore.getPlayer(player.partnerId)?.name || 'Unknown' }}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div><!-- Player Summary -->
+    <div class="content-card">
+      <div class="content-card-header">        <h3 class="text-xl font-semibold flex items-center gap-2">
+          <Icon name="mdi:account-group" class="text-paddle-teal" />
+          Selected Players Summary
+        </h3>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="content-card overflow-hidden">            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+              <Icon name="mdi:account-multiple" class="text-3xl text-blue-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-blue-700">{{ selectedPlayers.length }}</div>
+              <div class="text-sm font-medium text-blue-600">Selected Players</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
+              <Icon name="mdi:court-sport" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-paddle-teal">{{ playersPerRound }}</div>
+              <div class="text-sm font-medium text-paddle-teal-dark">Players per Round</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+              <Icon name="mdi:seat" class="text-3xl text-amber-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-amber-700">{{ restingPerRound }}</div>
+              <div class="text-sm font-medium text-amber-600">Resting per Round</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+              <Icon name="mdi:star" class="text-3xl text-purple-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-purple-700">{{ averageSkillLevel }}</div>
+              <div class="text-sm font-medium text-purple-600">Avg Skill Level</div>
+            </div>
+          </div>
+        </div>        <!-- Player List -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div
+            v-for="player in selectedPlayers"
+            :key="player.id"
+            class="player-card p-3"
+          >
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                  {{ player.name.charAt(0).toUpperCase() }}
+                </div>
+                <span class="text-sm font-medium">{{ player.name }}</span>
+              </div>
+              <div class="player-skill-badge text-xs">
+                {{ player.skillLevel }}
+              </div>
+            </div>
+          </div>
+        </div>        <div v-if="selectedPlayers.length === 0" class="text-center py-12 text-gray-500">
+          <Icon name="mdi:account-off" class="text-6xl text-gray-300 mb-4 mx-auto" />
+          <p class="text-lg">No selected players found</p>
+          <p class="text-sm">Select some players first to generate games.</p>
+        </div>
+      </div>
     </div>
 
-    <!-- Player Summary -->
-    <UCard>
-      <template #header>
-        <h3 class="text-lg font-medium flex items-center">
-          <UIcon name="i-heroicons-users" class="mr-2" />
-          Active Players Summary
-        </h3>
-      </template>
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">{{ activePlayers.length }}</div>
-          <div class="text-sm text-gray-600">Active Players</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">{{ playersPerRound }}</div>
-          <div class="text-sm text-gray-600">Players per Round</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-yellow-600">{{ restingPerRound }}</div>
-          <div class="text-sm text-gray-600">Resting per Round</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-purple-600">{{ averageSkillLevel }}</div>
-          <div class="text-sm text-gray-600">Avg Skill Level</div>
-        </div>
-      </div>
-
-      <!-- Player List -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-2">
-        <div
-          v-for="player in activePlayers"
-          :key="player.id"
-          class="flex items-center justify-between p-2 bg-gray-50 rounded"
-        >
-          <span class="text-sm">{{ player.name }}</span>
-          <UBadge
-            :color="getSkillLevelColor(player.skillLevel)"
-            variant="subtle"
-            size="xs"
-          >
-            {{ player.skillLevel }}
-          </UBadge>
-        </div>
-      </div>
-
-      <div v-if="activePlayers.length === 0" class="text-center py-8 text-gray-500">
-        No active players found. Add some players first.
-      </div>
-    </UCard>    <!-- Generation Progress -->
-    <UCard v-if="gameStore.isGenerating">
-      <div class="text-center py-8">
-        <UIcon name="i-heroicons-cog-6-tooth" class="text-4xl text-blue-500 animate-spin mb-4" />
-        <h3 class="text-lg font-medium mb-2">Generating Schedule...</h3>
-        <p class="text-gray-600">
+    <!-- Generation Progress -->
+    <div v-if="gameStore.isGenerating" class="content-card">
+      <div class="p-12 text-center">
+        <Icon name="mdi:cog" class="text-6xl text-paddle-teal animate-spin mb-6 mx-auto" />
+        <h3 class="text-2xl font-bold mb-3 text-gray-900">Generating Schedule...</h3>
+        <p class="text-gray-600 text-lg">
           Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds
         </p>
+        <div class="mt-6 max-w-md mx-auto bg-gray-200 rounded-full h-2">
+          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse" style="width: 60%"></div>
+        </div>
       </div>
-    </UCard>    <!-- Generation Results -->
-    <UCard v-if="gameStore.currentSchedule && scheduleStats">
-      <template #header>
-        <h3 class="text-lg font-medium flex items-center">
-          <UIcon name="i-heroicons-chart-bar" class="mr-2" />
+    </div>
+
+    <!-- Generation Results -->
+    <div v-if="gameStore.currentSchedule && scheduleStats" class="content-card">
+      <div class="content-card-header">
+        <h3 class="text-xl font-semibold flex items-center gap-2">
+          <Icon name="mdi:chart-bar" class="text-paddle-teal" />
           Generation Results
         </h3>
-      </template>
-
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
-        <div class="text-center">
-          <div class="text-2xl font-bold text-blue-600">{{ scheduleStats.totalGames }}</div>
-          <div class="text-sm text-gray-600">Total Games</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-green-600">{{ scheduleStats.totalRounds }}</div>
-          <div class="text-sm text-gray-600">Rounds</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-yellow-600">{{ scheduleStats.averageSkillDifference }}</div>
-          <div class="text-sm text-gray-600">Avg Skill Diff</div>
-        </div>
-        <div class="text-center">
-          <div class="text-2xl font-bold text-purple-600">{{ scheduleStats.restingPerRound }}</div>
-          <div class="text-sm text-gray-600">Resting per Round</div>
-        </div>
       </div>
 
-      <div class="text-sm text-gray-600 text-center">
-        Generated: {{ formatDateTime(scheduleStats.generatedAt) }}
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+              <Icon name="mdi:gamepad-variant" class="text-3xl text-blue-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-blue-700">{{ scheduleStats.totalGames }}</div>
+              <div class="text-sm font-medium text-blue-600">Total Games</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
+              <Icon name="mdi:counter" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-paddle-teal">{{ scheduleStats.totalRounds }}</div>
+              <div class="text-sm font-medium text-paddle-teal-dark">Rounds</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+              <Icon name="mdi:balance-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-amber-700">{{ scheduleStats.averageSkillDifference }}</div>
+              <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+              <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-purple-700">{{ scheduleStats.restingPerRound }}</div>
+              <div class="text-sm font-medium text-purple-600">Resting per Round</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+          <Icon name="mdi:clock-check" class="text-paddle-teal mr-2" />
+          <span class="text-sm font-medium text-gray-700">
+            Generated: {{ formatDateTime(scheduleStats.generatedAt) }}
+          </span>
+        </div>
       </div>
-    </UCard>
+    </div>
   </div>
 </template>

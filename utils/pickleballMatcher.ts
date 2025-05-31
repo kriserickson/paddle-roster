@@ -9,7 +9,7 @@ export class PickleballMatcher {
   private playerStats: Map<string, PlayerStats>;
 
   constructor(players: Player[], options: MatchingOptions) {
-    this.players = players.filter(p => p.active);
+    this.players = players;
     this.options = options;
     this.playerStats = new Map();
     this.initializePlayerStats();

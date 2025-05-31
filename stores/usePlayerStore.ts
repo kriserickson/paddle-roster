@@ -15,9 +15,16 @@ export const usePlayerStore = defineStore('player', () => {
   const players = ref<Player[]>([]);
 
   /**
+   * State: Selected players for game generation
+   */
+  const selectedPlayerIds = ref<Set<string>>(new Set());
+
+  /**
    * Getters: Computed properties
    */
-  const activePlayers = computed(() => players.value.filter(p => p.active));
+  const selectedPlayers = computed(() => 
+    players.value.filter(p => selectedPlayerIds.value.has(p.id))
+  );
   
   function getPlayer(id: string): Player | undefined {
     return players.value.find(p => p.id === id);
@@ -28,21 +35,21 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   function canGenerateGames(numberOfCourts: number): { valid: boolean; message?: string } {
-    const activePlayersList = activePlayers.value;
+    const selectedPlayersList = selectedPlayers.value;
     const minPlayers = numberOfCourts * 4; // 4 players per court
     const maxPlayers = numberOfCourts * 4 + 4; // Allow up to 4 to sit out
 
-    if (activePlayersList.length < minPlayers) {
+    if (selectedPlayersList.length < minPlayers) {
       return {
         valid: false,
-        message: `Need at least ${minPlayers} active players for ${numberOfCourts} court(s). Currently have ${activePlayersList.length}.`
+        message: `Need at least ${minPlayers} selected players for ${numberOfCourts} court(s). Currently have ${selectedPlayersList.length}.`
       };
     }
 
-    if (activePlayersList.length > maxPlayers) {
+    if (selectedPlayersList.length > maxPlayers) {
       return {
         valid: false,
-        message: `Too many players for ${numberOfCourts} court(s). Maximum ${maxPlayers} players, currently have ${activePlayersList.length}.`
+        message: `Too many players for ${numberOfCourts} court(s). Maximum ${maxPlayers} players, currently have ${selectedPlayersList.length}.`
       };
     }
 
@@ -78,6 +85,28 @@ export const usePlayerStore = defineStore('player', () => {
       };
     }
   }
+  /**
+   * Selection management functions
+   */
+  function togglePlayerSelection(playerId: string): void {
+    if (selectedPlayerIds.value.has(playerId)) {
+      selectedPlayerIds.value.delete(playerId);
+    } else {
+      selectedPlayerIds.value.add(playerId);
+    }
+  }
+
+  function selectAllPlayers(): void {
+    selectedPlayerIds.value = new Set(players.value.map(p => p.id));
+  }
+
+  function deselectAllPlayers(): void {
+    selectedPlayerIds.value.clear();
+  }
+
+  function isPlayerSelected(playerId: string): boolean {
+    return selectedPlayerIds.value.has(playerId);
+  }
 
   /**
    * Add a new player with automatic persistence
@@ -87,8 +116,7 @@ export const usePlayerStore = defineStore('player', () => {
       const result = await playerApi.createPlayer({
         name: name.trim(),
         skillLevel: Math.max(1, Math.min(5, skillLevel)), // Clamp between 1-5
-        partnerId,
-        active: true
+        partnerId
       });
 
       if (result.success && result.data) {
@@ -217,11 +245,11 @@ export const usePlayerStore = defineStore('player', () => {
   function exportPlayers(): string {
     return JSON.stringify(players.value, null, 2);
   }
-
   return {
     // State: Expose the ref directly, or use a computed for readonly access
     // Option 1: Expose ref directly (actions within store modify it)
     players,
+    selectedPlayerIds,
     // Option 2 (Safer for consumers): Expose a readonly computed property
     // allPlayers: computed(() => players.value), 
     // And keep the internal 'players' ref for modifications within actions.
@@ -229,10 +257,16 @@ export const usePlayerStore = defineStore('player', () => {
     // For this fix, let's try Option 1 first to directly address the error.
 
     // Getters
-    activePlayers,
+    selectedPlayers,
     getPlayer,
     getAvailablePartners,
     canGenerateGames,
+    
+    // Selection management
+    togglePlayerSelection,
+    selectAllPlayers,
+    deselectAllPlayers,
+    isPlayerSelected,
     
     // Actions
     initializeStore,

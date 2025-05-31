@@ -49,8 +49,7 @@ export const usePlayerManager = () => {
       id: generatePlayerId(),
       name: name.trim(),
       skillLevel: Math.max(1, Math.min(5, skillLevel)), // Clamp between 1-5
-      partnerId,
-      active: true
+      partnerId
     };
 
     players.value.push(newPlayer);
@@ -107,24 +106,17 @@ export const usePlayerManager = () => {
   };
 
   /**
-   * Get all active players
-   */
-  const getActivePlayers = (): Player[] => {
-    return players.value.filter(p => p.active);
-  };
-
-  /**
    * Get players available for partner selection (excluding the current player)
    */
   const getAvailablePartners = (currentPlayerId: string): Player[] => {
-    return players.value.filter(p => p.id !== currentPlayerId && p.active);
+    return players.value.filter(p => p.id !== currentPlayerId);
   };
 
   /**
    * Validate that minimum number of players exist for games
    */
   const canGenerateGames = (numberOfCourts: number): { valid: boolean; message?: string } => {
-    const activePlayers = getActivePlayers();
+    const activePlayers = [...players.value];
     const minPlayers = numberOfCourts * 4; // 4 players per court
     const maxPlayers = numberOfCourts * 4 + 4; // Allow up to 4 to sit out
 
@@ -186,8 +178,7 @@ export const usePlayerManager = () => {
         id: generatePlayerId(),
         name: p.name.trim(),
         skillLevel: Math.max(1, Math.min(5, p.skillLevel)),
-        partnerId: undefined, // Reset partner references on import
-        active: p.active ?? true
+        partnerId: undefined
       }));
 
       players.value = [...players.value, ...importedPlayers];
@@ -223,7 +214,6 @@ export const usePlayerManager = () => {
     updatePlayer,
     removePlayer,
     getPlayer,
-    getActivePlayers,
     getAvailablePartners,
     canGenerateGames,
     clearAllPlayers,

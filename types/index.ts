@@ -14,8 +14,6 @@ export interface Player {
   skillLevel: number;
   /** Optional reference to another player's ID for partner preference */
   partnerId?: string;
-  /** Whether this player is currently active/available for games */
-  active: boolean;
 }
 
 /**

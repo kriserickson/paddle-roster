@@ -22,16 +22,14 @@ const importData = ref('');
 const playerForm = ref({
   name: '',
   skillLevel: 3.0,
-  partnerId: 'none',
-  active: true
+  partnerId: 'none'
 });
 
 // Validation schema
 const playerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   skillLevel: z.number().min(1).max(5),
-  partnerId: z.string().optional(),
-  active: z.boolean()
+  partnerId: z.string().optional()
 });
 
 
@@ -57,18 +55,16 @@ const columns: TableColumn<Player>[] = [
 // Computed properties
 const totalPlayers = computed(() => playerStore.players.length);
 
-const activePlayers = computed(() => playerStore.activePlayers);
-
 const averageSkillLevel = computed(() => {
-  if (activePlayers.value.length === 0) {
+  if (playerStore.players.length === 0) {
     return '0.0';
   }
-  const total = activePlayers.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
-  return (total / activePlayers.value.length).toFixed(1);
+  const total = playerStore.players.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
+  return (total / playerStore.players.length).toFixed(1);
 });
 
 const playersWithPartners = computed(() => {
-  return activePlayers.value.filter((player: Player) => player.partnerId).length;
+  return playerStore.players.filter((player: Player) => player.partnerId).length;
 });
 
 const filteredPlayers = computed(() => {
@@ -86,7 +82,7 @@ const partnerOptions = computed(() => {
   const currentPlayerId = editingPlayer.value?.id;
   const availablePartners = currentPlayerId
     ? playerStore.getAvailablePartners(currentPlayerId)
-    : playerStore.activePlayers;
+    : playerStore.players;
 
   return [
     { label: 'No Partner', value: 'none' },
@@ -116,8 +112,7 @@ function editPlayer(player: Player): void {
   playerForm.value = {
     name: player.name,
     skillLevel: player.skillLevel,
-    partnerId: isPartnerAvailable ? currentPartnerId : 'none',
-    active: player.active
+    partnerId: isPartnerAvailable ? currentPartnerId : 'none'
   };
   showAddPlayer.value = true;
 }
@@ -155,26 +150,13 @@ async function deletePlayer(): Promise<void> {
   playerToDelete.value = null;
 }
 
-async function togglePlayerActive(player: Player): Promise<void> {
-  const success = await playerStore.updatePlayer(player.id, { active: !player.active });
-  if (success) {
-    toast.add({
-      title: player.active ? 'Player deactivated' : 'Player activated',
-      description: `${player.name} is now ${player.active ? 'inactive' : 'active'}.`,
-      color: 'info'
-    });
-  }
-}
-
-async function savePlayer(): Promise<void> {
-  try {
+async function savePlayer(): Promise<void> {  try {
     const partnerIdToSave = playerForm.value.partnerId === 'none' ? undefined : playerForm.value.partnerId;
     if (editingPlayer.value) {
       const success = await playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
         skillLevel: playerForm.value.skillLevel,
-        partnerId: partnerIdToSave,
-        active: playerForm.value.active
+        partnerId: partnerIdToSave
       });
 
       if (success) {
@@ -232,8 +214,7 @@ function cancelPlayerForm(): void {
   playerForm.value = {
     name: '',
     skillLevel: 3.0,
-    partnerId: 'none',
-    active: true
+    partnerId: 'none'
   };
 }
 
@@ -299,212 +280,218 @@ function exportPlayers(): void {
 <template>
   <div class="space-y-6">
     <!-- Player Management Header -->
-    <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-semibold text-gray-900">Player Management</h2>
-      <div class="flex gap-2">
-        <UButton icon="i-heroicons-plus" color="primary" @click="showAddPlayer = true">
-          Add Player
-        </UButton>
-        <UButton icon="i-heroicons-arrow-up-tray" variant="outline" @click="showImportModal = true">
-          Import
-        </UButton>
-        <UButton icon="i-heroicons-arrow-down-tray" variant="outline" @click="exportPlayers">
-          Export
-        </UButton>
-      </div>
-    </div>
-
-    <!-- Players Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-      <UCard>
-        <ClientOnly>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-blue-600">{{ totalPlayers }}</div>
-            <div class="text-sm text-gray-600">Total Players</div>
-          </div>
-          <template #placeholder>
-            <!-- Placeholder content to match server-rendered or show loading -->
-            <div class="text-center">
-              <div class="text-2xl font-bold text-blue-600">0</div>
-              <div class="text-sm text-gray-600">Total Players</div>
-            </div>
-          </template>
-        </ClientOnly>
-      </UCard>
-      <UCard>
-        <ClientOnly>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-green-600">{{ activePlayers.length }}</div>
-            <div class="text-sm text-gray-600">Active Players</div>
-          </div>
-          <template #placeholder>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-green-600">0</div>
-              <div class="text-sm text-gray-600">Active Players</div>
-            </div>
-          </template>
-        </ClientOnly>
-      </UCard>
-      <UCard>
-        <ClientOnly>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-yellow-600">{{ averageSkillLevel }}</div>
-            <div class="text-sm text-gray-600">Avg Skill Level</div>
-          </div>
-          <template #placeholder>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-yellow-600">0.0</div>
-              <div class="text-sm text-gray-600">Avg Skill Level</div>
-            </div>
-          </template>
-        </ClientOnly>
-      </UCard>
-      <UCard>
-        <ClientOnly>
-          <div class="text-center">
-            <div class="text-2xl font-bold text-purple-600">{{ playersWithPartners }}</div>
-            <div class="text-sm text-gray-600">With Partners</div>
-          </div>
-          <template #placeholder>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-600">0</div>
-              <div class="text-sm text-gray-600">With Partners</div>
-            </div>
-          </template>
-        </ClientOnly>
-      </UCard>
-    </div>
-
-    <!-- Players Table -->
-    <UCard>
-      <template #header>
+    <div class="content-card">
+      <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-medium">Players List</h3>
-          <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
-            class="w-64" />
+          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            <Icon name="mdi:account-multiple" class="text-paddle-teal text-3xl" />
+            Player Management
+          </h2>
+          <div class="flex gap-3">
+            <UButton icon="i-heroicons-plus" class="btn-primary" @click="showAddPlayer = true">
+              Add Player
+            </UButton>
+            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" @click="showImportModal = true">
+              Import
+            </UButton>
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" @click="exportPlayers">
+              Export
+            </UButton>
+          </div>
         </div>
-      </template>
-
-      <ClientOnly>
-        <UTable :data="filteredPlayers" :columns="columns" class="w-full">
-          <template #name-cell="{ row }">
-            <div class="flex items-center gap-2">
-              <span class="text-lg" :class="{ 'text-gray-500': !row.original.active }">{{ row.original.name }}</span>
-              <UBadge v-if="!row.original.active" color="warning" variant="subtle">
-                Inactive
-              </UBadge>
+      </div>
+    </div>    <!-- Players Summary -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="content-card overflow-hidden">
+        <ClientOnly>
+          <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+            <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-blue-700">{{ totalPlayers }}</div>
+            <div class="text-sm font-medium text-blue-600">Total Players</div>
+          </div>
+          <template #placeholder>
+            <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+              <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-blue-700">0</div>
+              <div class="text-sm font-medium text-blue-600">Total Players</div>
             </div>
           </template>
-
-          <template #skillLevel-cell="{ row }">
-            <UBadge :color="getSkillLevelColor(row.original.skillLevel)" variant="subtle">
-              {{ row.original.skillLevel }}
-            </UBadge>
-          </template>
-
-          <template #partnerId-cell="{ row }">
-            <span v-if="row.original.partnerId" class="text-sm text-gray-600">
-              {{ getPlayerName(row.original.partnerId) }}
-            </span>
-            <span v-else class="text-sm text-gray-400">None</span>
-          </template>
-
-          <template #actions-cell="{ row }">
-            <div class="flex gap-1 button-container">
-              <UButton icon="i-heroicons-pencil" variant="ghost" @click="editPlayer(row.original)" />
-              <UButton icon="i-heroicons-trash" variant="ghost" color="error" @click="confirmDelete(row.original)" />
-              <UButton :icon="row.original.active ? 'i-heroicons-eye-slash' : 'i-heroicons-eye'" variant="ghost"
-                :color="row.original.active ? 'primary' : 'secondary'" @click="togglePlayerActive(row.original)" />
+        </ClientOnly>
+      </div>
+      
+      <div class="content-card overflow-hidden">
+        <ClientOnly>
+          <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+            <Icon name="mdi:star" class="text-4xl text-amber-600 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-amber-700">{{ averageSkillLevel }}</div>
+            <div class="text-sm font-medium text-amber-600">Avg Skill Level</div>
+          </div>
+          <template #placeholder>
+            <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+              <Icon name="mdi:star" class="text-4xl text-amber-600 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-amber-700">0.0</div>
+              <div class="text-sm font-medium text-amber-600">Avg Skill Level</div>
             </div>
           </template>
-        </UTable>
-        <template #placeholder>
-          <!-- Placeholder for the table, e.g., a loading message or an empty state -->
-          <div class="p-4 text-center text-gray-500">Loading players...</div>
-        </template>
-      </ClientOnly>
-    </UCard>
+        </ClientOnly>
+      </div>
+      
+      <div class="content-card overflow-hidden">
+        <ClientOnly>
+          <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+            <Icon name="mdi:account-heart" class="text-4xl text-purple-600 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-purple-700">{{ playersWithPartners }}</div>
+            <div class="text-sm font-medium text-purple-600">With Partners</div>
+          </div>
+          <template #placeholder>
+            <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+              <Icon name="mdi:account-heart" class="text-4xl text-purple-600 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-purple-700">0</div>
+              <div class="text-sm font-medium text-purple-600">With Partners</div>
+            </div>
+          </template>
+        </ClientOnly>
+      </div>
+    </div>    <!-- Players Table -->
+    <div class="content-card">
+      <div class="content-card-header">
+        <div class="flex justify-between items-center">
+          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Icon name="mdi:format-list-bulleted" class="text-paddle-teal" />
+            Players List
+          </h3>          <div class="flex items-center gap-3">
+            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
+              class="w-64 form-input" />
+          </div>
+        </div>
+      </div>
 
-    <!-- Add/Edit Player Modal -->
-    <UModal v-model:open="showAddPlayer" 
-      :title="editingPlayer ? 'Edit Player' : 'Add New Player'"
-      description="Fill in the details below to add or edit a player."
-      >
-      <template #body>
-        <UForm :schema="playerSchema" :state="playerForm" class="space-y-4" @submit="savePlayer">
-          <UFormField label="Name" name="name" required>
-            <UInput v-model="playerForm.name" placeholder="Enter player name" />
-          </UFormField>
-
-          <UFormField label="Skill Level" name="skillLevel" required>
-            <UInput v-model.number="playerForm.skillLevel" type="number" step="0.25" min="1" max="5"
-              placeholder="1.0 - 5.0" />
-            <template #help>
-              Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
+      <div class="p-6">
+        <ClientOnly>
+          <UTable :data="filteredPlayers" :columns="columns" class="w-full">            <template #name-cell="{ row }">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
+                  {{ row.original.name.charAt(0).toUpperCase() }}
+                </div>
+                <div>
+                  <span class="text-lg font-medium">{{ row.original.name }}</span>
+                </div>
+              </div>
             </template>
-          </UFormField>
 
-          <UFormField label="Partner" name="partnerId">
-            <USelect v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" />
-          </UFormField>
+            <template #skillLevel-cell="{ row }">
+              <div class="player-skill-badge">
+                {{ row.original.skillLevel }}
+              </div>
+            </template>
 
-          <UFormField label="Status" name="active">
-            <USwitch v-model="playerForm.active" :label="playerForm.active ? 'Active' : 'Inactive'" />
-          </UFormField>
-        </UForm>
-      </template>
-      
-      <template #footer>
-        <UButton variant="ghost" @click="cancelPlayerForm">
-          Cancel
-        </UButton>
-        <UButton type="submit" color="primary" @click="savePlayer">
-          {{ editingPlayer ? 'Update' : 'Add' }} Player
-        </UButton>
-      </template>
-    </UModal>
-
-    <!-- Import Modal -->
-    <UModal 
-      v-model:open="showImportModal" 
-      title="Import Players" 
-      description="Paste JSON data to import players."
-    >
-      
+            <template #partnerId-cell="{ row }">
+              <div v-if="row.original.partnerId" class="flex items-center gap-2">
+                <Icon name="mdi:account-heart" class="text-paddle-red" />
+                <span class="text-sm font-medium text-gray-700">
+                  {{ getPlayerName(row.original.partnerId) }}
+                </span>
+              </div>
+              <span v-else class="text-sm text-gray-400 italic">None</span>
+            </template>            <template #actions-cell="{ row }">
+              <div class="flex gap-2 button-container">
+                <UButton icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm" @click="editPlayer(row.original)" 
+                  class="hover:bg-paddle-teal/10" />
+                <UButton icon="i-heroicons-trash" variant="ghost" color="error" size="sm" @click="confirmDelete(row.original)"
+                  class="hover:bg-paddle-red/10" />
+              </div>
+            </template>
+          </UTable>
+          <template #placeholder>
+            <div class="p-8 text-center">
+              <Icon name="mdi:loading" class="text-4xl text-paddle-teal animate-spin mb-4 mx-auto" />
+              <div class="text-gray-500">Loading players...</div>
+            </div>
+          </template>
+        </ClientOnly>
+      </div>
+    </div>    <!-- Add/Edit Player Modal -->
+    <UModal v-model:open="showAddPlayer" :title="editingPlayer ? 'Edit Player' : 'Add New Player'">
       <template #body>
-        <UFormField label="JSON Data">
-          <UTextarea v-model="importData" :rows="10" placeholder="Paste JSON data here..." />
-        </UFormField>
-      </template>
-      
-      <template #footer>
-        <UButton variant="ghost" @click="showImportModal = false">
-          Cancel
-        </UButton>
-        <UButton color="primary" @click="performImport">
-          Import
-        </UButton>
-      </template>
-    </UModal>
-
-    <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteConfirm" title="Confirm Delete" description="Are you sure you want to delete this player?">
-      
-      <template #body>
-        <div class="space-y-4">
-          <p>Are you sure you want to delete <strong>{{ playerToDelete?.name }}</strong>?</p>
-          <p class="text-sm text-gray-600">This action cannot be undone.</p>
+        <div class="space-y-6">
+          <div class="flex items-center gap-2 mb-4">
+            <Icon :name="editingPlayer ? 'mdi:account-edit' : 'mdi:account-plus'" class="text-paddle-teal text-xl" />
+            <p class="text-sm text-gray-600">Fill in the details below to add or edit a player.</p>
+          </div>
+          
+          <UForm :schema="playerSchema" :state="playerForm" class="space-y-6" @submit="savePlayer">
+            <UFormField label="Name" name="name" required>
+              <UInput v-model="playerForm.name" placeholder="Enter player name" class="form-input" />
+            </UFormField>            <UFormField label="Skill Level" name="skillLevel" required>
+              <UInput v-model.number="playerForm.skillLevel" type="number" min="1" max="5"
+                placeholder="1.0 - 5.0" class="form-input" />
+              <template #help>
+                <span class="text-sm text-gray-600">
+                  Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
+                </span>
+              </template>
+            </UFormField>            <UFormField label="Partner" name="partnerId">
+              <USelect v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" 
+                class="form-input" />
+            </UFormField>
+          </UForm>
+          
+          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+            <UButton variant="ghost" @click="cancelPlayerForm" class="btn-secondary">
+              Cancel
+            </UButton>
+            <UButton type="submit" @click="savePlayer" class="btn-primary">
+              {{ editingPlayer ? 'Update' : 'Add' }} Player
+            </UButton>
+          </div>
         </div>
       </template>
+    </UModal>    <!-- Import Modal -->
+    <UModal v-model:open="showImportModal" title="Import Players">
+      <template #body>
+        <div class="space-y-6">
+          <div class="flex items-center gap-2 mb-4">
+            <Icon name="mdi:upload" class="text-paddle-teal text-xl" />
+            <p class="text-sm text-gray-600">Paste JSON data to import players.</p>
+          </div>
+          
+          <UFormField label="JSON Data">
+            <UTextarea v-model="importData" :rows="10" placeholder="Paste JSON data here..." 
+              class="form-input font-mono text-sm" />
+          </UFormField>
+          
+          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+            <UButton variant="ghost" @click="showImportModal = false" class="btn-secondary">
+              Cancel
+            </UButton>
+            <UButton @click="performImport" class="btn-primary">
+              Import
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>    <!-- Delete Confirmation Modal -->
+    <UModal v-model:open="showDeleteConfirm" title="Confirm Delete">
+      <template #body>
+        <div class="space-y-6">
+          <div class="flex items-center gap-2 mb-4">
+            <Icon name="mdi:delete-alert" class="text-paddle-red text-xl" />
+            <p class="text-sm text-gray-600">Are you sure you want to delete this player?</p>
+          </div>
+          
+          <div class="bg-red-50 border-l-4 border-paddle-red p-4 rounded">
+            <p class="text-gray-900">Are you sure you want to delete <strong class="text-paddle-red">{{ playerToDelete?.name }}</strong>?</p>
+            <p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
+          </div>
 
-      <template #footer>
-        <div class="flex gap-2 justify-end">
-          <UButton variant="ghost" @click="showDeleteConfirm = false">
-            Cancel
-          </UButton>
-          <UButton color="error" @click="deletePlayer">
-            Delete
-          </UButton>
+          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
+            <UButton variant="ghost" @click="showDeleteConfirm = false" class="btn-secondary">
+              Cancel
+            </UButton>
+            <UButton @click="deletePlayer" class="btn-danger">
+              Delete Player
+            </UButton>
+          </div>
         </div>
       </template>
     </UModal>
@@ -513,15 +500,37 @@ function exportPlayers(): void {
   
 </template>
 
-<style>
+<style scoped>
+/* Additional component-specific styles */
 .button-container {
+  display: flex;
+  gap: 0.5rem;
+}
 
-  .i-heroicons\:eye-slash,
-  .i-heroicons\:trash,
-  .i-heroicons\:pencil,
-  .i-heroicons\:eye {
-    width: 2rem;
-    height: 2rem;
+.button-container button {
+  transition: all 0.2s ease;
+}
+
+.button-container button:hover {
+  transform: translateY(-1px);
+}
+
+/* Print-specific overrides */
+@media print {
+  .content-card,
+  .player-skill-badge,
+  .btn-primary,
+  .btn-secondary,
+  .btn-danger {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+  
+  .content-card-header {
+    background: white !important;
+    border-bottom: 2px solid #000 !important;
   }
 }
 </style>

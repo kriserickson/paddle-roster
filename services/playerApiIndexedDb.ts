@@ -44,7 +44,6 @@ export class PlayerApiIndexedDb implements IPlayerApi {
           if (!db.objectStoreNames.contains(this.storeName)) {
             const store = db.createObjectStore(this.storeName, { keyPath: 'id' });
             store.createIndex('name', 'name', { unique: false });
-            store.createIndex('active', 'active', { unique: false });
           }
         };
       });

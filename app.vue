@@ -26,6 +26,30 @@ const tabs = [
 // Active tab state
 const activeTab = ref('players');
 
+// Menu state
+const showMenu = ref(false);
+const showHelp = ref(false);
+
+// Methods
+function toggleMenu() {
+  showMenu.value = !showMenu.value;
+}
+
+function openHelp() {
+  showHelp.value = true;
+  showMenu.value = false;
+}
+
+function openSettings() {
+  // TODO: Implement settings
+  showMenu.value = false;
+}
+
+function logout() {
+  // TODO: Implement logout
+  showMenu.value = false;
+}
+
 // SEO
 useHead({
   title: 'Paddle Roster',
@@ -36,45 +60,43 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="min-h-screen">
     <UContainer class="py-8">
       <!-- Header -->
-      <div class="mb-8 text-center">
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">
+      <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
+        <!-- Hamburger Menu -->
+        <div class="absolute top-6 right-6">
+          <UDropdown :items="[
+            [
+              { label: 'Help', icon: 'i-heroicons-question-mark-circle', click: openHelp },
+              { label: 'Settings', icon: 'i-heroicons-cog-6-tooth', click: openSettings },
+              { label: 'Logout', icon: 'i-heroicons-arrow-right-on-rectangle', click: logout }
+            ]
+          ]" :popper="{ placement: 'bottom-end' }">
+            <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-white hover:bg-white/20" size="lg" />
+          </UDropdown>
+        </div>
+
+        <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
+          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16" />
           Paddle Roster
         </h1>
-        <p class="text-lg text-gray-600 mb-4">
+        <p class="text-xl text-white/90 mb-6 font-medium">
           Intelligent player matching for recreational pickleball leagues
         </p>
-        
-        <!-- Quick Help -->
-        <div class="max-w-2xl mx-auto bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-800">
-          <div class="flex items-start gap-2">
-            <UIcon name="i-heroicons-information-circle" class="w-5 h-5 mt-0.5 text-blue-500" />
-            <div class="text-left">
-              <p class="font-medium mb-1">Getting Started:</p>
-              <p>1. Add players in the <strong>Players</strong> tab</p>
-              <p>2. Configure and generate games in <strong>Generate Games</strong></p>
-              <p>3. View your schedule in the <strong>Schedule</strong> tab</p>
-              <p>4. Create printable formats in the <strong>Print</strong> tab</p>
-            </div>
-          </div>
-        </div>
       </div>
 
       <!-- Main Content -->
-      <div class="w-full bg-white rounded-lg shadow-sm border">
+      <div class="content-card">
         <!-- Tab Navigation -->
-        <div class="border-b border-gray-200">
+        <div class="tab-nav">
           <nav class="flex">
             <button
               v-for="tab in tabs"
               :key="tab.key"
               :class="[
-                'flex-1 py-4 px-6 text-center font-medium text-sm flex items-center justify-center gap-2 transition-colors relative',
-                activeTab === tab.key
-                  ? 'text-blue-600 border-b-2 border-blue-500 bg-blue-50'
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                'tab-button flex-1 py-4 px-6 text-center font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300',
+                activeTab === tab.key ? 'active' : ''
               ]"
               @click="activeTab = tab.key"
             >
@@ -85,7 +107,7 @@ useHead({
         </div>
 
         <!-- Tab Content -->
-        <div class="p-6">
+        <div class="p-8">
           <PlayersTab v-if="activeTab === 'players'" />
           <GamesTab v-else-if="activeTab === 'games'" />
           <ScheduleTab v-else-if="activeTab === 'schedule'" />
@@ -93,5 +115,57 @@ useHead({
         </div>
       </div>
     </UContainer>
+
+    <!-- Help Modal -->
+    <UModal v-model:open="showHelp" title="Getting Started Guide">
+      <template #body>
+        <div class="space-y-6">
+          <div class="flex items-center gap-2 mb-4">
+            <Icon name="mdi:information" class="text-paddle-teal text-xl" />
+            <p class="text-sm text-gray-600">Follow these steps to manage your pickleball league</p>
+          </div>
+
+          <div class="space-y-4">
+            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-paddle-teal/10 to-paddle-teal/5 rounded-lg">
+              <Icon name="mdi:numeric-1-circle" class="text-paddle-teal text-xl mt-1" />
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Add Players</h3>
+                <p class="text-sm text-gray-600">Go to the <strong>Players</strong> tab to add players with their skill levels (1.0-5.0) and optional partner preferences.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-25 rounded-lg">
+              <Icon name="mdi:numeric-2-circle" class="text-blue-600 text-xl mt-1" />
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Configure Games</h3>
+                <p class="text-sm text-gray-600">Use <strong>Generate Games</strong> to select players, set number of courts, and configure matching preferences.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-amber-25 rounded-lg">
+              <Icon name="mdi:numeric-3-circle" class="text-amber-600 text-xl mt-1" />
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">View Schedule</h3>
+                <p class="text-sm text-gray-600">Check the <strong>Schedule</strong> tab to see generated games, court assignments, and resting players.</p>
+              </div>
+            </div>
+
+            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-25 rounded-lg">
+              <Icon name="mdi:numeric-4-circle" class="text-purple-600 text-xl mt-1" />
+              <div>
+                <h3 class="font-semibold text-gray-900 mb-1">Print Schedule</h3>
+                <p class="text-sm text-gray-600">Use the <strong>Print</strong> tab to create professional printouts for your league.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex justify-end pt-4 border-t border-gray-200">
+            <UButton @click="showHelp = false" class="btn-primary">
+              Got it!
+            </UButton>
+          </div>
+        </div>
+      </template>
+    </UModal>
   </div>
 </template>
