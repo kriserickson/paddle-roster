@@ -21,18 +21,17 @@ export const usePrintManager = () => {
    * Current print options
    */
   const printOptions = ref<PrintOptions>({ ...defaultPrintOptions });
-
   /**
    * Generate HTML content for printing
    */
   const generatePrintHTML = (schedule: GameSchedule, options: PrintOptions): string => {
-    const playerName = (id: string): string => {
+    function playerName(id: string): string {
       return getPlayer(id)?.name || 'Unknown Player';
-    };
+    }
 
-    const formatSkillLevel = (level: number): string => {
+    function formatSkillLevel(level: number): string {
       return level % 1 === 0 ? level.toString() : level.toFixed(2);
-    };
+    }
 
     let html = `
 <!DOCTYPE html>

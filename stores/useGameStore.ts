@@ -44,10 +44,10 @@ export const useGameStore = defineStore('game', () => {
       generatedAt: schedule.generatedAt
     };
   });
-
   /**
    * Actions
-   */  const generateSchedule = async (eventLabel: string = ''): Promise<GameSchedule | null> => {
+   */
+  async function generateSchedule(eventLabel: string = ''): Promise<GameSchedule | null> {
     const playerStore = usePlayerStore();
     
     try {
@@ -74,21 +74,20 @@ export const useGameStore = defineStore('game', () => {
     } finally {
       isGenerating.value = false;
     }
-  };
+  }
 
-  const regenerateSchedule = async (): Promise<GameSchedule | null> => {
+  async function regenerateSchedule(): Promise<GameSchedule | null> {
     const eventLabel = currentSchedule.value?.eventLabel || '';
     return generateSchedule(eventLabel);
-  };
+  }
 
-  const updateOptions = (newOptions: Partial<MatchingOptions>): void => {
+  function updateOptions(newOptions: Partial<MatchingOptions>): void {
     matchingOptions.value = { ...matchingOptions.value, ...newOptions };
-  };
+  }
 
-  const resetOptions = (): void => {
+  function resetOptions(): void {
     matchingOptions.value = { ...defaultOptions };
-  };
-  const validateOptions = (): { valid: boolean; errors: string[] } => {
+  }  function validateOptions(): { valid: boolean; errors: string[] } {
     const playerStore = usePlayerStore();
     const errors: string[] = [];
     const selectedPlayers = playerStore.selectedPlayers;
@@ -122,22 +121,22 @@ export const useGameStore = defineStore('game', () => {
       valid: errors.length === 0,
       errors
     };
-  };
+  }
 
-  const calculateAverageSkillDifference = (schedule: GameSchedule): number => {
+  function calculateAverageSkillDifference(schedule: GameSchedule): number {
     const allGames = schedule.rounds.flat();
     if (allGames.length === 0) return 0;
 
     const totalDifference = allGames.reduce((sum, game) => sum + game.skillDifference, 0);
     return Math.round((totalDifference / allGames.length) * 100) / 100;
-  };
+  }
 
-  const exportSchedule = (): string | null => {
+  function exportSchedule(): string | null {
     if (!currentSchedule.value) return null;
     return JSON.stringify(currentSchedule.value, null, 2);
-  };
+  }
 
-  const importSchedule = (scheduleJson: string): { success: boolean; message: string } => {
+  function importSchedule(scheduleJson: string): { success: boolean; message: string } {
     try {
       const schedule = JSON.parse(scheduleJson) as GameSchedule;
       
@@ -151,25 +150,25 @@ export const useGameStore = defineStore('game', () => {
     } catch (error: unknown) {      
       return { success: false, message: 'Error parsing schedule JSON: ' + JSON.stringify(error) };
     }
-  };
+  }
 
-  const clearSchedule = (): void => {
+  function clearSchedule(): void {
     currentSchedule.value = null;
-  };
+  }
 
-  const getGamesForRound = (roundNumber: number): Game[] | null => {
+  function getGamesForRound(roundNumber: number): Game[] | null {
     if (!currentSchedule.value || roundNumber < 1 || roundNumber > currentSchedule.value.rounds.length) {
       return null;
     }
     return currentSchedule.value.rounds[roundNumber - 1];
-  };
+  }
 
-  const getRestingPlayersForRound = (roundNumber: number): string[] | null => {
+  function getRestingPlayersForRound(roundNumber: number): string[] | null {
     if (!currentSchedule.value || roundNumber < 1 || roundNumber > currentSchedule.value.restingPlayers.length) {
       return null;
     }
     return currentSchedule.value.restingPlayers[roundNumber - 1];
-  };
+  }
 
   return {
     // State

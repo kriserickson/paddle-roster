@@ -1,9 +1,7 @@
 <script setup lang="ts">
-import { onMounted } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
 import { z } from 'zod';
 import type { Player } from '~/types';
-import { getSkillLevelColor } from '~/utils/skillLevel';
 
 const playerStore = usePlayerStore();
 
@@ -287,14 +285,13 @@ function exportPlayers(): void {
             <Icon name="mdi:account-multiple" class="text-paddle-teal text-3xl" />
             Player Management
           </h2>
-          <div class="flex gap-3">
-            <UButton icon="i-heroicons-plus" class="btn-primary" @click="showAddPlayer = true">
+          <div class="flex gap-3">            <UButton icon="i-heroicons-plus" class="btn-primary" data-testid="add-player-button" @click="showAddPlayer = true">
               Add Player
             </UButton>
-            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" @click="showImportModal = true">
+            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button" @click="showImportModal = true">
               Import
             </UButton>
-            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" @click="exportPlayers">
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button" @click="exportPlayers">
               Export
             </UButton>
           </div>
@@ -306,7 +303,7 @@ function exportPlayers(): void {
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
             <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-blue-700">{{ totalPlayers }}</div>
+            <div class="text-3xl font-bold text-blue-700" data-testid="total-players-count">{{ totalPlayers }}</div>
             <div class="text-sm font-medium text-blue-600">Total Players</div>
           </div>
           <template #placeholder>
@@ -359,16 +356,16 @@ function exportPlayers(): void {
           <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <Icon name="mdi:format-list-bulleted" class="text-paddle-teal" />
             Players List
-          </h3>          <div class="flex items-center gap-3">
-            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
-              class="w-64 form-input" />
+          </h3>          <div class="flex items-center gap-3">            <UInput
+v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
+              class="w-64 form-input" data-testid="player-search-input" />
           </div>
         </div>
       </div>
 
       <div class="p-6">
         <ClientOnly>
-          <UTable :data="filteredPlayers" :columns="columns" class="w-full">            <template #name-cell="{ row }">
+          <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table">            <template #name-cell="{ row }">
               <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
                   {{ row.original.name.charAt(0).toUpperCase() }}
@@ -395,10 +392,12 @@ function exportPlayers(): void {
               <span v-else class="text-sm text-gray-400 italic">None</span>
             </template>            <template #actions-cell="{ row }">
               <div class="flex gap-2 button-container">
-                <UButton icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm" @click="editPlayer(row.original)" 
-                  class="hover:bg-paddle-teal/10" />
-                <UButton icon="i-heroicons-trash" variant="ghost" color="error" size="sm" @click="confirmDelete(row.original)"
-                  class="hover:bg-paddle-red/10" />
+                <UButton
+icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm" class="hover:bg-paddle-teal/10" 
+                  data-testid="edit-player-button" @click="editPlayer(row.original)" />
+                <UButton
+icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg-paddle-red/10"
+                  data-testid="delete-player-button" @click="confirmDelete(row.original)" />
               </div>
             </template>
           </UTable>
@@ -419,28 +418,30 @@ function exportPlayers(): void {
             <p class="text-sm text-gray-600">Fill in the details below to add or edit a player.</p>
           </div>
           
-          <UForm :schema="playerSchema" :state="playerForm" class="space-y-6" @submit="savePlayer">
+          <UForm :schema="playerSchema" :state="playerForm" class="space-y-6" data-testid="player-form" @submit="savePlayer">
             <UFormField label="Name" name="name" required>
-              <UInput v-model="playerForm.name" placeholder="Enter player name" class="form-input" />
+              <UInput v-model="playerForm.name" placeholder="Enter player name" class="form-input" data-testid="player-name-input" />
             </UFormField>            <UFormField label="Skill Level" name="skillLevel" required>
-              <UInput v-model.number="playerForm.skillLevel" type="number" min="1" max="5"
-                placeholder="1.0 - 5.0" class="form-input" />
+              <UInput
+v-model.number="playerForm.skillLevel" type="number" min="1" max="5"
+                placeholder="1.0 - 5.0" class="form-input" data-testid="player-skill-level-input" />
               <template #help>
                 <span class="text-sm text-gray-600">
                   Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
                 </span>
               </template>
             </UFormField>            <UFormField label="Partner" name="partnerId">
-              <USelect v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" 
-                class="form-input" />
+              <USelect
+v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" 
+                class="form-input" data-testid="player-partner-select" />
             </UFormField>
           </UForm>
           
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" @click="cancelPlayerForm" class="btn-secondary">
+            <UButton variant="ghost" class="btn-secondary" data-testid="cancel-player-button" @click="cancelPlayerForm">
               Cancel
             </UButton>
-            <UButton type="submit" @click="savePlayer" class="btn-primary">
+            <UButton type="submit" class="btn-primary" data-testid="save-player-button" @click="savePlayer">
               {{ editingPlayer ? 'Update' : 'Add' }} Player
             </UButton>
           </div>
@@ -456,15 +457,16 @@ function exportPlayers(): void {
           </div>
           
           <UFormField label="JSON Data">
-            <UTextarea v-model="importData" :rows="10" placeholder="Paste JSON data here..." 
+            <UTextarea
+v-model="importData" :rows="10" placeholder="Paste JSON data here..." 
               class="form-input font-mono text-sm" />
           </UFormField>
           
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" @click="showImportModal = false" class="btn-secondary">
+            <UButton variant="ghost" class="btn-secondary" @click="showImportModal = false">
               Cancel
             </UButton>
-            <UButton @click="performImport" class="btn-primary">
+            <UButton class="btn-primary" @click="performImport">
               Import
             </UButton>
           </div>
@@ -485,10 +487,10 @@ function exportPlayers(): void {
           </div>
 
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" @click="showDeleteConfirm = false" class="btn-secondary">
+            <UButton variant="ghost" class="btn-secondary" @click="showDeleteConfirm = false">
               Cancel
             </UButton>
-            <UButton @click="deletePlayer" class="btn-danger">
+            <UButton class="btn-danger" @click="deletePlayer">
               Delete Player
             </UButton>
           </div>

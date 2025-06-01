@@ -1,12 +1,12 @@
-import { defineConfig } from 'vitest/config'
-import { resolve } from 'path'
+import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
   test: {
     environment: 'happy-dom',
     globals: true,
-    setupFiles: ['./test/setup.ts'],
-    include: ['test/**/*.test.ts', 'test/**/*.spec.ts']
+    setupFiles: ['./tests/unit/setup.ts'],
+    include: ['tests/unit/**/*.test.ts', 'tests/unit/**/*.spec.ts']
   },
   resolve: {
     alias: {
@@ -14,4 +14,4 @@ export default defineConfig({
       '@/': resolve(__dirname, './'),
     }
   }
-})
+});

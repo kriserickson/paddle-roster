@@ -66,19 +66,20 @@ useHead({
       <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
         <!-- Hamburger Menu -->
         <div class="absolute top-6 right-6">
-          <UDropdown :items="[
+          <UDropdown
+:items="[
             [
               { label: 'Help', icon: 'i-heroicons-question-mark-circle', click: openHelp },
               { label: 'Settings', icon: 'i-heroicons-cog-6-tooth', click: openSettings },
               { label: 'Logout', icon: 'i-heroicons-arrow-right-on-rectangle', click: logout }
             ]
           ]" :popper="{ placement: 'bottom-end' }">
-            <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-white hover:bg-white/20" size="lg" />
+            <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-white hover:bg-white/20" size="lg" @click="toggleMenu()" />
           </UDropdown>
         </div>
 
         <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
-          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16" />
+          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16" >
           Paddle Roster
         </h1>
         <p class="text-xl text-white/90 mb-6 font-medium">
@@ -160,7 +161,7 @@ useHead({
           </div>
 
           <div class="flex justify-end pt-4 border-t border-gray-200">
-            <UButton @click="showHelp = false" class="btn-primary">
+            <UButton class="btn-primary" @click="showHelp = false">
               Got it!
             </UButton>
           </div>

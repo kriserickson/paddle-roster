@@ -10,11 +10,10 @@ export const usePlayerManager = () => {
    * Reactive list of all players
    */
   const players = ref<Player[]>([]);
-
   /**
    * Load players from local storage
    */
-  const loadPlayers = (): void => {
+  function loadPlayers(): void {
     if (import.meta.client) {
       try {
         const stored = localStorage.getItem(STORAGE_KEY);
@@ -26,12 +25,12 @@ export const usePlayerManager = () => {
         players.value = [];
       }
     }
-  };
+  }
 
   /**
    * Save players to local storage
    */
-  const savePlayers = (): void => {
+  function savePlayers(): void {
     if (import.meta.client) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(players.value));
@@ -39,12 +38,11 @@ export const usePlayerManager = () => {
         console.error('Error saving players to localStorage:', error);
       }
     }
-  };
-
+  }
   /**
    * Add a new player
    */
-  const addPlayer = (name: string, skillLevel: number, partnerId?: string): Player => {
+  function addPlayer(name: string, skillLevel: number, partnerId?: string): Player {
     const newPlayer: Player = {
       id: generatePlayerId(),
       name: name.trim(),
@@ -55,12 +53,12 @@ export const usePlayerManager = () => {
     players.value.push(newPlayer);
     savePlayers();
     return newPlayer;
-  };
+  }
 
   /**
    * Update an existing player
    */
-  const updatePlayer = (id: string, updates: Partial<Omit<Player, 'id'>>): boolean => {
+  function updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): boolean {
     const index = players.value.findIndex(p => p.id === id);
     if (index === -1) return false;
 
@@ -77,12 +75,12 @@ export const usePlayerManager = () => {
     players.value[index] = { ...players.value[index], ...updates };
     savePlayers();
     return true;
-  };
+  }
 
   /**
    * Remove a player
    */
-  const removePlayer = (id: string): boolean => {
+  function removePlayer(id: string): boolean {
     const index = players.value.findIndex(p => p.id === id);
     if (index === -1) return false;
 
@@ -96,26 +94,25 @@ export const usePlayerManager = () => {
     players.value.splice(index, 1);
     savePlayers();
     return true;
-  };
-
+  }
   /**
    * Get a player by ID
    */
-  const getPlayer = (id: string): Player | undefined => {
+  function getPlayer(id: string): Player | undefined {
     return players.value.find(p => p.id === id);
-  };
+  }
 
   /**
    * Get players available for partner selection (excluding the current player)
    */
-  const getAvailablePartners = (currentPlayerId: string): Player[] => {
+  function getAvailablePartners(currentPlayerId: string): Player[] {
     return players.value.filter(p => p.id !== currentPlayerId);
-  };
+  }
 
   /**
    * Validate that minimum number of players exist for games
    */
-  const canGenerateGames = (numberOfCourts: number): { valid: boolean; message?: string } => {
+  function canGenerateGames(numberOfCourts: number): { valid: boolean; message?: string } {
     const activePlayers = [...players.value];
     const minPlayers = numberOfCourts * 4; // 4 players per court
     const maxPlayers = numberOfCourts * 4 + 4; // Allow up to 4 to sit out
@@ -135,27 +132,26 @@ export const usePlayerManager = () => {
     }
 
     return { valid: true };
-  };
+  }
 
   /**
    * Generate a unique player ID
    */
-  const generatePlayerId = (): string => {
+  function generatePlayerId(): string {
     return `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  };
+  }
 
   /**
    * Clear all players (with confirmation)
    */
-  const clearAllPlayers = (): void => {
+  function clearAllPlayers(): void {
     players.value = [];
     savePlayers();
-  };
-
+  }
   /**
    * Import players from JSON
    */
-  const importPlayers = (playersData: Player[]): { success: boolean; message: string } => {
+  function importPlayers(playersData: Player[]): { success: boolean; message: string } {
     try {
       // Validate the imported data
       if (!Array.isArray(playersData)) {
@@ -191,14 +187,14 @@ export const usePlayerManager = () => {
     } catch (error) {
       return { success: false, message: 'Error importing players: ' + JSON.stringify(error) };
     }
-  };
+  }
 
   /**
    * Export players to JSON
    */
-  const exportPlayers = (): string => {
+  function exportPlayers(): string {
     return JSON.stringify(players.value, null, 2);
-  };
+  }
 
   // Load players on composable initialization
   onMounted(() => {

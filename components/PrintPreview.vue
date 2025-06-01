@@ -12,28 +12,28 @@ const playerStore = usePlayerStore();
 /**
  * Get player name safely
  */
-const getPlayerName = (id: string): string => {
+function getPlayerName(id: string): string {
   return playerStore.getPlayer(id)?.name || 'Unknown Player';
-};
+}
 
 /**
  * Format skill level safely
  */
-const formatSkillLevel = (level: number): string => {
+function formatSkillLevel(level: number): string {
   return level % 1 === 0 ? level.toString() : level.toFixed(2);
-};
+}
 
 /**
  * Get current date formatted
  */
-const getCurrentDate = (): string => {
+function getCurrentDate(): string {
   return new Date().toLocaleDateString();
-};
+}
 
 /**
  * Calculate total games per player
  */
-const getPlayerGameCount = (playerId: string): number => {
+function getPlayerGameCount(playerId: string): number {
   let count = 0;
   props.schedule.rounds.forEach(round => {
     round.forEach(game => {
@@ -46,14 +46,14 @@ const getPlayerGameCount = (playerId: string): number => {
     });
   });
   return count;
-};
+}
 
 /**
  * Get players sitting out in a round
  */
-const getPlayersRestingInRound = (roundIndex: number): string[] => {
+function getPlayersRestingInRound(roundIndex: number): string[] {
   return props.schedule.restingPlayers[roundIndex] || [];
-};
+}
 
 /**
  * Get all unique players from the schedule

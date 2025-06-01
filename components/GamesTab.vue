@@ -107,44 +107,36 @@ const canGenerate = computed(() => validationResult.value.valid);
 const validationErrors = computed(() => validationResult.value.errors);
 
 // Methods
-const selectFilteredPlayers = (): void => {
+function selectFilteredPlayers(): void {
   filteredPlayers.value.forEach(player => {
     if (!playerStore.isPlayerSelected(player.id)) {
       playerStore.togglePlayerSelection(player.id);
     }
   });
-};
+}
 
-const deselectFilteredPlayers = (): void => {
+function deselectFilteredPlayers(): void {
   filteredPlayers.value.forEach(player => {
     if (playerStore.isPlayerSelected(player.id)) {
       playerStore.togglePlayerSelection(player.id);
     }
   });
-};
+}
 
-const clearAllFilters = (): void => {
+function clearAllFilters(): void {
   playerSearchQuery.value = '';
   skillLevelFilter.value = 'all';
   partnerFilter.value = 'all';
-};
+}
 
-const getSkillLevelColor = (skillLevel: number): "primary" | "secondary" | "success" | "info" | "warning" | "error" | "neutral" => {
-  if (skillLevel < 2) return 'error';
-  if (skillLevel < 3) return 'warning';
-  if (skillLevel < 4) return 'info';
-  if (skillLevel < 5) return 'success';
-  return 'primary';
-};
-
-const formatDateTime = (date: Date): string => {
+function formatDateTime(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(date);
-};
+}
 
-const generateGames = async (): Promise<void> => {
+async function generateGames(): Promise<void> {
   try {
     const schedule = await gameStore.generateSchedule(eventLabel.value);
     if (schedule) {
@@ -162,9 +154,9 @@ const generateGames = async (): Promise<void> => {
       color: 'error'
     });
   }
-};
+}
 
-const regenerateGames = async (): Promise<void> => {
+async function regenerateGames(): Promise<void> {
   try {
     const schedule = await gameStore.regenerateSchedule();
     if (schedule) {
@@ -182,9 +174,9 @@ const regenerateGames = async (): Promise<void> => {
       color: 'error'
     });
   }
-};
+}
 
-const resetToDefaults = (): void => {
+function resetToDefaults(): void {
   gameStore.resetOptions();
   matchingOptions.value = { ...gameStore.matchingOptions };
   toast.add({
@@ -192,7 +184,7 @@ const resetToDefaults = (): void => {
     description: 'All options have been reset to default values.',
     color: 'info'
   });
-};
+}
 
 // Initialize with current options
 onMounted(() => {
@@ -212,10 +204,10 @@ onMounted(() => {
           </h2>
           <div class="flex gap-3">
             <UButton
-              :disabled="!canGenerate || gameStore.isGenerating"
-              :loading="gameStore.isGenerating"
+              :disabled="!canGenerate || gameStore.isGenerating"              :loading="gameStore.isGenerating"
               size="lg"
               class="btn-primary"
+              data-testid="generate-games-button"
               @click="generateGames"
             >
               <UIcon name="i-heroicons-play" class="mr-2" />
@@ -225,6 +217,7 @@ onMounted(() => {
               v-if="gameStore.currentSchedule"
               :disabled="gameStore.isGenerating"
               class="btn-secondary"
+              data-testid="regenerate-games-button"
               @click="regenerateGames"
             >
               <UIcon name="i-heroicons-arrow-path" class="mr-2" />
@@ -380,16 +373,16 @@ onMounted(() => {
             <UButton 
               variant="ghost" 
               size="sm" 
-              @click="playerStore.selectAllPlayers()"
               class="btn-secondary"
+              @click="playerStore.selectAllPlayers()"
             >
               Select All
             </UButton>
             <UButton 
               variant="ghost" 
               size="sm" 
-              @click="playerStore.deselectAllPlayers()"
               class="btn-secondary"
+              @click="playerStore.deselectAllPlayers()"
             >
               Deselect All
             </UButton>
@@ -453,26 +446,26 @@ onMounted(() => {
             <UButton 
               variant="ghost" 
               size="sm" 
-              @click="selectFilteredPlayers()"
               :disabled="filteredPlayers.length === 0"
               class="btn-secondary"
+              @click="selectFilteredPlayers()"
             >
               Select Filtered
             </UButton>
             <UButton 
               variant="ghost" 
               size="sm" 
-              @click="deselectFilteredPlayers()"
               :disabled="filteredPlayers.length === 0"
               class="btn-secondary"
+              @click="deselectFilteredPlayers()"
             >
               Deselect Filtered
             </UButton>
             <UButton 
               variant="ghost" 
               size="sm" 
-              @click="clearAllFilters()"
               class="btn-secondary"
+              @click="clearAllFilters()"
             >
               Clear Filters
             </UButton>
@@ -506,8 +499,8 @@ onMounted(() => {
               <div class="flex items-center gap-2">
                 <UCheckbox 
                   :checked="playerStore.isPlayerSelected(player.id)"
-                  @change="playerStore.togglePlayerSelection(player.id)"
                   class="pointer-events-none"
+                  @change="playerStore.togglePlayerSelection(player.id)"
                 />
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
@@ -598,7 +591,7 @@ onMounted(() => {
           Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds
         </p>
         <div class="mt-6 max-w-md mx-auto bg-gray-200 rounded-full h-2">
-          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse" style="width: 60%"></div>
+          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse" style="width: 60%"/>
         </div>
       </div>
     </div>

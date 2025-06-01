@@ -25,6 +25,7 @@ pickleball leagues by intelligently matching players across multiple game rounds
 ## Code Style Guidelines
 
 - Use TypeScript interfaces for all data structures, don't use `any` type
+- Always end each line with a semicolon
 - Follow Vue 3 Composition API patterns for component logic
 - Implement reactive state management with Vue 3 Composition API
 - Follow Nuxt.js best practices for SSR/SSG compatibility
@@ -33,7 +34,7 @@ pickleball leagues by intelligently matching players across multiple game rounds
 - Always use `async/await` for asynchronous operations
 - Always use braces and semicolons for clarity even with short control statements
 - Use descriptive variable and function names
-- Ue functions for methods and and arrow functions for computed properties.
+- Ue functions for methods and and arrow functions for computed properties e.g. in eslint ( 'func-style': ['error', 'declaration', { 'allowArrowFunctions': false }])
 - Use template syntax for declarative rendering.
 - In Vue files have the script first, then the template, and finally the style section.
 - The functions should use function declarations rather than constants with lambdas.

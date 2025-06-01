@@ -208,9 +208,9 @@ watch(gameSchedule, (newSchedule) => {
           <UButton
             :disabled="!gameSchedule"
             icon="i-heroicons-eye"
-            @click="generatePreview"
             class="btn-primary"
             size="lg"
+            @click="generatePreview"
           >
             <Icon name="mdi:eye" class="mr-2" />
             Generate Preview
@@ -219,8 +219,8 @@ watch(gameSchedule, (newSchedule) => {
           <UButton
             :disabled="!gameSchedule"
             icon="i-heroicons-printer"
-            @click="print"
             class="btn-secondary"
+            @click="print"
           >
             <Icon name="mdi:printer" class="mr-2" />
             Print
@@ -229,8 +229,8 @@ watch(gameSchedule, (newSchedule) => {
           <UButton
             :disabled="!gameSchedule"
             icon="i-heroicons-document-arrow-down"
-            @click="downloadPdf"
             class="btn-secondary"
+            @click="downloadPdf"
           >
             <Icon name="mdi:file-pdf-box" class="mr-2" />
             Download PDF
@@ -239,8 +239,8 @@ watch(gameSchedule, (newSchedule) => {
           <UButton
             :disabled="!gameSchedule || !previewGenerated"
             icon="i-heroicons-code-bracket"
-            @click="exportHtml"
             class="btn-secondary"
+            @click="exportHtml"
           >
             <Icon name="mdi:code-tags" class="mr-2" />
             Export HTML

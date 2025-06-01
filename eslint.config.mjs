@@ -8,7 +8,15 @@ export default withNuxt(
       // Enforce semicolons
       'semi': ['error', 'always'],
       // Ensure semicolon spacing
-      'semi-spacing': ['error', { before: false, after: true }]
+      'semi-spacing': ['error', { before: false, after: true }],
+      'func-style': ['error', 'declaration', { 'allowArrowFunctions': false }]
+    }
+  },
+  // Allow arrow functions for composables
+  {
+    files: ['composables/**/*.ts'],
+    rules: {
+      'func-style': 'off'
     }
   }
 );

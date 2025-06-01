@@ -138,6 +138,10 @@ temp/
 # Vitest
 coverage/
 .vitest/
+test-results/
+
+#Playwrite
+playwright-report/
 
 # Build artifacts
 build/

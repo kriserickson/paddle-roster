@@ -1,5 +1,5 @@
 // Test setup file
-import { vi } from 'vitest'
+import { vi } from 'vitest';
 
 // Mock LocalStorage for tests
 Object.defineProperty(window, 'localStorage', {
@@ -10,21 +10,20 @@ Object.defineProperty(window, 'localStorage', {
     clear: vi.fn(),
   },
   writable: true,
-})
+});
 
 // Mock IndexedDB for tests
 const mockIDBRequest = {
   result: null,
   error: null,
   onsuccess: null,
-  onerror: null,
-  readyState: 'done',
+  onerror: null,  readyState: 'done',
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
-}
+};
 
-const mockIDBDatabase = {
+const _mockIDBDatabase = {
   name: 'test-db',
   version: 1,
   objectStoreNames: [],
@@ -35,19 +34,19 @@ const mockIDBDatabase = {
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
   dispatchEvent: vi.fn(),
-}
+};
 
 const mockIDBFactory = {
   open: vi.fn(() => mockIDBRequest),
   deleteDatabase: vi.fn(() => mockIDBRequest),
   databases: vi.fn(() => Promise.resolve([])),
   cmp: vi.fn(),
-}
+};
 
 Object.defineProperty(window, 'indexedDB', {
   value: mockIDBFactory,
   writable: true,
-})
+});
 
 // Mock Nuxt composables
 vi.mock('#app', () => ({
@@ -56,7 +55,7 @@ vi.mock('#app', () => ({
       resolve: vi.fn(),
     },
   }),
-}))
+}));
 
 // Mock the player store to prevent database initialization
 vi.mock('~/stores/usePlayerStore', () => ({
@@ -72,4 +71,4 @@ vi.mock('~/stores/usePlayerStore', () => ({
     deselectAllPlayers: vi.fn(),
     isPlayerSelected: vi.fn(),
   }),
-}))
+}));

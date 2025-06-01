@@ -39,36 +39,28 @@ const selectedRoundResting = computed(() => {
 });
 
 // Methods
-const getPlayerName = (playerId: string): string => {
+function getPlayerName(playerId: string): string {
   const player = playerStore.getPlayer(playerId);
   return player ? player.name : 'Unknown Player';
-};
+}
 
-const getPlayerSkill = (playerId: string): number => {
+function getPlayerSkill(playerId: string): number {
   const player = playerStore.getPlayer(playerId);
   return player ? player.skillLevel : 0;
-};
+}
 
-const getSkillLevelColor = (skillLevel: number): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' => {
-  if (skillLevel >= 4.5) return 'secondary';
-  if (skillLevel >= 3.5) return 'success';
-  if (skillLevel >= 2.5) return 'warning';
-  if (skillLevel >= 1.5) return 'info';
-  return 'error';
-};
-
-const formatDateTime = (date: Date): string => {
+function formatDateTime(date: Date): string {
   return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short'
   }).format(date);
-};
+}
 
-const getGameForCourt = (round: readonly Game[], courtNumber: number): Game | undefined => {
+function getGameForCourt(round: readonly Game[], courtNumber: number): Game | undefined {
   return round.find(game => game.court === courtNumber) as Game | undefined;
-};
+}
 
-const exportScheduleData = (): void => {
+function exportScheduleData(): void {
   try {
     const data = gameStore.exportSchedule();
     if (data) {
@@ -93,9 +85,9 @@ const exportScheduleData = (): void => {
         color: 'error'
       });
   }
-};
+}
 
-const performImport = (): void => {
+function performImport(): void {
   try {
     const result = gameStore.importSchedule(importData.value);
     if (result.success) {      toast.add({
@@ -120,9 +112,9 @@ const performImport = (): void => {
       color: 'error'
     });
   }
-};
+}
 
-const clearCurrentSchedule = (): void => {
+function clearCurrentSchedule(): void {
   gameStore.clearSchedule();
   selectedRound.value = 1;
   toast.add({
@@ -130,7 +122,7 @@ const clearCurrentSchedule = (): void => {
     description: 'The current schedule has been cleared.',
     color: 'primary'
   });
-};
+}
 
 // Watch for schedule changes and reset round selection
 watch(() => gameStore.currentSchedule, (newSchedule) => {
@@ -175,10 +167,8 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
           </div>
         </div>
       </div>
-    </div>
-
-    <!-- No Schedule Message -->
-    <div v-if="!gameStore.currentSchedule" class="content-card">
+    </div>    <!-- No Schedule Message -->
+    <div v-if="!gameStore.currentSchedule" class="content-card" data-testid="no-schedule-message">
       <div class="p-16 text-center">
         <Icon name="mdi:calendar-blank" class="text-8xl text-gray-300 mb-6 mx-auto" />
         <h3 class="text-2xl font-bold text-gray-900 mb-3">No Schedule Generated</h3>
@@ -189,15 +179,14 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
           to="#games"
           class="btn-primary"
           size="lg"
+          data-testid="generate-schedule-link"
         >
           <Icon name="mdi:cog" class="mr-2" />
           Generate Schedule
         </UButton>
       </div>
-    </div>
-
-    <!-- Schedule Display -->
-    <div v-if="gameStore.currentSchedule" class="space-y-6">
+    </div>    <!-- Schedule Display -->
+    <div v-if="gameStore.currentSchedule" class="space-y-6" data-testid="schedule-display">
       <!-- Schedule Info -->
       <div class="content-card">
         <div class="content-card-header">
@@ -206,7 +195,7 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
               <Icon name="mdi:information" class="text-paddle-teal" />
               Schedule Information
             </h3>
-            <div class="player-skill-badge">
+            <div class="player-skill-badge" data-testid="total-rounds-count">
               {{ gameStore.currentSchedule.rounds.length }} Rounds
             </div>
           </div>
@@ -368,7 +357,8 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
 
               <!-- Skill Difference -->
               <div class="text-center">
-                <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
+                <div
+class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                   :class="{
                     'bg-emerald-100 text-emerald-800': game.skillDifference <= 1,
                     'bg-amber-100 text-amber-800': game.skillDifference > 1 && game.skillDifference <= 2,
@@ -492,14 +482,14 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
             <UButton
               variant="ghost"
-              @click="showImportModal = false"
               class="btn-secondary"
+              @click="showImportModal = false"
             >
               Cancel
             </UButton>
             <UButton
-              @click="performImport"
               class="btn-primary"
+              @click="performImport"
             >
               Import
             </UButton>
