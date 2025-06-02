@@ -15,7 +15,8 @@ describe('PickleballMatcher', () => {
       { id: '4', name: 'Diana', skillLevel: 3.5, partnerId: undefined },
       { id: '5', name: 'Eve', skillLevel: 4.0, partnerId: undefined },
       { id: '6', name: 'Frank', skillLevel: 4.5, partnerId: undefined },
-      { id: '7', name: 'Grace', skillLevel: 1.5, partnerId: undefined },      { id: '8', name: 'Henry', skillLevel: 2.8, partnerId: undefined },
+      { id: '7', name: 'Grace', skillLevel: 1.5, partnerId: undefined },
+      { id: '8', name: 'Henry', skillLevel: 2.8, partnerId: undefined }
     ];
 
     defaultOptions = {
@@ -23,17 +24,20 @@ describe('PickleballMatcher', () => {
       numberOfRounds: 7,
       balanceSkillLevels: true,
       respectPartnerPreferences: true,
-      maxSkillDifference: 2.0,      distributeRestEqually: true,
+      maxSkillDifference: 2.0,
+      distributeRestEqually: true
     };
   });
 
-  describe('constructor', () => {    it('should initialize with players and options', () => {
+  describe('constructor', () => {
+    it('should initialize with players and options', () => {
       const matcher = new PickleballMatcher(players, defaultOptions);
       expect(matcher).toBeDefined();
     });
   });
 
-  describe('generateSchedule', () => {    it('should generate a valid schedule with 7 rounds for 8 players', () => {
+  describe('generateSchedule', () => {
+    it('should generate a valid schedule with 7 rounds for 8 players', () => {
       const matcher = new PickleballMatcher(players, defaultOptions);
       const schedule = matcher.generateSchedule('Test Event');
 
@@ -42,18 +46,21 @@ describe('PickleballMatcher', () => {
       expect(schedule.eventLabel).toBe('Test Event');
       expect(schedule.options).toEqual(defaultOptions);
       expect(schedule.generatedAt).toBeInstanceOf(Date);
-    });    it('should handle fewer players than courts gracefully', () => {
+    });
+    it('should handle fewer players than courts gracefully', () => {
       const matcher = new PickleballMatcher(players.slice(0, 6), defaultOptions);
       const schedule = matcher.generateSchedule();
 
       expect(schedule.rounds).toHaveLength(7);
       // Should have fewer courts when not enough players
       expect(schedule.rounds[0].length).toBeLessThanOrEqual(2);
-    });    it('should respect rest distribution when enabled', () => {
+    });
+    it('should respect rest distribution when enabled', () => {
       const matcher = new PickleballMatcher(players, { ...defaultOptions, distributeRestEqually: true });
-      const schedule = matcher.generateSchedule();      // Count rest periods per player across all rounds
+      const schedule = matcher.generateSchedule(); // Count rest periods per player across all rounds
       const restCounts = new Map<string, number>();
-      players.forEach(p => restCounts.set(p.id, 0));      schedule.rounds.forEach((round, _roundIndex) => {
+      players.forEach(p => restCounts.set(p.id, 0));
+      schedule.rounds.forEach((round, _roundIndex) => {
         const playingPlayerIds = new Set<string>();
         round.forEach(game => {
           playingPlayerIds.add(game.team1[0]);
@@ -85,32 +92,37 @@ describe('PickleballMatcher', () => {
         { id: '3', name: 'Charlie', skillLevel: 3.0, partnerId: '4' },
         { id: '4', name: 'Diana', skillLevel: 3.5, partnerId: '3' },
         { id: '5', name: 'Eve', skillLevel: 4.0, partnerId: undefined },
-        { id: '6', name: 'Frank', skillLevel: 4.5, partnerId: undefined },
+        { id: '6', name: 'Frank', skillLevel: 4.5, partnerId: undefined }
       ];
 
       const matcher = new PickleballMatcher(partneredPlayers, { ...defaultOptions, respectPartnerPreferences: true });
       const schedule = matcher.generateSchedule();
 
       // Check that partner preferences are mostly respected
-      let partnerPairings = 0;      let _totalPairings = 0;
+      let partnerPairings = 0;
+      let _totalPairings = 0;
 
       schedule.rounds.forEach(round => {
         round.forEach(game => {
           _totalPairings += 2; // Two teams per game
 
           // Check if Alice and Bob are partnered
-          if ((game.team1[0] === '1' && game.team1[1] === '2') ||
-              (game.team1[0] === '2' && game.team1[1] === '1') ||
-              (game.team2[0] === '1' && game.team2[1] === '2') ||
-              (game.team2[0] === '2' && game.team2[1] === '1')) {
+          if (
+            (game.team1[0] === '1' && game.team1[1] === '2') ||
+            (game.team1[0] === '2' && game.team1[1] === '1') ||
+            (game.team2[0] === '1' && game.team2[1] === '2') ||
+            (game.team2[0] === '2' && game.team2[1] === '1')
+          ) {
             partnerPairings++;
           }
 
           // Check if Charlie and Diana are partnered
-          if ((game.team1[0] === '3' && game.team1[1] === '4') ||
-              (game.team1[0] === '4' && game.team1[1] === '3') ||
-              (game.team2[0] === '3' && game.team2[1] === '4') ||
-              (game.team2[0] === '4' && game.team2[1] === '3')) {
+          if (
+            (game.team1[0] === '3' && game.team1[1] === '4') ||
+            (game.team1[0] === '4' && game.team1[1] === '3') ||
+            (game.team2[0] === '3' && game.team2[1] === '4') ||
+            (game.team2[0] === '4' && game.team2[1] === '3')
+          ) {
             partnerPairings++;
           }
         });
@@ -122,7 +134,11 @@ describe('PickleballMatcher', () => {
   });
   describe('skill level balancing', () => {
     it('should balance skill levels when enabled', () => {
-      const matcher = new PickleballMatcher(players, { ...defaultOptions, balanceSkillLevels: true, maxSkillDifference: 1.5 });
+      const matcher = new PickleballMatcher(players, {
+        ...defaultOptions,
+        balanceSkillLevels: true,
+        maxSkillDifference: 1.5
+      });
       const schedule = matcher.generateSchedule();
 
       // Check that skill differences between teams are reasonable

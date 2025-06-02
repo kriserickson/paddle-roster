@@ -9,26 +9,28 @@ import { TOKENS } from '~/types/api';
 export const usePlayerManager = () => {
   const playerApi = container.resolve<IPlayerApi>(TOKENS.PlayerApi);
   const user = useSupabaseUser();
-  
+
   // Check if we're in demo mode - this is now only for UI purposes
   const config = useRuntimeConfig();
   const isDemo = computed(() => {
-    return !config.public.supabase?.url || 
-           !config.public.supabase?.key ||
-           config.public.supabase.url === 'https://your-project.supabase.co' ||
-           config.public.supabase.url.includes('placeholder');
+    return (
+      !config.public.supabase?.url ||
+      !config.public.supabase?.key ||
+      config.public.supabase.url === 'https://your-project.supabase.co' ||
+      config.public.supabase.url.includes('placeholder')
+    );
   });
 
   /**
    * Reactive list of all players
    */
   const players = ref<Player[]>([]);
-  
+
   /**
    * Loading state
    */
   const loading = ref(false);
-  
+
   /**
    * Error state
    */
@@ -40,14 +42,14 @@ export const usePlayerManager = () => {
     try {
       loading.value = true;
       error.value = null;
-      
+
       const result = await playerApi.getPlayers();
       if (!result.success) {
         error.value = result.error || result.message;
         players.value = [];
         return;
       }
-      
+
       players.value = result.data || [];
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to load players';
@@ -63,7 +65,7 @@ export const usePlayerManager = () => {
     try {
       loading.value = true;
       error.value = null;
-      
+
       const result = await playerApi.createPlayer({
         name,
         skillLevel,
@@ -71,12 +73,12 @@ export const usePlayerManager = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       });
-      
+
       if (!result.success) {
         error.value = result.error || result.message;
         return null;
       }
-      
+
       const newPlayer = result.data!;
       players.value.push(newPlayer);
       return newPlayer;
@@ -95,7 +97,7 @@ export const usePlayerManager = () => {
     try {
       loading.value = true;
       error.value = null;
-      
+
       // Validate updates
       if (updates.name !== undefined) {
         updates.name = updates.name.trim();
@@ -104,7 +106,7 @@ export const usePlayerManager = () => {
           return false;
         }
       }
-      
+
       if (updates.skillLevel !== undefined) {
         updates.skillLevel = Math.max(1, Math.min(5, updates.skillLevel));
       }
@@ -114,13 +116,13 @@ export const usePlayerManager = () => {
         error.value = result.error || result.message;
         return false;
       }
-      
+
       const updatedPlayer = result.data!;
       const index = players.value.findIndex(p => p.id === id);
       if (index !== -1) {
         players.value[index] = updatedPlayer;
       }
-      
+
       return true;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to update player';
@@ -137,23 +139,23 @@ export const usePlayerManager = () => {
     try {
       loading.value = true;
       error.value = null;
-      
+
       const result = await playerApi.deletePlayer(id);
       if (!result.success) {
         error.value = result.error || result.message;
         return false;
       }
-      
+
       // Remove from local array
       players.value = players.value.filter(p => p.id !== id);
-      
+
       // Remove any partner references to this player locally
       players.value.forEach(player => {
         if (player.partnerId === id) {
           player.partnerId = undefined;
         }
       });
-      
+
       return true;
     } catch (err) {
       error.value = err instanceof Error ? err.message : 'Failed to remove player';
@@ -186,16 +188,16 @@ export const usePlayerManager = () => {
    */
   function validatePlayersForGames(minPlayers = 4): { valid: boolean; message?: string } {
     const activePlayers = [...players.value];
-    
+
     if (activePlayers.length < minPlayers) {
       return {
         valid: false,
         message: `Need at least ${minPlayers} players to generate games. Currently have ${activePlayers.length}.`
       };
     }
-    
+
     return { valid: true };
-  }  /**
+  } /**
    * Import players from JSON data
    */
   async function importPlayers(playersData: unknown[]): Promise<{ success: boolean; message: string }> {
@@ -207,15 +209,16 @@ export const usePlayerManager = () => {
         return { success: false, message: 'Invalid data format' };
       }
 
-      const validPlayers = playersData.filter((p): p is Player => 
-        typeof p === 'object' && 
-        p !== null &&
-        'name' in p &&
-        'skillLevel' in p &&
-        typeof p.name === 'string' && 
-        typeof p.skillLevel === 'number' && 
-        p.skillLevel >= 1 && 
-        p.skillLevel <= 5
+      const validPlayers = playersData.filter(
+        (p): p is Player =>
+          typeof p === 'object' &&
+          p !== null &&
+          'name' in p &&
+          'skillLevel' in p &&
+          typeof p.name === 'string' &&
+          typeof p.skillLevel === 'number' &&
+          p.skillLevel >= 1 &&
+          p.skillLevel <= 5
       );
 
       const result = await playerApi.importPlayers(validPlayers);
@@ -245,20 +248,20 @@ export const usePlayerManager = () => {
    */
   const canGenerateGames = computed(() => {
     return players.value.length >= 4;
-  });  /**
+  }); /**
    * Clear all players
    */
   async function clearAllPlayers(): Promise<boolean> {
     try {
       loading.value = true;
       error.value = null;
-      
+
       const result = await playerApi.clearAllPlayers();
       if (!result.success) {
         error.value = result.error || result.message;
         return false;
       }
-      
+
       players.value = [];
       return true;
     } catch (err) {
@@ -282,13 +285,17 @@ export const usePlayerManager = () => {
     return JSON.stringify(exportData, null, 2);
   }
   // Load players when user changes or component mounts
-  watch(user, (newUser) => {
-    if (newUser || isDemo.value) {
-      loadPlayers();
-    } else {
-      players.value = [];
-    }
-  }, { immediate: true });
+  watch(
+    user,
+    newUser => {
+      if (newUser || isDemo.value) {
+        loadPlayers();
+      } else {
+        players.value = [];
+      }
+    },
+    { immediate: true }
+  );
 
   return {
     players: readonly(players),

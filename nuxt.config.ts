@@ -12,9 +12,9 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@nuxtjs/supabase'
   ],
-  
+
   css: ['~/assets/css/main.css'],
-  
+
   supabase: {
     redirectOptions: {
       login: '/auth/login',
@@ -24,13 +24,13 @@ export default defineNuxtConfig({
     url: process.env.SUPABASE_URL,
     key: process.env.SUPABASE_ANON_KEY
   },
-  
+
   runtimeConfig: {
     public: {
       enableGoogleAuth: process.env.ENABLE_GOOGLE_AUTH === 'true' || false
     }
   },
-  
+
   typescript: {
     typeCheck: true
   },

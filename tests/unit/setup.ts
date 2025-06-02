@@ -7,9 +7,9 @@ Object.defineProperty(window, 'localStorage', {
     getItem: vi.fn(),
     setItem: vi.fn(),
     removeItem: vi.fn(),
-    clear: vi.fn(),
+    clear: vi.fn()
   },
-  writable: true,
+  writable: true
 });
 
 // Mock IndexedDB for tests
@@ -17,10 +17,11 @@ const mockIDBRequest = {
   result: null,
   error: null,
   onsuccess: null,
-  onerror: null,  readyState: 'done',
+  onerror: null,
+  readyState: 'done',
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn(),
+  dispatchEvent: vi.fn()
 };
 
 const _mockIDBDatabase = {
@@ -33,28 +34,28 @@ const _mockIDBDatabase = {
   close: vi.fn(),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn(),
+  dispatchEvent: vi.fn()
 };
 
 const mockIDBFactory = {
   open: vi.fn(() => mockIDBRequest),
   deleteDatabase: vi.fn(() => mockIDBRequest),
   databases: vi.fn(() => Promise.resolve([])),
-  cmp: vi.fn(),
+  cmp: vi.fn()
 };
 
 Object.defineProperty(window, 'indexedDB', {
   value: mockIDBFactory,
-  writable: true,
+  writable: true
 });
 
 // Mock Nuxt composables
 vi.mock('#app', () => ({
   useNuxtApp: () => ({
     $container: {
-      resolve: vi.fn(),
-    },
-  }),
+      resolve: vi.fn()
+    }
+  })
 }));
 
 // Mock the player store to prevent database initialization
@@ -69,6 +70,6 @@ vi.mock('~/stores/usePlayerStore', () => ({
     togglePlayerSelection: vi.fn(),
     selectAllPlayers: vi.fn(),
     deselectAllPlayers: vi.fn(),
-    isPlayerSelected: vi.fn(),
-  }),
+    isPlayerSelected: vi.fn()
+  })
 }));

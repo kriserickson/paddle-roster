@@ -43,9 +43,7 @@ export class PickleballMatcher {
    */
   private generateRound(roundNumber: number): { games: Game[]; resting: string[] } {
     const playersThisRound = this.selectPlayersForRound();
-    const resting = this.players
-      .filter(p => !playersThisRound.includes(p.id))
-      .map(p => p.id);
+    const resting = this.players.filter(p => !playersThisRound.includes(p.id)).map(p => p.id);
 
     const games = this.createGamesFromPlayers(playersThisRound, roundNumber);
     return { games, resting };
@@ -57,7 +55,7 @@ export class PickleballMatcher {
   private selectPlayersForRound(): string[] {
     const totalPlayers = this.players.length;
     const playersPerRound = this.options.numberOfCourts * 4;
-    
+
     if (totalPlayers <= playersPerRound) {
       return this.players.map(p => p.id);
     }
@@ -137,12 +135,7 @@ export class PickleballMatcher {
         );
 
         if (opponents.length === 2) {
-          const game = this.createGameFromPlayers(
-            [playerId, partner.id],
-            opponents,
-            roundNumber,
-            games.length + 1
-          );
+          const game = this.createGameFromPlayers([playerId, partner.id], opponents, roundNumber, games.length + 1);
 
           if (game) {
             games.push(game);
@@ -197,14 +190,14 @@ export class PickleballMatcher {
     const players = [...playerPool];
 
     // Limit combinations to avoid performance issues
-    const maxCombinations = Math.min(100, players.length * (players.length - 1) / 2);
+    const maxCombinations = Math.min(100, (players.length * (players.length - 1)) / 2);
     let count = 0;
 
     for (let i = 0; i < players.length && count < maxCombinations; i++) {
       for (let j = i + 1; j < players.length && count < maxCombinations; j++) {
         const team1 = [players[i], players[j]];
         const remaining = players.filter(p => !team1.includes(p));
-        
+
         for (let k = 0; k < remaining.length && count < maxCombinations; k++) {
           for (let l = k + 1; l < remaining.length && count < maxCombinations; l++) {
             const team2 = [remaining[k], remaining[l]];
@@ -267,7 +260,7 @@ export class PickleballMatcher {
       for (let j = i + 1; j < availablePlayers.length; j++) {
         const opponents = [availablePlayers[i], availablePlayers[j]];
         const game = this.createGameFromPlayers(team, opponents, 1, 1);
-        
+
         if (game) {
           const score = this.calculateGameScore(game);
           if (score < bestScore) {
@@ -284,12 +277,7 @@ export class PickleballMatcher {
   /**
    * Create a game from specific team assignments
    */
-  private createGameFromPlayers(
-    team1: string[],
-    team2: string[],
-    round: number,
-    court: number
-  ): Game | null {
+  private createGameFromPlayers(team1: string[], team2: string[], round: number, court: number): Game | null {
     if (team1.length !== 2 || team2.length !== 2) return null;
 
     const team1Skills = team1.map(id => this.players.find(p => p.id === id)?.skillLevel || 0);
@@ -348,7 +336,7 @@ export class PickleballMatcher {
     // Update playing players
     for (const game of games) {
       const allPlayers = [...game.team1, ...game.team2];
-      
+
       for (const playerId of allPlayers) {
         const stats = this.playerStats.get(playerId);
         if (!stats) continue;
@@ -356,9 +344,10 @@ export class PickleballMatcher {
         stats.gamesPlayed++;
 
         // Update partner counts
-        const teammates = allPlayers.filter(id => id !== playerId && 
-          (game.team1.includes(id) === game.team1.includes(playerId)));
-        
+        const teammates = allPlayers.filter(
+          id => id !== playerId && game.team1.includes(id) === game.team1.includes(playerId)
+        );
+
         for (const teammate of teammates) {
           stats.partnerCounts[teammate] = (stats.partnerCounts[teammate] || 0) + 1;
           if (!stats.partneredWith.includes(teammate)) {
@@ -367,9 +356,10 @@ export class PickleballMatcher {
         }
 
         // Update opponent counts
-        const opponents = allPlayers.filter(id => id !== playerId && 
-          (game.team1.includes(id) !== game.team1.includes(playerId)));
-        
+        const opponents = allPlayers.filter(
+          id => id !== playerId && game.team1.includes(id) !== game.team1.includes(playerId)
+        );
+
         for (const opponent of opponents) {
           stats.opponentCounts[opponent] = (stats.opponentCounts[opponent] || 0) + 1;
           if (!stats.playedAgainst.includes(opponent)) {

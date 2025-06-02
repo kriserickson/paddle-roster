@@ -71,26 +71,27 @@ function exportScheduleData(): void {
       link.download = `pickleball-schedule-${new Date().toISOString().split('T')[0]}.json`;
       link.click();
       URL.revokeObjectURL(url);
-        toast.add({
+      toast.add({
         title: 'Export Successful',
         description: 'Schedule has been downloaded as JSON.',
         color: 'success'
       });
     }
-  } catch (error) {      
-    console.error('Export failed:', error);    
+  } catch (error) {
+    console.error('Export failed:', error);
     toast.add({
-        title: 'Export Failed',
-        description: 'Failed to export schedule.',
-        color: 'error'
-      });
+      title: 'Export Failed',
+      description: 'Failed to export schedule.',
+      color: 'error'
+    });
   }
 }
 
 function performImport(): void {
   try {
     const result = gameStore.importSchedule(importData.value);
-    if (result.success) {      toast.add({
+    if (result.success) {
+      toast.add({
         title: 'Import Successful',
         description: result.message,
         color: 'success'
@@ -98,13 +99,14 @@ function performImport(): void {
       showImportModal.value = false;
       importData.value = '';
       selectedRound.value = 1;
-    } else {      toast.add({
+    } else {
+      toast.add({
         title: 'Import Failed',
         description: result.message,
         color: 'error'
       });
     }
-  } catch (error) {    
+  } catch (error) {
     console.error('Import error:', error);
     toast.add({
       title: 'Import Failed',
@@ -125,11 +127,14 @@ function clearCurrentSchedule(): void {
 }
 
 // Watch for schedule changes and reset round selection
-watch(() => gameStore.currentSchedule, (newSchedule) => {
-  if (newSchedule && selectedRound.value > newSchedule.rounds.length) {
-    selectedRound.value = 1;
+watch(
+  () => gameStore.currentSchedule,
+  newSchedule => {
+    if (newSchedule && selectedRound.value > newSchedule.rounds.length) {
+      selectedRound.value = 1;
+    }
   }
-});
+);
 </script>
 
 <template>
@@ -143,49 +148,30 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
             Game Schedule
           </h2>
           <div v-if="gameStore.currentSchedule" class="flex gap-3">
-            <UButton
-              icon="i-heroicons-arrow-down-tray"
-              class="btn-secondary"
-              @click="exportScheduleData"
-            >
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" @click="exportScheduleData">
               Export JSON
             </UButton>
-            <UButton
-              icon="i-heroicons-arrow-up-tray"
-              class="btn-secondary"
-              @click="showImportModal = true"
-            >
+            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" @click="showImportModal = true">
               Import JSON
             </UButton>
-            <UButton
-              icon="i-heroicons-trash"
-              class="btn-danger"
-              @click="clearCurrentSchedule"
-            >
-              Clear
-            </UButton>
+            <UButton icon="i-heroicons-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
           </div>
         </div>
       </div>
-    </div>    <!-- No Schedule Message -->
+    </div>
+    <!-- No Schedule Message -->
     <div v-if="!gameStore.currentSchedule" class="content-card" data-testid="no-schedule-message">
       <div class="p-16 text-center">
         <Icon name="mdi:calendar-blank" class="text-8xl text-gray-300 mb-6 mx-auto" />
         <h3 class="text-2xl font-bold text-gray-900 mb-3">No Schedule Generated</h3>
-        <p class="text-gray-600 mb-8 text-lg">
-          Go to the "Generate Games" tab to create a new schedule.
-        </p>
-        <UButton
-          to="#games"
-          class="btn-primary"
-          size="lg"
-          data-testid="generate-schedule-link"
-        >
+        <p class="text-gray-600 mb-8 text-lg">Go to the "Generate Games" tab to create a new schedule.</p>
+        <UButton to="#games" class="btn-primary" size="lg" data-testid="generate-schedule-link">
           <Icon name="mdi:cog" class="mr-2" />
           Generate Schedule
         </UButton>
       </div>
-    </div>    <!-- Schedule Display -->
+    </div>
+    <!-- Schedule Display -->
     <div v-if="gameStore.currentSchedule" class="space-y-6" data-testid="schedule-display">
       <!-- Schedule Info -->
       <div class="content-card">
@@ -213,7 +199,9 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
                 <Icon name="mdi:court-sport" class="text-3xl text-paddle-teal mb-2 mx-auto" />
-                <div class="text-2xl font-bold text-paddle-teal">{{ gameStore.currentSchedule.options.numberOfCourts }}</div>
+                <div class="text-2xl font-bold text-paddle-teal">
+                  {{ gameStore.currentSchedule.options.numberOfCourts }}
+                </div>
                 <div class="text-sm font-medium text-paddle-teal-dark">Courts Used</div>
               </div>
             </div>
@@ -251,7 +239,7 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
             Select Round
           </h3>
         </div>
-        
+
         <div class="p-6">
           <div class="flex flex-wrap gap-3">
             <UButton
@@ -265,7 +253,8 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
             </UButton>
           </div>
         </div>
-      </div>      <!-- Round Details -->
+      </div>
+      <!-- Round Details -->
       <div v-if="selectedRoundGames" class="content-card">
         <div class="content-card-header">
           <div class="flex justify-between items-center">
@@ -273,25 +262,17 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
               <Icon name="mdi:gamepad-variant" class="text-paddle-teal" />
               Round {{ selectedRound }} Games
             </h3>
-            <div class="player-skill-badge">
-              {{ selectedRoundGames.length }} Games
-            </div>
+            <div class="player-skill-badge">{{ selectedRoundGames.length }} Games</div>
           </div>
         </div>
 
         <div class="p-6">
           <!-- Games Grid -->
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            <div
-              v-for="game in selectedRoundGames"
-              :key="game.id"
-              class="game-card p-6"
-            >
+            <div v-for="game in selectedRoundGames" :key="game.id" class="game-card p-6">
               <!-- Court Header -->
               <div class="text-center mb-4">
-                <div class="court-badge text-sm">
-                  Court {{ game.court }}
-                </div>
+                <div class="court-badge text-sm">Court {{ game.court }}</div>
               </div>
 
               <!-- Team 1 -->
@@ -358,12 +339,13 @@ watch(() => gameStore.currentSchedule, (newSchedule) => {
               <!-- Skill Difference -->
               <div class="text-center">
                 <div
-class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
+                  class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
                   :class="{
                     'bg-emerald-100 text-emerald-800': game.skillDifference <= 1,
                     'bg-amber-100 text-amber-800': game.skillDifference > 1 && game.skillDifference <= 2,
                     'bg-red-100 text-red-800': game.skillDifference > 2
-                  }">
+                  }"
+                >
                   <Icon name="mdi:balance-scale" />
                   Diff: {{ game.skillDifference.toFixed(1) }}
                 </div>
@@ -389,7 +371,8 @@ class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
             </div>
           </div>
         </div>
-      </div>      <!-- All Rounds Overview -->
+      </div>
+      <!-- All Rounds Overview -->
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="text-xl font-semibold flex items-center gap-2">
@@ -461,7 +444,8 @@ class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
           </div>
         </div>
       </div>
-    </div>      <!-- Import Modal -->
+    </div>
+    <!-- Import Modal -->
     <UModal v-model:open="showImportModal" title="Import Schedule">
       <template #body>
         <div class="space-y-6">
@@ -480,19 +464,8 @@ class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
           </UFormField>
 
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton
-              variant="ghost"
-              class="btn-secondary"
-              @click="showImportModal = false"
-            >
-              Cancel
-            </UButton>
-            <UButton
-              class="btn-primary"
-              @click="performImport"
-            >
-              Import
-            </UButton>
+            <UButton variant="ghost" class="btn-secondary" @click="showImportModal = false"> Cancel </UButton>
+            <UButton class="btn-primary" @click="performImport"> Import </UButton>
           </div>
         </div>
       </template>

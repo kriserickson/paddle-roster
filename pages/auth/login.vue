@@ -22,14 +22,14 @@ async function signInWithGoogle() {
   try {
     loading.value = true;
     error.value = '';
-    
+
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: `${window.location.origin}/auth/callback`
       }
     });
-    
+
     if (authError) {
       error.value = authError.message;
     }
@@ -45,12 +45,12 @@ async function signInWithEmail(email: string, password: string) {
   try {
     loading.value = true;
     error.value = '';
-    
+
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password
     });
-    
+
     if (authError) {
       error.value = authError.message;
     } else {
@@ -68,7 +68,7 @@ async function signUpWithEmail(email: string, password: string) {
   try {
     loading.value = true;
     error.value = '';
-    
+
     const { error: authError } = await supabase.auth.signUp({
       email,
       password,
@@ -76,7 +76,7 @@ async function signUpWithEmail(email: string, password: string) {
         emailRedirectTo: `${window.location.origin}/auth/callback`
       }
     });
-    
+
     if (authError) {
       error.value = authError.message;
     } else {
@@ -110,16 +110,16 @@ function handleEmailAuth() {
     <div class="max-w-md w-full">
       <UCard class="p-8 shadow-2xl">
         <div class="text-center mb-8">
-          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16 mx-auto mb-4" >
+          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16 mx-auto mb-4" />
           <h1 class="text-3xl font-bold text-gray-900 mb-2">Paddle Roster</h1>
-            <!-- Clear Mode Indicator -->
+          <!-- Clear Mode Indicator -->
           <div class="mb-6">
             <div class="inline-flex rounded-lg border-2 border-gray-500 p-1 bg-gray-300">
               <button
                 :class="[
                   'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
-                  !isSignUp 
-                    ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform' 
+                  !isSignUp
+                    ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 ]"
                 @click="isSignUp = false"
@@ -129,8 +129,8 @@ function handleEmailAuth() {
               <button
                 :class="[
                   'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
-                  isSignUp 
-                    ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform' 
+                  isSignUp
+                    ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 ]"
                 @click="isSignUp = true"
@@ -139,17 +139,18 @@ function handleEmailAuth() {
               </button>
             </div>
           </div>
-          
+
           <p class="text-gray-600 text-lg font-medium">
             {{ isSignUp ? 'Create your new account' : 'Welcome back!' }}
           </p>
           <p class="text-gray-500 text-sm mt-1">
             {{ isSignUp ? 'Join the pickleball community' : 'Sign in to continue to your dashboard' }}
           </p>
-        </div>        <div class="space-y-8">
+        </div>
+        <div class="space-y-8">
           <!-- Google Auth (conditional) -->
           <template v-if="enableGoogleAuth">
-            <UButton 
+            <UButton
               :loading="loading"
               variant="outline"
               size="lg"
@@ -173,12 +174,11 @@ function handleEmailAuth() {
           <!-- Email Auth Form -->
           <form class="space-y-6" @submit.prevent="handleEmailAuth">
             <div class="space-y-6">
-              <UFormGroup 
-                label="Email address"
-                :description="isSignUp ? 'We\'ll send you a confirmation email' : ''"
-                class="mb-2"
-              >
-                <UInput 
+              <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700"> Email address </label>
+                <p v-if="isSignUp" class="mt-1 text-sm text-gray-500">We'll send you a confirmation email</p>
+
+                <UInput
                   v-model="email"
                   type="email"
                   placeholder="Enter your email"
@@ -187,13 +187,12 @@ function handleEmailAuth() {
                   class="w-full mb-2"
                   :ui="{ base: 'h-12' }"
                 />
-              </UFormGroup>
+              </div>
 
-              <UFormGroup 
-                label="Password"              
-                :description="isSignUp ? 'Choose a strong password (8+ characters)' : ''"
-              >
-                <UInput 
+              <div class="mb-2">
+                <label class="block text-sm font-medium text-gray-700"> Password </label>
+                <p v-if="isSignUp" class="mt-1 text-sm text-gray-500">Choose a strong password (8+ characters)</p>
+                <UInput
                   v-model="password"
                   type="password"
                   :placeholder="isSignUp ? 'Create a password' : 'Enter your password'"
@@ -202,19 +201,15 @@ function handleEmailAuth() {
                   class="w-full"
                   :ui="{ base: 'h-12' }"
                 />
-              </UFormGroup>
+              </div>
             </div>
 
-            <UButton 
-              type="submit"
-              :loading="loading"
-              size="lg"
-              class="w-full h-12 btn-primary text-base font-medium"
-            >
+            <UButton type="submit" :loading="loading" size="lg" class="w-full h-12 btn-primary text-base font-medium">
               {{ isSignUp ? 'Create Account' : 'Sign In' }}
             </UButton>
-          </form>          <!-- Error/Success Message -->          
-          <UAlert 
+          </form>
+          <!-- Error/Success Message -->
+          <UAlert
             v-if="error"
             :title="error"
             :color="error.includes('Check your email') ? 'success' : 'error'"

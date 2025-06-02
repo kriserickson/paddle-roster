@@ -37,9 +37,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
           resolve();
         };
 
-        request.onupgradeneeded = (event) => {
+        request.onupgradeneeded = event => {
           const db = (event.target as IDBOpenDBRequest).result;
-          
+
           // Create players store if it doesn't exist
           if (!db.objectStoreNames.contains(this.storeName)) {
             const store = db.createObjectStore(this.storeName, { keyPath: 'id' });

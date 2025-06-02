@@ -1,4 +1,4 @@
-export default defineNuxtRouteMiddleware((to) => {
+export default defineNuxtRouteMiddleware(to => {
   const user = useSupabaseUser();
   const { isDemo } = useMockAuth();
 

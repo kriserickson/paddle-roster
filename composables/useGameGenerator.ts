@@ -41,20 +41,18 @@ export const useGameGenerator = () => {
     try {
       isGenerating.value = true;
 
-      
       if (players.value.length < matchingOptions.value.numberOfCourts * 4) {
         throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} active players`);
       }
 
       // Create matcher instance
       const matcher = new PickleballMatcher([...players.value], matchingOptions.value);
-      
+
       // Generate schedule
       const schedule = matcher.generateSchedule(eventLabel);
-      
+
       currentSchedule.value = schedule;
       return schedule;
-
     } catch (error) {
       console.error('Error generating schedule:', error);
       throw error;
@@ -171,7 +169,7 @@ export const useGameGenerator = () => {
   const importSchedule = (scheduleJson: string): { success: boolean; message: string } => {
     try {
       const schedule = JSON.parse(scheduleJson) as GameSchedule;
-      
+
       // Basic validation
       if (!schedule.rounds || !Array.isArray(schedule.rounds)) {
         return { success: false, message: 'Invalid schedule format' };
@@ -179,7 +177,7 @@ export const useGameGenerator = () => {
 
       currentSchedule.value = schedule;
       return { success: true, message: 'Schedule imported successfully' };
-    } catch (error:unknown) {      
+    } catch (error: unknown) {
       return { success: false, message: 'Error parsing schedule JSON: ' + JSON.stringify(error) };
     }
   };
@@ -216,7 +214,7 @@ export const useGameGenerator = () => {
     matchingOptions: readonly(matchingOptions),
     isGenerating: readonly(isGenerating),
     defaultOptions,
-    
+
     // Actions
     generateSchedule,
     regenerateSchedule,
@@ -226,7 +224,7 @@ export const useGameGenerator = () => {
     exportSchedule,
     importSchedule,
     clearSchedule,
-    
+
     // Getters
     getGamesForRound,
     getRestingPlayersForRound,

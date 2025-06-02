@@ -2,9 +2,7 @@
 // SEO
 useHead({
   title: 'Getting Started - Paddle Roster',
-  meta: [
-    { name: 'description', content: 'Learn how to use Paddle Roster for managing your pickleball league' }
-  ]
+  meta: [{ name: 'description', content: 'Learn how to use Paddle Roster for managing your pickleball league' }]
 });
 
 // Navigation function
@@ -20,10 +18,10 @@ function navigateToHome(): void {
       <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
         <!-- Back Button -->
         <div class="absolute top-6 left-6">
-          <UButton 
-            icon="i-heroicons-arrow-left" 
-            variant="ghost" 
-            class="text-white hover:bg-white/20" 
+          <UButton
+            icon="i-heroicons-arrow-left"
+            variant="ghost"
+            class="text-white hover:bg-white/20"
             size="lg"
             @click="navigateToHome"
           />
@@ -48,7 +46,8 @@ function navigateToHome(): void {
               <h2 class="text-2xl font-bold text-gray-900">Follow these steps to manage your pickleball league</h2>
             </div>
             <p class="text-gray-600 max-w-2xl mx-auto">
-              Paddle Roster makes it easy to organize players, generate balanced games, and create professional schedules for your recreational pickleball league.
+              Paddle Roster makes it easy to organize players, generate balanced games, and create professional
+              schedules for your recreational pickleball league.
             </p>
           </div>
 
@@ -62,7 +61,8 @@ function navigateToHome(): void {
               <div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Add Players</h3>
                 <p class="text-gray-600 mb-3">
-                  Go to the <strong>Players</strong> tab to add players with their skill levels (1.0-5.0) and optional partner preferences.
+                  Go to the <strong>Players</strong> tab to add players with their skill levels (1.0-5.0) and optional
+                  partner preferences.
                 </p>
                 <ul class="text-sm text-gray-500 list-disc list-inside space-y-1">
                   <li>Click "Add Player" to create new player profiles</li>
@@ -81,7 +81,8 @@ function navigateToHome(): void {
               <div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">Configure Games</h3>
                 <p class="text-gray-600 mb-3">
-                  Use <strong>Generate Games</strong> to select players, set number of courts, and configure matching preferences.
+                  Use <strong>Generate Games</strong> to select players, set number of courts, and configure matching
+                  preferences.
                 </p>
                 <ul class="text-sm text-gray-500 list-disc list-inside space-y-1">
                   <li>Select which players will participate in the session</li>
@@ -100,7 +101,8 @@ function navigateToHome(): void {
               <div>
                 <h3 class="text-xl font-semibold text-gray-900 mb-2">View Schedule</h3>
                 <p class="text-gray-600 mb-3">
-                  Check the <strong>Schedule</strong> tab to see generated games, court assignments, and resting players.
+                  Check the <strong>Schedule</strong> tab to see generated games, court assignments, and resting
+                  players.
                 </p>
                 <ul class="text-sm text-gray-500 list-disc list-inside space-y-1">
                   <li>View games organized by rounds and courts</li>
@@ -161,17 +163,8 @@ function navigateToHome(): void {
 
           <!-- Action Buttons -->
           <div class="mt-8 flex justify-center gap-4">
-            <UButton 
-              class="btn-primary" 
-              icon="i-heroicons-arrow-left"
-              @click="navigateToHome"
-            >
-              Back to App
-            </UButton>            <UButton 
-              class="btn-secondary" 
-              icon="i-heroicons-users"
-              @click="navigateTo('/?tab=players')"
-            >
+            <UButton class="btn-primary" icon="i-heroicons-arrow-left" @click="navigateToHome"> Back to App </UButton>
+            <UButton class="btn-secondary" icon="i-heroicons-users" @click="navigateTo('/?tab=players')">
               Start with Players
             </UButton>
           </div>

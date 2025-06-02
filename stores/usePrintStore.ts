@@ -25,9 +25,9 @@ export const usePrintStore = defineStore('print', () => {
 
   /**
    * Actions
-   */  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
+   */ function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
     const { getPlayer } = usePlayerManager();
-    
+
     function playerName(id: string): string {
       return getPlayer(id)?.name || 'Unknown Player';
     }
@@ -171,7 +171,7 @@ export const usePrintStore = defineStore('print', () => {
     if (options.eventSubtitle) {
       html += `<h2>${options.eventSubtitle}</h2>`;
     }
-    
+
     // Event info
     if (options.eventDate || options.location || options.organizer) {
       html += '<div class="event-info">';
@@ -190,7 +190,7 @@ export const usePrintStore = defineStore('print', () => {
 
     // Generate schedule grid
     html += '<table class="schedule-grid">';
-    
+
     // Header row
     html += '<thead><tr><th>Round</th>';
     if (options.includeCourtAssignments) {
@@ -209,14 +209,14 @@ export const usePrintStore = defineStore('print', () => {
     for (let roundIndex = 0; roundIndex < schedule.rounds.length; roundIndex++) {
       const round = schedule.rounds[roundIndex];
       const restingPlayers = schedule.restingPlayers[roundIndex];
-      
+
       html += `<tr><td class="round-header">Round ${roundIndex + 1}</td>`;
-      
+
       if (options.includeCourtAssignments) {
         // Games for each court
         for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
           const game = round.find(g => g.court === court);
-          
+
           html += '<td class="game-cell">';
           if (game) {
             html += generateGameHTML(game, playerName, formatSkillLevel, options);
@@ -232,7 +232,7 @@ export const usePrintStore = defineStore('print', () => {
         });
         html += '</td>';
       }
-      
+
       // Resting players
       if (options.includeRestPeriods) {
         html += '<td class="game-cell">';
@@ -244,7 +244,7 @@ export const usePrintStore = defineStore('print', () => {
         }
         html += '</td>';
       }
-      
+
       html += '</tr>';
     }
 
@@ -266,33 +266,34 @@ export const usePrintStore = defineStore('print', () => {
   }
 
   function generateGameHTML(
-    game: Game, 
-    playerName: (id: string) => string, 
-    formatSkillLevel: (level: number) => string, 
+    game: Game,
+    playerName: (id: string) => string,
+    formatSkillLevel: (level: number) => string,
     options: PrintOptions
   ): string {
     const team1Player1 = playerName(game.team1[0]);
     const team1Player2 = playerName(game.team1[1]);
     const team2Player1 = playerName(game.team2[0]);
     const team2Player2 = playerName(game.team2[1]);
-    
+
     let html = `<div class="team team1">${team1Player1}<br>${team1Player2}</div>`;
     html += '<div class="vs">vs</div>';
     html += `<div class="team team2">${team2Player1}<br>${team2Player2}</div>`;
-    
+
     if (options.includeStats) {
       html += `<div class="skill-diff">Diff: ${formatSkillLevel(game.skillDifference)}</div>`;
     }
-    
+
     return html;
   }
 
   function generateStatsSection(schedule: GameSchedule): string {
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
     const allGames = schedule.rounds.flat();
-    const avgSkillDiff = allGames.length > 0 
-      ? (allGames.reduce((sum, game) => sum + game.skillDifference, 0) / allGames.length).toFixed(2)
-      : '0';
+    const avgSkillDiff =
+      allGames.length > 0
+        ? (allGames.reduce((sum, game) => sum + game.skillDifference, 0) / allGames.length).toFixed(2)
+        : '0';
 
     return `
     <div style="margin-top: 20px; font-size: 10px; border-top: 1px solid #ccc; padding-top: 10px;">
@@ -309,13 +310,13 @@ export const usePrintStore = defineStore('print', () => {
   function printSchedule(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
-    
+
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(html);
       printWindow.document.close();
-      
+
       // Wait for content to load, then print
       printWindow.onload = () => {
         setTimeout(() => {
@@ -338,7 +339,7 @@ export const usePrintStore = defineStore('print', () => {
   function downloadScheduleHTML(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
-    
+
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -360,7 +361,7 @@ export const usePrintStore = defineStore('print', () => {
     // State
     printOptions: readonly(printOptions),
     defaultPrintOptions,
-    
+
     // Actions
     printSchedule,
     downloadScheduleHTML,

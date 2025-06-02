@@ -37,10 +37,12 @@ function getPlayerGameCount(playerId: string): number {
   let count = 0;
   props.schedule.rounds.forEach(round => {
     round.forEach(game => {
-      if (game.team1[0] === playerId || 
-          game.team1[1] === playerId || 
-          game.team2[0] === playerId || 
-          game.team2[1] === playerId) {
+      if (
+        game.team1[0] === playerId ||
+        game.team1[1] === playerId ||
+        game.team2[0] === playerId ||
+        game.team2[1] === playerId
+      ) {
         count++;
       }
     });
@@ -88,22 +90,15 @@ const getAllPlayers = computed(() => {
         <div v-if="props.options.eventDate" class="event-date">
           Date: {{ new Date(props.options.eventDate).toLocaleDateString() }}
         </div>
-        <div v-if="props.options.location" class="event-location">
-          Location: {{ props.options.location }}
-        </div>
-        <div v-if="props.options.organizer" class="event-organizer">
-          Organizer: {{ props.options.organizer }}
-        </div>
+        <div v-if="props.options.location" class="event-location">Location: {{ props.options.location }}</div>
+        <div v-if="props.options.organizer" class="event-organizer">Organizer: {{ props.options.organizer }}</div>
       </div>
-    </div>    <!-- Player List -->
+    </div>
+    <!-- Player List -->
     <div v-if="props.options.includePlayerList" class="section">
       <h2>Players</h2>
       <div class="player-list">
-        <div
-          v-for="player in getAllPlayers"
-          :key="player.id"
-          class="player-item"
-        >
+        <div v-for="player in getAllPlayers" :key="player.id" class="player-item">
           {{ player.name }} ({{ formatSkillLevel(player.skillLevel) }})
         </div>
       </div>
@@ -111,39 +106,31 @@ const getAllPlayers = computed(() => {
 
     <!-- Rounds -->
     <div class="rounds-section">
-      <div
-        v-for="(round, roundIndex) in props.schedule.rounds"
-        :key="roundIndex"
-        class="round-section"
-      >
+      <div v-for="(round, roundIndex) in props.schedule.rounds" :key="roundIndex" class="round-section">
         <h2>Round {{ roundIndex + 1 }}</h2>
-        
+
         <!-- Games -->
         <div class="games-grid">
-          <div
-            v-for="game in round"
-            :key="`${roundIndex}-${game.court}`"
-            class="game-card"
-          >
+          <div v-for="game in round" :key="`${roundIndex}-${game.court}`" class="game-card">
             <div class="court-header">
-              <span v-if="props.options.includeCourtAssignments">
-                Court {{ game.court }}
-              </span>
+              <span v-if="props.options.includeCourtAssignments"> Court {{ game.court }} </span>
             </div>
             <div class="teams">
               <div class="team">
                 <span class="team-label">Team 1:</span>
-                {{ getPlayerName(game.team1[0]) }} & {{ getPlayerName(game.team1[1]) }}                <div class="skill-levels">
-                  ({{ formatSkillLevel(getPlayer(game.team1[0])?.skillLevel || 0) }}, 
-                   {{ formatSkillLevel(getPlayer(game.team1[1])?.skillLevel || 0) }})
+                {{ getPlayerName(game.team1[0]) }} & {{ getPlayerName(game.team1[1]) }}
+                <div class="skill-levels">
+                  ({{ formatSkillLevel(getPlayer(game.team1[0])?.skillLevel || 0) }},
+                  {{ formatSkillLevel(getPlayer(game.team1[1])?.skillLevel || 0) }})
                 </div>
               </div>
               <div class="vs">vs</div>
               <div class="team">
                 <span class="team-label">Team 2:</span>
-                {{ getPlayerName(game.team2[0]) }} & {{ getPlayerName(game.team2[1]) }}                <div class="skill-levels">
-                  ({{ formatSkillLevel(getPlayer(game.team2[0])?.skillLevel || 0) }}, 
-                   {{ formatSkillLevel(getPlayer(game.team2[1])?.skillLevel || 0) }})
+                {{ getPlayerName(game.team2[0]) }} & {{ getPlayerName(game.team2[1]) }}
+                <div class="skill-levels">
+                  ({{ formatSkillLevel(getPlayer(game.team2[0])?.skillLevel || 0) }},
+                  {{ formatSkillLevel(getPlayer(game.team2[1])?.skillLevel || 0) }})
                 </div>
               </div>
             </div>
@@ -151,15 +138,12 @@ const getAllPlayers = computed(() => {
         </div>
 
         <!-- Rest Period Info -->
-        <div 
+        <div
           v-if="props.options.includeRestPeriods && getPlayersRestingInRound(roundIndex).length > 0"
           class="rest-info"
         >
           <strong>Resting this round:</strong>
-          <span
-            v-for="(playerId, index) in getPlayersRestingInRound(roundIndex)"
-            :key="playerId"
-          >
+          <span v-for="(playerId, index) in getPlayersRestingInRound(roundIndex)" :key="playerId">
             {{ getPlayerName(playerId) }}{{ index < getPlayersRestingInRound(roundIndex).length - 1 ? ', ' : '' }}
           </span>
         </div>
@@ -179,10 +163,7 @@ const getAllPlayers = computed(() => {
           </tr>
         </thead>
         <tbody>
-          <tr
-            v-for="player in getAllPlayers"
-            :key="player.id"
-          >
+          <tr v-for="player in getAllPlayers" :key="player.id">
             <td>{{ player.name }}</td>
             <td>{{ formatSkillLevel(player.skillLevel) }}</td>
             <td>{{ getPlayerGameCount(player.id) }}</td>
@@ -194,9 +175,7 @@ const getAllPlayers = computed(() => {
 
     <!-- Footer -->
     <div class="footer">
-      <p class="generated-info">
-        Schedule generated on {{ getCurrentDate() }}
-      </p>
+      <p class="generated-info">Schedule generated on {{ getCurrentDate() }}</p>
     </div>
   </div>
 </template>
@@ -381,11 +360,11 @@ const getAllPlayers = computed(() => {
   .print-preview-safe {
     padding: 0;
   }
-  
+
   .round-section {
     page-break-inside: avoid;
   }
-  
+
   .game-card {
     break-inside: avoid;
   }

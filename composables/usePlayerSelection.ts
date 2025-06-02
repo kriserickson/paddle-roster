@@ -5,7 +5,7 @@ import type { Player } from '~/types';
  */
 export const usePlayerSelection = () => {
   const { players } = usePlayerManager();
-  
+
   /**
    * Set of selected player IDs
    */
@@ -14,9 +14,7 @@ export const usePlayerSelection = () => {
   /**
    * Computed property for selected players
    */
-  const selectedPlayers = computed(() => 
-    players.value.filter(p => selectedPlayerIds.value.has(p.id))
-  );
+  const selectedPlayers = computed(() => players.value.filter(p => selectedPlayerIds.value.has(p.id)));
 
   /**
    * Toggle player selection

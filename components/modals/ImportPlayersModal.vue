@@ -44,23 +44,19 @@ function handleCancel(): void {
           <Icon name="mdi:upload" class="text-paddle-teal text-xl" />
           <p class="text-sm text-gray-600">Paste JSON data to import players.</p>
         </div>
-        
+
         <UFormField label="JSON Data">
           <UTextarea
-            v-model="importDataModel" 
-            :rows="10" 
-            placeholder="Paste JSON data here..." 
-            class="form-input font-mono text-sm" 
+            v-model="importDataModel"
+            :rows="10"
+            placeholder="Paste JSON data here..."
+            class="form-input font-mono text-sm"
           />
         </UFormField>
-        
+
         <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-          <UButton variant="ghost" class="btn-secondary" @click="handleCancel">
-            Cancel
-          </UButton>
-          <UButton class="btn-primary" @click="handleImport">
-            Import
-          </UButton>
+          <UButton variant="ghost" class="btn-secondary" @click="handleCancel"> Cancel </UButton>
+          <UButton class="btn-primary" @click="handleImport"> Import </UButton>
         </div>
       </div>
     </template>

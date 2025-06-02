@@ -2,13 +2,13 @@
 import type { MatchingOptions, Player } from '~/types';
 
 const { players, canGenerateGames: _canGenerateGames } = usePlayerManager();
-const { 
-  selectedPlayers: selectedPlayersFromSelection, 
-  togglePlayerSelection, 
-  selectAllPlayers, 
-  deselectAllPlayers, 
+const {
+  selectedPlayers: selectedPlayersFromSelection,
+  togglePlayerSelection,
+  selectAllPlayers,
+  deselectAllPlayers,
   isPlayerSelected,
-  getPlayer 
+  getPlayer
 } = usePlayerSelection();
 const gameStore = useGameStore();
 
@@ -23,9 +23,13 @@ const playerSearchQuery = ref('');
 const skillLevelFilter = ref('all');
 
 // Watch for changes and update the game generator
-watch(matchingOptions, (newOptions) => {
-  gameStore.updateOptions(newOptions);
-}, { deep: true });
+watch(
+  matchingOptions,
+  newOptions => {
+    gameStore.updateOptions(newOptions);
+  },
+  { deep: true }
+);
 
 // Filter options
 const skillLevelFilterOptions = [
@@ -44,9 +48,7 @@ const filteredPlayers = computed(() => {
   // Apply search filter
   if (playerSearchQuery.value) {
     const query = playerSearchQuery.value.toLowerCase();
-    filtered = filtered.filter(player => 
-      player.name.toLowerCase().includes(query)
-    );
+    filtered = filtered.filter(player => player.name.toLowerCase().includes(query));
   }
 
   // Apply skill level filter
@@ -110,7 +112,7 @@ function deselectFilteredPlayers(): void {
 
 function clearAllFilters(): void {
   playerSearchQuery.value = '';
-  skillLevelFilter.value = 'all';  
+  skillLevelFilter.value = 'all';
 }
 
 function formatDateTime(date: Date): string {
@@ -182,12 +184,11 @@ onMounted(() => {
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            Game Generation
-          </h2>
+          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">Game Generation</h2>
           <div class="flex gap-3">
             <UButton
-              :disabled="!canGenerate || gameStore.isGenerating"              :loading="gameStore.isGenerating"
+              :disabled="!canGenerate || gameStore.isGenerating"
+              :loading="gameStore.isGenerating"
               size="lg"
               class="btn-primary"
               data-testid="generate-games-button"
@@ -212,10 +213,7 @@ onMounted(() => {
     </div>
 
     <!-- Validation Messages -->
-    <div
-      v-if="validationErrors.length > 0"
-      class="alert-error p-4 rounded-xl flex items-start gap-3"
-    >
+    <div v-if="validationErrors.length > 0" class="alert-error p-4 rounded-xl flex items-start gap-3">
       <Icon name="mdi:alert-circle" class="text-xl text-paddle-red mt-1" />
       <div>
         <p class="font-semibold">Cannot Generate Games</p>
@@ -246,45 +244,23 @@ onMounted(() => {
 
           <!-- Number of Courts -->
           <UFormField label="Number of Courts" help="How many courts are available for games">
-            <USlider
-              v-model="matchingOptions.numberOfCourts"
-              :min="1"
-              :max="5"
-              :step="1"
-              class="mb-3"
-            />
+            <USlider v-model="matchingOptions.numberOfCourts" :min="1" :max="5" :step="1" class="mb-3" />
             <div class="text-center">
-              <span class="player-skill-badge">
-                {{ matchingOptions.numberOfCourts }} courts
-              </span>
+              <span class="player-skill-badge"> {{ matchingOptions.numberOfCourts }} courts </span>
             </div>
           </UFormField>
 
           <!-- Number of Rounds -->
           <UFormField label="Number of Rounds" help="How many rounds to generate (typically 7-9)">
-            <USlider
-              v-model="matchingOptions.numberOfRounds"
-              :min="1"
-              :max="15"
-              :step="1"
-              class="mb-3"
-            />
+            <USlider v-model="matchingOptions.numberOfRounds" :min="1" :max="15" :step="1" class="mb-3" />
             <div class="text-center">
-              <span class="player-skill-badge">
-                {{ matchingOptions.numberOfRounds }} rounds
-              </span>
+              <span class="player-skill-badge"> {{ matchingOptions.numberOfRounds }} rounds </span>
             </div>
           </UFormField>
 
           <!-- Max Skill Difference -->
           <UFormField label="Maximum Skill Difference" help="Maximum allowed skill difference between teams">
-            <USlider
-              v-model="matchingOptions.maxSkillDifference"
-              :min="0.5"
-              :max="4.0"
-              :step="0.25"
-              class="mb-3"
-            />
+            <USlider v-model="matchingOptions.maxSkillDifference" :min="0.5" :max="4.0" :step="0.25" class="mb-3" />
             <div class="text-center">
               <span class="player-skill-badge">
                 {{ matchingOptions.maxSkillDifference }}
@@ -304,10 +280,7 @@ onMounted(() => {
         </div>
 
         <div class="p-6 space-y-6">
-          <UFormField 
-            label="Balance Skill Levels"
-            help="Attempt to create balanced teams by skill level"
-          >
+          <UFormField label="Balance Skill Levels" help="Attempt to create balanced teams by skill level">
             <USwitch
               v-model="matchingOptions.balanceSkillLevels"
               :label="matchingOptions.balanceSkillLevels ? 'Enabled' : 'Disabled'"
@@ -315,7 +288,7 @@ onMounted(() => {
             />
           </UFormField>
 
-          <UFormField 
+          <UFormField
             label="Respect Partner Preferences"
             help="Try to pair players with their preferred partners in at least one game"
           >
@@ -326,10 +299,7 @@ onMounted(() => {
             />
           </UFormField>
 
-          <UFormField 
-            label="Distribute Rest Equally"
-            help="Ensure all players get equal rest periods"
-          >
+          <UFormField label="Distribute Rest Equally" help="Ensure all players get equal rest periods">
             <USwitch
               v-model="matchingOptions.distributeRestEqually"
               :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'"
@@ -339,17 +309,15 @@ onMounted(() => {
 
           <!-- Reset Options -->
           <div class="pt-6 border-t border-gray-200">
-            <UButton
-              class="btn-secondary w-full"
-              @click="resetToDefaults"
-            >
+            <UButton class="btn-secondary w-full" @click="resetToDefaults">
               <Icon name="mdi:refresh" class="mr-2" />
               Reset to Defaults
             </UButton>
           </div>
         </div>
       </div>
-    </div>    <!-- Player Selection Interface -->
+    </div>
+    <!-- Player Selection Interface -->
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
@@ -358,20 +326,8 @@ onMounted(() => {
             Player Selection
           </h3>
           <div class="flex gap-2">
-            <UButton 
-              variant="ghost" 
-              size="sm" 
-              class="btn-secondary"
-              @click="selectAllPlayers()"
-            >
-              Select All
-            </UButton>
-            <UButton 
-              variant="ghost" 
-              size="sm" 
-              class="btn-secondary"
-              @click="deselectAllPlayers()"
-            >
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="selectAllPlayers()"> Select All </UButton>
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="deselectAllPlayers()">
               Deselect All
             </UButton>
           </div>
@@ -396,14 +352,9 @@ onMounted(() => {
           <!-- Skill Level Filter -->
           <div>
             <UFormField label="Skill Level">
-              <USelect
-                v-model="skillLevelFilter"
-                :items="skillLevelFilterOptions"
-                class="form-input"
-              />
+              <USelect v-model="skillLevelFilter" :items="skillLevelFilterOptions" class="form-input" />
             </UFormField>
           </div>
-          
         </div>
 
         <!-- Filter Actions -->
@@ -411,43 +362,39 @@ onMounted(() => {
           <div class="flex items-center gap-2 text-sm text-gray-600">
             <Icon name="mdi:information" class="text-paddle-teal" />
             <span>
-              Showing {{ filteredPlayers.length }} of {{ players.length }} players.
-              You need at least {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).
+              Showing {{ filteredPlayers.length }} of {{ players.length }} players. You need at least
+              {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).
             </span>
           </div>
-          
+
           <div class="flex gap-2">
-            <UButton 
-              variant="ghost" 
-              size="sm" 
+            <UButton
+              variant="ghost"
+              size="sm"
               :disabled="filteredPlayers.length === 0"
               class="btn-secondary"
               @click="selectFilteredPlayers()"
             >
               Add Filtered
             </UButton>
-            <UButton 
-              variant="ghost" 
-              size="sm" 
+            <UButton
+              variant="ghost"
+              size="sm"
               :disabled="filteredPlayers.length === 0"
               class="btn-secondary"
               @click="deselectFilteredPlayers()"
             >
               Remove Filtered
             </UButton>
-            <UButton 
-              variant="ghost" 
-              size="sm" 
-              class="btn-secondary"
-              @click="clearAllFilters()"
-            >
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="clearAllFilters()">
               Clear Filters
             </UButton>
           </div>
         </div>
-        
+
         <div v-if="players.length === 0" class="text-center py-8 text-gray-500">
-          <Icon name="mdi:account-plus" class="text-4xl text-gray-300 mb-3 mx-auto" />          <p class="text-lg mb-2">No players available</p>
+          <Icon name="mdi:account-plus" class="text-4xl text-gray-300 mb-3 mx-auto" />
+          <p class="text-lg mb-2">No players available</p>
           <p class="text-sm">Add some players first in the Players tab.</p>
         </div>
 
@@ -463,20 +410,22 @@ onMounted(() => {
             :key="player.id"
             :class="[
               'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
-              isPlayerSelected(player.id) 
-                ? 'border-paddle-teal bg-paddle-teal/5' 
+              isPlayerSelected(player.id)
+                ? 'border-paddle-teal bg-paddle-teal/5'
                 : 'border-gray-200 hover:border-paddle-teal/50'
             ]"
             @click="togglePlayerSelection(player.id)"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <UCheckbox 
+                <UCheckbox
                   :checked="isPlayerSelected(player.id)"
                   class="pointer-events-none"
                   @change="togglePlayerSelection(player.id)"
                 />
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
+                >
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <span class="text-sm font-medium">{{ player.name }}</span>
@@ -492,9 +441,11 @@ onMounted(() => {
           </div>
         </div>
       </div>
-    </div><!-- Player Summary -->
+    </div>
+    <!-- Player Summary -->
     <div class="content-card">
-      <div class="content-card-header">        <h3 class="text-xl font-semibold flex items-center gap-2">
+      <div class="content-card-header">
+        <h3 class="text-xl font-semibold flex items-center gap-2">
           <Icon name="mdi:account-group" class="text-paddle-teal" />
           Selected Players Summary
         </h3>
@@ -502,12 +453,13 @@ onMounted(() => {
 
       <div class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div class="content-card overflow-hidden">            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
               <Icon name="mdi:account-multiple" class="text-3xl text-blue-600 mb-2 mx-auto" />
               <div class="text-2xl font-bold text-blue-700">{{ selectedPlayers.length }}</div>
               <div class="text-sm font-medium text-blue-600">Selected Players</div>
             </div>
-          </div>          
+          </div>
           <div class="content-card overflow-hidden">
             <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
               <Icon name="mdi:account-convert" class="text-3xl text-paddle-teal mb-2 mx-auto" />
@@ -529,16 +481,15 @@ onMounted(() => {
               <div class="text-sm font-medium text-purple-600">Avg Skill Level</div>
             </div>
           </div>
-        </div>        <!-- Player List -->
+        </div>
+        <!-- Player List -->
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-          <div
-            v-for="player in selectedPlayers"
-            :key="player.id"
-            class="player-card p-3"
-          >
+          <div v-for="player in selectedPlayers" :key="player.id" class="player-card p-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                <div
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
+                >
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <span class="text-sm font-medium">{{ player.name }}</span>
@@ -548,7 +499,8 @@ onMounted(() => {
               </div>
             </div>
           </div>
-        </div>        <div v-if="selectedPlayers.length === 0" class="text-center py-12 text-gray-500">
+        </div>
+        <div v-if="selectedPlayers.length === 0" class="text-center py-12 text-gray-500">
           <Icon name="mdi:account-off" class="text-6xl text-gray-300 mb-4 mx-auto" />
           <p class="text-lg">No selected players found</p>
           <p class="text-sm">Select some players first to generate games.</p>
@@ -561,11 +513,12 @@ onMounted(() => {
       <div class="p-12 text-center">
         <Icon name="mdi:cog" class="text-6xl text-paddle-teal animate-spin mb-6 mx-auto" />
         <h3 class="text-2xl font-bold mb-3 text-gray-900">Generating Schedule...</h3>
-        <p class="text-gray-600 text-lg">
-          Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds
-        </p>
+        <p class="text-gray-600 text-lg">Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds</p>
         <div class="mt-6 max-w-md mx-auto bg-gray-200 rounded-full h-2">
-          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse" style="width: 60%"/>
+          <div
+            class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse"
+            style="width: 60%"
+          />
         </div>
       </div>
     </div>

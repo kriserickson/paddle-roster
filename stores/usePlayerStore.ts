@@ -4,7 +4,6 @@ import { container } from 'tsyringe';
 import { TOKENS, type IPlayerApi } from '~/types/api';
 import type { Player } from '~/types';
 
-
 export const usePlayerStore = defineStore('player', () => {
   // Get API instance from DI container
   const playerApi = container.resolve<IPlayerApi>(TOKENS.PlayerApi);
@@ -22,10 +21,8 @@ export const usePlayerStore = defineStore('player', () => {
   /**
    * Getters: Computed properties
    */
-  const selectedPlayers = computed(() => 
-    players.value.filter(p => selectedPlayerIds.value.has(p.id))
-  );
-  
+  const selectedPlayers = computed(() => players.value.filter(p => selectedPlayerIds.value.has(p.id)));
+
   function getPlayer(id: string): Player | undefined {
     return players.value.find(p => p.id === id);
   }
@@ -123,7 +120,7 @@ export const usePlayerStore = defineStore('player', () => {
         players.value.push(result.data);
         return result.data;
       }
-      
+
       throw new Error(result.message || 'Failed to add player');
     } catch (error) {
       console.error('Error adding player:', error);
@@ -147,7 +144,7 @@ export const usePlayerStore = defineStore('player', () => {
       }
 
       const result = await playerApi.updatePlayer(id, updates);
-      
+
       if (result.success && result.data) {
         const index = players.value.findIndex(p => p.id === id);
         if (index !== -1) {
@@ -197,7 +194,7 @@ export const usePlayerStore = defineStore('player', () => {
   async function clearAllPlayers(): Promise<boolean> {
     try {
       const result = await playerApi.clearAllPlayers();
-      
+
       if (result.success) {
         players.value = [];
         return true;
@@ -214,26 +211,22 @@ export const usePlayerStore = defineStore('player', () => {
    */
   async function importPlayers(playersData: Player[]): Promise<{ success: boolean; message: string }> {
     try {
-
-      const validPlayers = playersData.filter(p => 
-        p.name && 
-        typeof p.skillLevel === 'number' && 
-        p.skillLevel >= 1 && 
-        p.skillLevel <= 5
+      const validPlayers = playersData.filter(
+        p => p.name && typeof p.skillLevel === 'number' && p.skillLevel >= 1 && p.skillLevel <= 5
       );
 
       const result = await playerApi.importPlayers(validPlayers);
       if (result.success && result.data) {
         // Assuming importPlayers from API returns the full list or successfully imported ones
         // For simplicity, let's reload all players after import, or merge carefully
-        await loadPlayers(); 
+        await loadPlayers();
         return { success: true, message: `Imported ${result.data.length} players.` };
       }
       return { success: false, message: result.message || 'Failed to import players' };
     } catch (error) {
       console.error('Error importing players:', error);
-      return { 
-        success: false, 
+      return {
+        success: false,
         message: 'Error importing players: ' + (error instanceof Error ? error.message : 'Unknown error')
       };
     }
@@ -251,7 +244,7 @@ export const usePlayerStore = defineStore('player', () => {
     players,
     selectedPlayerIds,
     // Option 2 (Safer for consumers): Expose a readonly computed property
-    // allPlayers: computed(() => players.value), 
+    // allPlayers: computed(() => players.value),
     // And keep the internal 'players' ref for modifications within actions.
     // If choosing Option 2, components would use 'store.allPlayers'.
     // For this fix, let's try Option 1 first to directly address the error.
@@ -261,13 +254,13 @@ export const usePlayerStore = defineStore('player', () => {
     getPlayer,
     getAvailablePartners,
     canGenerateGames,
-    
+
     // Selection management
     togglePlayerSelection,
     selectAllPlayers,
     deselectAllPlayers,
     isPlayerSelected,
-    
+
     // Actions
     initializeStore,
     loadPlayers,

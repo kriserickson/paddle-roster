@@ -1,12 +1,12 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: [
-    "./components/**/*.{js,vue,ts}",
-    "./layouts/**/*.vue",
-    "./pages/**/*.vue",
-    "./plugins/**/*.{js,ts}",
-    "./app.vue",
-    "./error.vue"
+    './components/**/*.{js,vue,ts}',
+    './layouts/**/*.vue',
+    './pages/**/*.vue',
+    './plugins/**/*.{js,ts}',
+    './app.vue',
+    './error.vue'
   ],
   theme: {
     extend: {
@@ -24,7 +24,7 @@ export default {
           600: '#0891b2',
           700: '#0e7490',
           800: '#155e75',
-          900: '#164e63',
+          900: '#164e63'
         },
         'paddle-red': {
           DEFAULT: '#ff272b',
@@ -39,10 +39,10 @@ export default {
           600: '#dc2626',
           700: '#b91c1c',
           800: '#991b1b',
-          900: '#7f1d1d',
+          900: '#7f1d1d'
         }
       }
-    },
+    }
   },
-  plugins: [],
+  plugins: []
 };

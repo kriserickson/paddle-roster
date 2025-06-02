@@ -168,7 +168,7 @@ export const usePrintManager = () => {
 
     // Generate schedule grid
     html += '<table class="schedule-grid">';
-    
+
     // Header row
     html += '<thead><tr><th>Round</th>';
     for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
@@ -183,31 +183,31 @@ export const usePrintManager = () => {
     for (let roundIndex = 0; roundIndex < schedule.rounds.length; roundIndex++) {
       const round = schedule.rounds[roundIndex];
       const restingPlayers = schedule.restingPlayers[roundIndex];
-      
+
       html += `<tr><td class="round-header">Round ${roundIndex + 1}</td>`;
-      
+
       // Games for each court
       for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
         const game = round.find(g => g.court === court);
-        
+
         html += '<td class="game-cell">';
         if (game) {
           const team1Player1 = playerName(game.team1[0]);
           const team1Player2 = playerName(game.team1[1]);
           const team2Player1 = playerName(game.team2[0]);
           const team2Player2 = playerName(game.team2[1]);
-          
+
           html += `<div class="team team1">${team1Player1}<br>${team1Player2}</div>`;
           html += '<div class="vs">vs</div>';
           html += `<div class="team team2">${team2Player1}<br>${team2Player2}</div>`;
-          
+
           if (options.includeStats) {
             html += `<div class="skill-diff">Diff: ${formatSkillLevel(game.skillDifference)}</div>`;
           }
         }
         html += '</td>';
       }
-      
+
       // Resting players
       if (options.includeRestPeriods) {
         html += '<td class="game-cell">';
@@ -219,7 +219,7 @@ export const usePrintManager = () => {
         }
         html += '</td>';
       }
-      
+
       html += '</tr>';
     }
 
@@ -246,9 +246,10 @@ export const usePrintManager = () => {
   const generateStatsSection = (schedule: GameSchedule): string => {
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
     const allGames = schedule.rounds.flat();
-    const avgSkillDiff = allGames.length > 0 
-      ? (allGames.reduce((sum, game) => sum + game.skillDifference, 0) / allGames.length).toFixed(2)
-      : '0';
+    const avgSkillDiff =
+      allGames.length > 0
+        ? (allGames.reduce((sum, game) => sum + game.skillDifference, 0) / allGames.length).toFixed(2)
+        : '0';
 
     return `
     <div style="margin-top: 20px; font-size: 10px; border-top: 1px solid #ccc; padding-top: 10px;">
@@ -268,13 +269,13 @@ export const usePrintManager = () => {
   const printSchedule = (schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void => {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
-    
+
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(html);
       printWindow.document.close();
-      
+
       // Wait for content to load, then print
       printWindow.onload = () => {
         setTimeout(() => {
@@ -300,7 +301,7 @@ export const usePrintManager = () => {
   const downloadScheduleHTML = (schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void => {
     const options = { ...printOptions.value, ...customOptions };
     const html = generatePrintHTML(schedule, options);
-    
+
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -327,7 +328,7 @@ export const usePrintManager = () => {
   return {
     printOptions: readonly(printOptions),
     defaultPrintOptions,
-    
+
     // Actions
     printSchedule,
     downloadScheduleHTML,

@@ -33,7 +33,7 @@ async function generatePreview(): Promise<void> {
 
   try {
     previewGenerated.value = true;
-    
+
     // Scroll to preview
     await nextTick();
     if (printPreviewRef.value) {
@@ -70,7 +70,7 @@ async function downloadPdf(): Promise<void> {
   if (!previewGenerated.value) {
     await generatePreview();
   }
-  
+
   // Open print dialog which allows saving as PDF
   await print();
 }
@@ -96,14 +96,18 @@ function exportHtml(): void {
 }
 
 // Auto-update preview when options change
-watch(printOptions, () => {
-  if (previewGenerated.value && gameSchedule.value) {
-    generatePreview();
-  }
-}, { deep: true });
+watch(
+  printOptions,
+  () => {
+    if (previewGenerated.value && gameSchedule.value) {
+      generatePreview();
+    }
+  },
+  { deep: true }
+);
 
 // Watch for schedule changes
-watch(gameSchedule, (newSchedule) => {
+watch(gameSchedule, newSchedule => {
   if (newSchedule && previewGenerated.value) {
     generatePreview();
   }
@@ -125,35 +129,19 @@ watch(gameSchedule, (newSchedule) => {
         <!-- Header Configuration -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <UFormField label="Event Name">
-            <UInput
-              v-model="printOptions.eventTitle"
-              placeholder="Pickleball League"
-              class="form-input"
-            />
+            <UInput v-model="printOptions.eventTitle" placeholder="Pickleball League" class="form-input" />
           </UFormField>
 
           <UFormField label="Event Date">
-            <UInput
-              v-model="printOptions.eventDate"
-              type="date"
-              class="form-input"
-            />
+            <UInput v-model="printOptions.eventDate" type="date" class="form-input" />
           </UFormField>
 
           <UFormField label="Location">
-            <UInput
-              v-model="printOptions.location"
-              placeholder="Community Center"
-              class="form-input"
-            />
+            <UInput v-model="printOptions.location" placeholder="Community Center" class="form-input" />
           </UFormField>
 
           <UFormField label="Organizer">
-            <UInput
-              v-model="printOptions.organizer"
-              placeholder="League Coordinator"
-              class="form-input"
-            />
+            <UInput v-model="printOptions.organizer" placeholder="League Coordinator" class="form-input" />
           </UFormField>
         </div>
 
@@ -161,16 +149,8 @@ watch(gameSchedule, (newSchedule) => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <UFormField label="Include Options">
             <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-              <UCheckbox
-                v-model="printOptions.includePlayerList"
-                label="Player List"
-                class="text-blue-800"
-              />
-              <UCheckbox
-                v-model="printOptions.includeStats"
-                label="Game Statistics"
-                class="text-blue-800"
-              />
+              <UCheckbox v-model="printOptions.includePlayerList" label="Player List" class="text-blue-800" />
+              <UCheckbox v-model="printOptions.includeStats" label="Game Statistics" class="text-blue-800" />
               <UCheckbox
                 v-model="printOptions.includeRestPeriods"
                 label="Rest Period Information"
@@ -194,11 +174,7 @@ watch(gameSchedule, (newSchedule) => {
                 ]"
                 class="text-paddle-teal-dark"
               />
-              <UCheckbox
-                v-model="printOptions.compactLayout"
-                label="Compact Layout"
-                class="text-paddle-teal-dark"
-              />
+              <UCheckbox v-model="printOptions.compactLayout" label="Compact Layout" class="text-paddle-teal-dark" />
             </div>
           </UFormField>
         </div>
@@ -216,12 +192,7 @@ watch(gameSchedule, (newSchedule) => {
             Generate Preview
           </UButton>
 
-          <UButton
-            :disabled="!gameSchedule"
-            icon="i-heroicons-printer"
-            class="btn-secondary"
-            @click="print"
-          >
+          <UButton :disabled="!gameSchedule" icon="i-heroicons-printer" class="btn-secondary" @click="print">
             <Icon name="mdi:printer" class="mr-2" />
             Print
           </UButton>
@@ -254,16 +225,8 @@ watch(gameSchedule, (newSchedule) => {
       <div class="text-center py-12">
         <UIcon name="i-heroicons-document-text" class="text-6xl text-gray-300 mb-4" />
         <h3 class="text-xl font-medium text-gray-900 mb-2">No Schedule Available</h3>
-        <p class="text-gray-600 mb-6">
-          Generate a schedule first to enable printing options.
-        </p>
-        <UButton
-          to="#games"
-          color="primary"
-          icon="i-heroicons-cog-6-tooth"
-        >
-          Generate Schedule
-        </UButton>
+        <p class="text-gray-600 mb-6">Generate a schedule first to enable printing options.</p>
+        <UButton to="#games" color="primary" icon="i-heroicons-cog-6-tooth"> Generate Schedule </UButton>
       </div>
     </UCard>
 
@@ -273,24 +236,14 @@ watch(gameSchedule, (newSchedule) => {
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-semibold">Print Preview</h3>
           <div class="flex gap-2">
-            <UButton
-              size="sm"
-              icon="i-heroicons-printer"
-              @click="print"
-            >
-              Print
-            </UButton>
-            <UButton
-              size="sm"
-              variant="outline"
-              icon="i-heroicons-document-arrow-down"
-              @click="downloadPdf"
-            >
+            <UButton size="sm" icon="i-heroicons-printer" @click="print"> Print </UButton>
+            <UButton size="sm" variant="outline" icon="i-heroicons-document-arrow-down" @click="downloadPdf">
               Save PDF
             </UButton>
           </div>
         </div>
-      </template>      <PrintPreview
+      </template>
+      <PrintPreview
         ref="printPreviewRef"
         :schedule="gameSchedule"
         :options="printOptions"

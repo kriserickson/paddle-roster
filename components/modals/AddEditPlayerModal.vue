@@ -90,10 +90,21 @@ function onSkillLevelInput(event: Event): void {
           <Icon :name="editingPlayer ? 'mdi:account-edit' : 'mdi:account-plus'" class="text-paddle-teal text-xl" />
           <p class="text-sm text-gray-600">Fill in the details below to add or edit a player.</p>
         </div>
-          <UForm :schema="playerSchema" :state="localPlayerForm" class="space-y-6" data-testid="player-form" @submit="handleSave">
+        <UForm
+          :schema="playerSchema"
+          :state="localPlayerForm"
+          class="space-y-6"
+          data-testid="player-form"
+          @submit="handleSave"
+        >
           <UFormField label="Name" name="name" required>
-            <UInput v-model="localPlayerForm.name" placeholder="Enter player name" class="form-input w-full" data-testid="player-name-input" />
-          </UFormField>           
+            <UInput
+              v-model="localPlayerForm.name"
+              placeholder="Enter player name"
+              class="form-input w-full"
+              data-testid="player-name-input"
+            />
+          </UFormField>
           <UFormField label="Skill Level" name="skillLevel" required>
             <UInput
               v-model="localPlayerForm.skillLevel"
@@ -110,18 +121,18 @@ function onSkillLevelInput(event: Event): void {
                 Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
               </span>
             </template>
-          </UFormField>            
+          </UFormField>
           <UFormField label="Partner" name="partnerId">
             <USelect
-              v-model="localPlayerForm.partnerId" 
-              :items="partnerOptions" 
-              placeholder="Select a partner (optional)" 
-              class="form-input w-full" 
-              data-testid="player-partner-select" 
+              v-model="localPlayerForm.partnerId"
+              :items="partnerOptions"
+              placeholder="Select a partner (optional)"
+              class="form-input w-full"
+              data-testid="player-partner-select"
             />
           </UFormField>
         </UForm>
-        
+
         <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
           <UButton variant="ghost" class="btn-secondary" data-testid="cancel-player-button" @click="handleCancel">
             Cancel

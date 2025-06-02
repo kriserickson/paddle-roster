@@ -77,16 +77,12 @@ const filteredPlayers = computed(() => {
   }
 
   const query = searchQuery.value.toLowerCase();
-  return players.value.filter((player: Player) =>
-    player.name.toLowerCase().includes(query)
-  ).slice();
+  return players.value.filter((player: Player) => player.name.toLowerCase().includes(query)).slice();
 });
 
 const partnerOptions = computed(() => {
   const currentPlayerId = editingPlayer.value?.id;
-  const availablePartners = currentPlayerId
-    ? getAvailablePartners(currentPlayerId)
-    : players.value;
+  const availablePartners = currentPlayerId ? getAvailablePartners(currentPlayerId) : players.value;
 
   return [
     { label: 'No Partner', value: 'none' },
@@ -114,7 +110,6 @@ function handleAddPlayer(): void {
   };
   showAddPlayer.value = true;
 }
-
 
 function editPlayer(player: Player): void {
   editingPlayer.value = player;
@@ -190,11 +185,8 @@ async function savePlayer(): Promise<void> {
         });
       }
     } else {
-      const newPlayer = await addPlayer(
-        playerForm.value.name,
-        playerForm.value.skillLevel,
-        partnerIdToSave
-      ); if (newPlayer) {
+      const newPlayer = await addPlayer(playerForm.value.name, playerForm.value.skillLevel, partnerIdToSave);
+      if (newPlayer) {
         // Update partner relationship for new player
         if (partnerIdToSave) {
           await updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
@@ -285,9 +277,7 @@ function handleExportPlayers(): void {
       color: 'error'
     });
   }
-};
-
-
+}
 </script>
 
 <template>
@@ -301,22 +291,35 @@ function handleExportPlayers(): void {
             Player Management
           </h2>
           <div class="flex gap-3">
-            <UButton icon="i-heroicons-plus" class="btn-primary" data-testid="add-player-button"
-              @click="handleAddPlayer">
+            <UButton
+              icon="i-heroicons-plus"
+              class="btn-primary"
+              data-testid="add-player-button"
+              @click="handleAddPlayer"
+            >
               Add Player
             </UButton>
-            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button"
-              @click="showImportModal = true">
+            <UButton
+              icon="i-heroicons-arrow-up-tray"
+              class="btn-secondary"
+              data-testid="import-players-button"
+              @click="showImportModal = true"
+            >
               Import
             </UButton>
-            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button"
-              @click="handleExportPlayers">
+            <UButton
+              icon="i-heroicons-arrow-down-tray"
+              class="btn-secondary"
+              data-testid="export-players-button"
+              @click="handleExportPlayers"
+            >
               Export
             </UButton>
           </div>
         </div>
       </div>
-    </div> <!-- Players Summary -->
+    </div>
+    <!-- Players Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="content-card overflow-hidden">
         <ClientOnly>
@@ -368,7 +371,8 @@ function handleExportPlayers(): void {
           </template>
         </ClientOnly>
       </div>
-    </div> <!-- Players Table -->
+    </div>
+    <!-- Players Table -->
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
@@ -377,19 +381,25 @@ function handleExportPlayers(): void {
             Players List
           </h3>
           <div class="flex items-center gap-3">
-            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
-              class="w-64 form-input" data-testid="player-search-input" />
+            <UInput
+              v-model="searchQuery"
+              icon="i-heroicons-magnifying-glass"
+              placeholder="Search players..."
+              class="w-64 form-input"
+              data-testid="player-search-input"
+            />
           </div>
         </div>
       </div>
 
       <div class="p-6">
         <ClientOnly>
-          <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table"> <template
-              #name-cell="{ row }">
+          <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table">
+            <template #name-cell="{ row }">
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm"
+                >
                   {{ row.original.name.charAt(0).toUpperCase() }}
                 </div>
                 <div>
@@ -412,12 +422,27 @@ function handleExportPlayers(): void {
                 </span>
               </div>
               <span v-else class="text-sm text-gray-400 italic">None</span>
-            </template> <template #actions-cell="{ row }">
+            </template>
+            <template #actions-cell="{ row }">
               <div class="flex gap-2 button-container">
-                <UButton icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm"
-                  class="hover:bg-paddle-teal/10" data-testid="edit-player-button" @click="editPlayer(row.original)" />
-                <UButton icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg-paddle-red/10"
-                  data-testid="delete-player-button" @click="confirmDelete(row.original)" />
+                <UButton
+                  icon="i-heroicons-pencil"
+                  variant="ghost"
+                  color="primary"
+                  size="sm"
+                  class="hover:bg-paddle-teal/10"
+                  data-testid="edit-player-button"
+                  @click="editPlayer(row.original)"
+                />
+                <UButton
+                  icon="i-heroicons-trash"
+                  variant="ghost"
+                  color="error"
+                  size="sm"
+                  class="hover:bg-paddle-red/10"
+                  data-testid="delete-player-button"
+                  @click="confirmDelete(row.original)"
+                />
               </div>
             </template>
           </UTable>
@@ -432,15 +457,19 @@ function handleExportPlayers(): void {
     </div>
     <!-- Modals -->
     <ClientOnly>
-      <AddEditPlayerModal v-model:open="showAddPlayer" v-model:player-form="playerForm" :editing-player="editingPlayer"
-        :partner-options="partnerOptions" @save="savePlayer" @cancel="cancelPlayerForm" />
+      <AddEditPlayerModal
+        v-model:open="showAddPlayer"
+        v-model:player-form="playerForm"
+        :editing-player="editingPlayer"
+        :partner-options="partnerOptions"
+        @save="savePlayer"
+        @cancel="cancelPlayerForm"
+      />
       <ImportPlayersModal v-model:open="showImportModal" v-model:import-data="importData" @import="performImport" />
 
       <DeletePlayerModal v-model:open="showDeleteConfirm" :player-to-delete="playerToDelete" @delete="deletePlayer" />
     </ClientOnly>
   </div>
-
-
 </template>
 
 <style scoped>
@@ -460,7 +489,6 @@ function handleExportPlayers(): void {
 
 /* Print-specific overrides */
 @media print {
-
   .content-card,
   .player-skill-badge,
   .btn-primary,
