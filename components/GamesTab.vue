@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MatchingOptions, Player } from '~/types';
 
-const { players, canGenerateGames } = usePlayerManager();
+const { players, canGenerateGames: _canGenerateGames } = usePlayerManager();
 const { 
   selectedPlayers: selectedPlayersFromSelection, 
   togglePlayerSelection, 
@@ -21,33 +21,18 @@ const matchingOptions = ref<MatchingOptions>({ ...gameStore.matchingOptions });
 // Player filtering state
 const playerSearchQuery = ref('');
 const skillLevelFilter = ref('all');
-const partnerFilter = ref('all');
 
 // Watch for changes and update the game generator
 watch(matchingOptions, (newOptions) => {
   gameStore.updateOptions(newOptions);
 }, { deep: true });
 
-// Court options
-const courtOptions = [
-  { label: '1 Court', value: 1 },
-  { label: '2 Courts', value: 2 },
-  { label: '3 Courts', value: 3 },
-  { label: '4 Courts', value: 4 }
-];
-
 // Filter options
 const skillLevelFilterOptions = [
   { label: 'All Skill Levels', value: 'all' },
-  { label: 'Beginner (1.0-2.0)', value: 'beginner' },
-  { label: 'Intermediate (2.1-3.5)', value: 'intermediate' },
+  { label: 'Beginner (1.0-2.75)', value: 'beginner' },
+  { label: 'Intermediate (3-3.5)', value: 'intermediate' },
   { label: 'Advanced (3.6-5.0)', value: 'advanced' }
-];
-
-const partnerFilterOptions = [
-  { label: 'All Players', value: 'all' },
-  { label: 'With Partner', value: 'with' },
-  { label: 'Without Partner', value: 'without' }
 ];
 
 // Computed properties
@@ -78,14 +63,6 @@ const filteredPlayers = computed(() => {
         default:
           return true;
       }
-    });
-  }
-
-  // Apply partner filter
-  if (partnerFilter.value !== 'all') {
-    filtered = filtered.filter(player => {
-      const hasPartner = !!player.partnerId;
-      return partnerFilter.value === 'with' ? hasPartner : !hasPartner;
     });
   }
 
@@ -133,8 +110,7 @@ function deselectFilteredPlayers(): void {
 
 function clearAllFilters(): void {
   playerSearchQuery.value = '';
-  skillLevelFilter.value = 'all';
-  partnerFilter.value = 'all';
+  skillLevelFilter.value = 'all';  
 }
 
 function formatDateTime(date: Date): string {
@@ -207,7 +183,6 @@ onMounted(() => {
       <div class="content-card-header">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
-            <Icon name="mdi:tennis" class="text-paddle-teal text-3xl" />
             Game Generation
           </h2>
           <div class="flex gap-3">
@@ -265,19 +240,24 @@ onMounted(() => {
             <UInput
               v-model="eventLabel"
               placeholder="e.g., John Henry Secondary School Tuesday May 9th"
-              class="form-input"
+              class="form-input w-full"
             />
           </UFormField>
 
           <!-- Number of Courts -->
           <UFormField label="Number of Courts" help="How many courts are available for games">
-            <USelect
+            <USlider
               v-model="matchingOptions.numberOfCourts"
-              :options="courtOptions"
-              option-attribute="label"
-              value-attribute="value"
-              class="form-input"
+              :min="1"
+              :max="5"
+              :step="1"
+              class="mb-3"
             />
+            <div class="text-center">
+              <span class="player-skill-badge">
+                {{ matchingOptions.numberOfCourts }} courts
+              </span>
+            </div>
           </UFormField>
 
           <!-- Number of Rounds -->
@@ -402,13 +382,13 @@ onMounted(() => {
         <!-- Filter Controls -->
         <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
           <!-- Search -->
-          <div class="md:col-span-2">
+          <div class="md:col-span-3">
             <UFormField label="Search Players">
               <UInput
                 v-model="playerSearchQuery"
                 icon="i-heroicons-magnifying-glass"
                 placeholder="Search by name..."
-                class="form-input"
+                class="form-input w-full"
               />
             </UFormField>
           </div>
@@ -418,26 +398,12 @@ onMounted(() => {
             <UFormField label="Skill Level">
               <USelect
                 v-model="skillLevelFilter"
-                :options="skillLevelFilterOptions"
-                option-attribute="label"
-                value-attribute="value"
+                :items="skillLevelFilterOptions"
                 class="form-input"
               />
             </UFormField>
           </div>
-
-          <!-- Partner Filter -->
-          <div>
-            <UFormField label="Partner Status">
-              <USelect
-                v-model="partnerFilter"
-                :options="partnerFilterOptions"
-                option-attribute="label"
-                value-attribute="value"
-                class="form-input"
-              />
-            </UFormField>
-          </div>
+          
         </div>
 
         <!-- Filter Actions -->
@@ -458,7 +424,7 @@ onMounted(() => {
               class="btn-secondary"
               @click="selectFilteredPlayers()"
             >
-              Select Filtered
+              Add Filtered
             </UButton>
             <UButton 
               variant="ghost" 
@@ -467,7 +433,7 @@ onMounted(() => {
               class="btn-secondary"
               @click="deselectFilteredPlayers()"
             >
-              Deselect Filtered
+              Remove Filtered
             </UButton>
             <UButton 
               variant="ghost" 
@@ -541,10 +507,10 @@ onMounted(() => {
               <div class="text-2xl font-bold text-blue-700">{{ selectedPlayers.length }}</div>
               <div class="text-sm font-medium text-blue-600">Selected Players</div>
             </div>
-          </div>
+          </div>          
           <div class="content-card overflow-hidden">
             <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
-              <Icon name="mdi:court-sport" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+              <Icon name="mdi:account-convert" class="text-3xl text-paddle-teal mb-2 mx-auto" />
               <div class="text-2xl font-bold text-paddle-teal">{{ playersPerRound }}</div>
               <div class="text-sm font-medium text-paddle-teal-dark">Players per Round</div>
             </div>

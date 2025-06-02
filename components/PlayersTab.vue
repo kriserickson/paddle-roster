@@ -1,18 +1,20 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui';
-import { z } from 'zod';
 import type { Player } from '~/types';
+import AddEditPlayerModal from '~/components/modals/AddEditPlayerModal.vue';
+import ImportPlayersModal from '~/components/modals/ImportPlayersModal.vue';
+import DeletePlayerModal from '~/components/modals/DeletePlayerModal.vue';
 
-const { 
-  players, 
-  loading, 
-  error,
+const {
+  players,
+  loading: _loading,
+  error: _error,
   addPlayer,
   updatePlayer,
   removePlayer,
   getPlayer,
   getAvailablePartners,
-  clearAllPlayers,
+  clearAllPlayers: _clearAllPlayers,
   importPlayers,
   exportPlayers
 } = usePlayerManager();
@@ -34,14 +36,6 @@ const playerForm = ref({
   skillLevel: 3.0,
   partnerId: 'none'
 });
-
-// Validation schema
-const playerSchema = z.object({
-  name: z.string().min(1, 'Name is required'),
-  skillLevel: z.number().min(1).max(5),
-  partnerId: z.string().optional()
-});
-
 
 const columns: TableColumn<Player>[] = [
   {
@@ -111,13 +105,24 @@ function getPlayerName(playerId: string): string {
   return player ? player.name : 'Unknown';
 }
 
+function handleAddPlayer(): void {
+  editingPlayer.value = null;
+  playerForm.value = {
+    name: '',
+    skillLevel: 3.0,
+    partnerId: 'none'
+  };
+  showAddPlayer.value = true;
+}
+
+
 function editPlayer(player: Player): void {
   editingPlayer.value = player;
-    // Check if the player's current partner is still available
+  // Check if the player's current partner is still available
   const currentPartnerId = player.partnerId;
   const availablePartners = getAvailablePartners(player.id);
   const isPartnerAvailable = currentPartnerId && availablePartners.some((p: Player) => p.id === currentPartnerId);
-  
+
   playerForm.value = {
     name: player.name,
     skillLevel: player.skillLevel,
@@ -133,14 +138,14 @@ function confirmDelete(player: Player): void {
 
 async function deletePlayer(): Promise<void> {
   console.log('deletePlayer called with:', playerToDelete.value); // Debug log
-  
+
   if (playerToDelete.value) {
     console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
-    
+
     const success = await removePlayer(playerToDelete.value.id);
-    
+
     console.log('Remove result:', success); // Debug log
-    
+
     if (success) {
       toast.add({
         title: 'Player deleted',
@@ -159,7 +164,8 @@ async function deletePlayer(): Promise<void> {
   playerToDelete.value = null;
 }
 
-async function savePlayer(): Promise<void> {  try {
+async function savePlayer(): Promise<void> {
+  try {
     const partnerIdToSave = playerForm.value.partnerId === 'none' ? undefined : playerForm.value.partnerId;
     if (editingPlayer.value) {
       const success = await updatePlayer(editingPlayer.value.id, {
@@ -188,7 +194,7 @@ async function savePlayer(): Promise<void> {  try {
         playerForm.value.name,
         playerForm.value.skillLevel,
         partnerIdToSave
-      );      if (newPlayer) {
+      ); if (newPlayer) {
         // Update partner relationship for new player
         if (partnerIdToSave) {
           await updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
@@ -294,19 +300,23 @@ function handleExportPlayers(): void {
             <Icon name="mdi:account-multiple" class="text-paddle-teal text-3xl" />
             Player Management
           </h2>
-          <div class="flex gap-3">            <UButton icon="i-heroicons-plus" class="btn-primary" data-testid="add-player-button" @click="showAddPlayer = true">
+          <div class="flex gap-3">
+            <UButton icon="i-heroicons-plus" class="btn-primary" data-testid="add-player-button"
+              @click="handleAddPlayer">
               Add Player
             </UButton>
-            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button" @click="showImportModal = true">
+            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button"
+              @click="showImportModal = true">
               Import
             </UButton>
-            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button" @click="handleExportPlayers">
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button"
+              @click="handleExportPlayers">
               Export
             </UButton>
           </div>
         </div>
       </div>
-    </div>    <!-- Players Summary -->
+    </div> <!-- Players Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="content-card overflow-hidden">
         <ClientOnly>
@@ -324,7 +334,7 @@ function handleExportPlayers(): void {
           </template>
         </ClientOnly>
       </div>
-      
+
       <div class="content-card overflow-hidden">
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
@@ -341,7 +351,7 @@ function handleExportPlayers(): void {
           </template>
         </ClientOnly>
       </div>
-      
+
       <div class="content-card overflow-hidden">
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
@@ -358,15 +368,16 @@ function handleExportPlayers(): void {
           </template>
         </ClientOnly>
       </div>
-    </div>    <!-- Players Table -->
+    </div> <!-- Players Table -->
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
           <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
             <Icon name="mdi:format-list-bulleted" class="text-paddle-teal" />
             Players List
-          </h3>          <div class="flex items-center gap-3">            <UInput
-v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
+          </h3>
+          <div class="flex items-center gap-3">
+            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
               class="w-64 form-input" data-testid="player-search-input" />
           </div>
         </div>
@@ -374,9 +385,11 @@ v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search pl
 
       <div class="p-6">
         <ClientOnly>
-          <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table">            <template #name-cell="{ row }">
+          <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table"> <template
+              #name-cell="{ row }">
               <div class="flex items-center gap-3">
-                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
+                <div
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
                   {{ row.original.name.charAt(0).toUpperCase() }}
                 </div>
                 <div>
@@ -399,13 +412,11 @@ v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search pl
                 </span>
               </div>
               <span v-else class="text-sm text-gray-400 italic">None</span>
-            </template>            <template #actions-cell="{ row }">
+            </template> <template #actions-cell="{ row }">
               <div class="flex gap-2 button-container">
-                <UButton
-icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm" class="hover:bg-paddle-teal/10" 
-                  data-testid="edit-player-button" @click="editPlayer(row.original)" />
-                <UButton
-icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg-paddle-red/10"
+                <UButton icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm"
+                  class="hover:bg-paddle-teal/10" data-testid="edit-player-button" @click="editPlayer(row.original)" />
+                <UButton icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg-paddle-red/10"
                   data-testid="delete-player-button" @click="confirmDelete(row.original)" />
               </div>
             </template>
@@ -418,97 +429,18 @@ icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg
           </template>
         </ClientOnly>
       </div>
-    </div>    <!-- Add/Edit Player Modal -->
-    <UModal v-model:open="showAddPlayer" :title="editingPlayer ? 'Edit Player' : 'Add New Player'">
-      <template #body>
-        <div class="space-y-6">
-          <div class="flex items-center gap-2 mb-4">
-            <Icon :name="editingPlayer ? 'mdi:account-edit' : 'mdi:account-plus'" class="text-paddle-teal text-xl" />
-            <p class="text-sm text-gray-600">Fill in the details below to add or edit a player.</p>
-          </div>
-          
-          <UForm :schema="playerSchema" :state="playerForm" class="space-y-6" data-testid="player-form" @submit="savePlayer">
-            <UFormField label="Name" name="name" required>
-              <UInput v-model="playerForm.name" placeholder="Enter player name" class="form-input" data-testid="player-name-input" />
-            </UFormField>            <UFormField label="Skill Level" name="skillLevel" required>
-              <UInput
-v-model.number="playerForm.skillLevel" type="number" min="1" max="5"
-                placeholder="1.0 - 5.0" class="form-input" data-testid="player-skill-level-input" />
-              <template #help>
-                <span class="text-sm text-gray-600">
-                  Skill level from 1.0 (beginner) to 5.0 (advanced). Decimals allowed (e.g., 3.25)
-                </span>
-              </template>
-            </UFormField>            <UFormField label="Partner" name="partnerId">
-              <USelect
-v-model="playerForm.partnerId" :items="partnerOptions" placeholder="Select a partner (optional)" 
-                class="form-input" data-testid="player-partner-select" />
-            </UFormField>
-          </UForm>
-          
-          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" class="btn-secondary" data-testid="cancel-player-button" @click="cancelPlayerForm">
-              Cancel
-            </UButton>
-            <UButton type="submit" class="btn-primary" data-testid="save-player-button" @click="savePlayer">
-              {{ editingPlayer ? 'Update' : 'Add' }} Player
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>    <!-- Import Modal -->
-    <UModal v-model:open="showImportModal" title="Import Players">
-      <template #body>
-        <div class="space-y-6">
-          <div class="flex items-center gap-2 mb-4">
-            <Icon name="mdi:upload" class="text-paddle-teal text-xl" />
-            <p class="text-sm text-gray-600">Paste JSON data to import players.</p>
-          </div>
-          
-          <UFormField label="JSON Data">
-            <UTextarea
-v-model="importData" :rows="10" placeholder="Paste JSON data here..." 
-              class="form-input font-mono text-sm" />
-          </UFormField>
-          
-          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" class="btn-secondary" @click="showImportModal = false">
-              Cancel
-            </UButton>
-            <UButton class="btn-primary" @click="performImport">
-              Import
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>    <!-- Delete Confirmation Modal -->
-    <UModal v-model:open="showDeleteConfirm" title="Confirm Delete">
-      <template #body>
-        <div class="space-y-6">
-          <div class="flex items-center gap-2 mb-4">
-            <Icon name="mdi:delete-alert" class="text-paddle-red text-xl" />
-            <p class="text-sm text-gray-600">Are you sure you want to delete this player?</p>
-          </div>
-          
-          <div class="bg-red-50 border-l-4 border-paddle-red p-4 rounded">
-            <p class="text-gray-900">Are you sure you want to delete <strong class="text-paddle-red">{{ playerToDelete?.name }}</strong>?</p>
-            <p class="text-sm text-gray-600 mt-2">This action cannot be undone.</p>
-          </div>
+    </div>
+    <!-- Modals -->
+    <ClientOnly>
+      <AddEditPlayerModal v-model:open="showAddPlayer" v-model:player-form="playerForm" :editing-player="editingPlayer"
+        :partner-options="partnerOptions" @save="savePlayer" @cancel="cancelPlayerForm" />
+      <ImportPlayersModal v-model:open="showImportModal" v-model:import-data="importData" @import="performImport" />
 
-          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" class="btn-secondary" @click="showDeleteConfirm = false">
-              Cancel
-            </UButton>
-            <UButton class="btn-danger" @click="deletePlayer">
-              Delete Player
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
+      <DeletePlayerModal v-model:open="showDeleteConfirm" :player-to-delete="playerToDelete" @delete="deletePlayer" />
+    </ClientOnly>
   </div>
-  
-  
+
+
 </template>
 
 <style scoped>
@@ -528,6 +460,7 @@ v-model="importData" :rows="10" placeholder="Paste JSON data here..."
 
 /* Print-specific overrides */
 @media print {
+
   .content-card,
   .player-skill-badge,
   .btn-primary,
@@ -538,7 +471,7 @@ v-model="importData" :rows="10" placeholder="Paste JSON data here..."
     box-shadow: none !important;
     border: 1px solid #000 !important;
   }
-  
+
   .content-card-header {
     background: white !important;
     border-bottom: 2px solid #000 !important;

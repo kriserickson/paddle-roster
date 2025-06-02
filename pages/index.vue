@@ -33,14 +33,20 @@ const tabs = [
 ];
 
 // Active tab state
+const route = useRoute();
 const activeTab = ref('players');
 
-// Modal state
-const showHelp = ref(false);
+// Initialize tab from URL parameter
+onMounted(() => {
+  const tabParam = route.query.tab as string;
+  if (tabParam && tabs.some(tab => tab.key === tabParam)) {
+    activeTab.value = tabParam;
+  }
+});
 
 // Methods
-function openHelp() {
-  showHelp.value = true;
+function openHelp(): void {
+  navigateTo('/help');
 }
 
 function openSettings() {
@@ -180,62 +186,9 @@ const userDisplayName = computed(() => {
           <PlayersTab v-if="activeTab === 'players'" />
           <GamesTab v-else-if="activeTab === 'games'" />
           <ScheduleTab v-else-if="activeTab === 'schedule'" />
-          <PrintTab v-else-if="activeTab === 'print'" />
-        </div>
+          <PrintTab v-else-if="activeTab === 'print'" />        </div>
       </div>
     </UContainer>
-
-    <!-- Help Modal -->
-    <UModal v-model:open="showHelp" title="Getting Started Guide">
-      <template #body>
-        <div class="space-y-6">
-          <div class="flex items-center gap-2 mb-4">
-            <Icon name="mdi:information" class="text-paddle-teal text-xl" />
-            <p class="text-sm text-gray-600">Follow these steps to manage your pickleball league</p>
-          </div>
-
-          <div class="space-y-4">
-            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-paddle-teal/10 to-paddle-teal/5 rounded-lg">
-              <Icon name="mdi:numeric-1-circle" class="text-paddle-teal text-xl mt-1" />
-              <div>
-                <h3 class="font-semibold text-gray-900 mb-1">Add Players</h3>
-                <p class="text-sm text-gray-600">Go to the <strong>Players</strong> tab to add players with their skill levels (1.0-5.0) and optional partner preferences.</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-blue-50 to-blue-25 rounded-lg">
-              <Icon name="mdi:numeric-2-circle" class="text-blue-600 text-xl mt-1" />
-              <div>
-                <h3 class="font-semibold text-gray-900 mb-1">Configure Games</h3>
-                <p class="text-sm text-gray-600">Use <strong>Generate Games</strong> to select players, set number of courts, and configure matching preferences.</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-amber-50 to-amber-25 rounded-lg">
-              <Icon name="mdi:numeric-3-circle" class="text-amber-600 text-xl mt-1" />
-              <div>
-                <h3 class="font-semibold text-gray-900 mb-1">View Schedule</h3>
-                <p class="text-sm text-gray-600">Check the <strong>Schedule</strong> tab to see generated games, court assignments, and resting players.</p>
-              </div>
-            </div>
-
-            <div class="flex items-start gap-3 p-4 bg-gradient-to-r from-purple-50 to-purple-25 rounded-lg">
-              <Icon name="mdi:numeric-4-circle" class="text-purple-600 text-xl mt-1" />
-              <div>
-                <h3 class="font-semibold text-gray-900 mb-1">Print Schedule</h3>
-                <p class="text-sm text-gray-600">Use the <strong>Print</strong> tab to create professional printouts for your league.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex justify-end pt-4 border-t border-gray-200">
-            <UButton class="btn-primary" @click="showHelp = false">
-              Got it!
-            </UButton>
-          </div>
-        </div>
-      </template>
-    </UModal>
   </div>
 </template>
 

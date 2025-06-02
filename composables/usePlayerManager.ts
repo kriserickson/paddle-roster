@@ -195,11 +195,10 @@ export const usePlayerManager = () => {
     }
     
     return { valid: true };
-  }
-  /**
+  }  /**
    * Import players from JSON data
    */
-  async function importPlayers(playersData: any[]): Promise<{ success: boolean; message: string }> {
+  async function importPlayers(playersData: unknown[]): Promise<{ success: boolean; message: string }> {
     try {
       loading.value = true;
       error.value = null;
@@ -208,7 +207,11 @@ export const usePlayerManager = () => {
         return { success: false, message: 'Invalid data format' };
       }
 
-      const validPlayers = playersData.filter(p => 
+      const validPlayers = playersData.filter((p): p is Player => 
+        typeof p === 'object' && 
+        p !== null &&
+        'name' in p &&
+        'skillLevel' in p &&
         typeof p.name === 'string' && 
         typeof p.skillLevel === 'number' && 
         p.skillLevel >= 1 && 

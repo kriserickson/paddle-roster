@@ -116,24 +116,24 @@ function handleEmailAuth() {
           <div class="mb-6">
             <div class="inline-flex rounded-lg border-2 border-gray-500 p-1 bg-gray-300">
               <button
-                @click="isSignUp = false"
                 :class="[
                   'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
                   !isSignUp 
                     ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 ]"
+                @click="isSignUp = false"
               >
                 Sign In
               </button>
               <button
-                @click="isSignUp = true"
                 :class="[
                   'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
                   isSignUp 
                     ? 'bg-white text-paddle-teal shadow-lg border-2 border-paddle-teal scale-105 transform' 
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
                 ]"
+                @click="isSignUp = true"
               >
                 Sign Up
               </button>
@@ -150,12 +150,12 @@ function handleEmailAuth() {
           <!-- Google Auth (conditional) -->
           <template v-if="enableGoogleAuth">
             <UButton 
-              @click="signInWithGoogle"
               :loading="loading"
               variant="outline"
               size="lg"
               class="w-full h-12"
               icon="i-logos-google-icon"
+              @click="signInWithGoogle"
             >
               {{ isSignUp ? 'Sign up with Google' : 'Continue with Google' }}
             </UButton>
@@ -171,7 +171,7 @@ function handleEmailAuth() {
           </template>
 
           <!-- Email Auth Form -->
-          <form @submit.prevent="handleEmailAuth" class="space-y-6">
+          <form class="space-y-6" @submit.prevent="handleEmailAuth">
             <div class="space-y-6">
               <UFormGroup 
                 label="Email address"
