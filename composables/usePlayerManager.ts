@@ -1,220 +1,308 @@
+import { container } from 'tsyringe';
 import type { Player } from '~/types';
+import type { IPlayerApi } from '~/types/api';
+import { TOKENS } from '~/types/api';
 
 /**
- * Composable for managing player data with local storage persistence
+ * Composable for managing player data with dependency injection
  */
 export const usePlayerManager = () => {
-  const STORAGE_KEY = 'pickleball-players';
+  const playerApi = container.resolve<IPlayerApi>(TOKENS.PlayerApi);
+  const user = useSupabaseUser();
+  
+  // Check if we're in demo mode - this is now only for UI purposes
+  const config = useRuntimeConfig();
+  const isDemo = computed(() => {
+    return !config.public.supabase?.url || 
+           !config.public.supabase?.key ||
+           config.public.supabase.url === 'https://your-project.supabase.co' ||
+           config.public.supabase.url.includes('placeholder');
+  });
 
   /**
    * Reactive list of all players
    */
   const players = ref<Player[]>([]);
+  
   /**
-   * Load players from local storage
+   * Loading state
    */
-  function loadPlayers(): void {
-    if (import.meta.client) {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        if (stored) {
-          players.value = JSON.parse(stored);
-        }
-      } catch (error) {
-        console.error('Error loading players from localStorage:', error);
+  const loading = ref(false);
+  
+  /**
+   * Error state
+   */
+  const error = ref<string | null>(null);
+  /**
+   * Load players from the API
+   */
+  async function loadPlayers(): Promise<void> {
+    try {
+      loading.value = true;
+      error.value = null;
+      
+      const result = await playerApi.getPlayers();
+      if (!result.success) {
+        error.value = result.error || result.message;
         players.value = [];
+        return;
       }
-    }
-  }
-
-  /**
-   * Save players to local storage
-   */
-  function savePlayers(): void {
-    if (import.meta.client) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(players.value));
-      } catch (error) {
-        console.error('Error saving players to localStorage:', error);
-      }
+      
+      players.value = result.data || [];
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to load players';
+      console.error('Error loading players:', err);
+    } finally {
+      loading.value = false;
     }
   }
   /**
    * Add a new player
    */
-  function addPlayer(name: string, skillLevel: number, partnerId?: string): Player {
-    const newPlayer: Player = {
-      id: generatePlayerId(),
-      name: name.trim(),
-      skillLevel: Math.max(1, Math.min(5, skillLevel)), // Clamp between 1-5
-      partnerId
-    };
-
-    players.value.push(newPlayer);
-    savePlayers();
-    return newPlayer;
+  async function addPlayer(name: string, skillLevel: number, partnerId?: string): Promise<Player | null> {
+    try {
+      loading.value = true;
+      error.value = null;
+      
+      const result = await playerApi.createPlayer({
+        name,
+        skillLevel,
+        partnerId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      });
+      
+      if (!result.success) {
+        error.value = result.error || result.message;
+        return null;
+      }
+      
+      const newPlayer = result.data!;
+      players.value.push(newPlayer);
+      return newPlayer;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to add player';
+      console.error('Error adding player:', err);
+      return null;
+    } finally {
+      loading.value = false;
+    }
   }
-
   /**
    * Update an existing player
    */
-  function updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): boolean {
-    const index = players.value.findIndex(p => p.id === id);
-    if (index === -1) return false;
+  async function updatePlayer(id: string, updates: Partial<Omit<Player, 'id' | 'created_at'>>): Promise<boolean> {
+    try {
+      loading.value = true;
+      error.value = null;
+      
+      // Validate updates
+      if (updates.name !== undefined) {
+        updates.name = updates.name.trim();
+        if (!updates.name) {
+          error.value = 'Player name cannot be empty';
+          return false;
+        }
+      }
+      
+      if (updates.skillLevel !== undefined) {
+        updates.skillLevel = Math.max(1, Math.min(5, updates.skillLevel));
+      }
 
-    // Validate skill level if being updated
-    if (updates.skillLevel !== undefined) {
-      updates.skillLevel = Math.max(1, Math.min(5, updates.skillLevel));
+      const result = await playerApi.updatePlayer(id, updates);
+      if (!result.success) {
+        error.value = result.error || result.message;
+        return false;
+      }
+      
+      const updatedPlayer = result.data!;
+      const index = players.value.findIndex(p => p.id === id);
+      if (index !== -1) {
+        players.value[index] = updatedPlayer;
+      }
+      
+      return true;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to update player';
+      console.error('Error updating player:', err);
+      return false;
+    } finally {
+      loading.value = false;
     }
-
-    // Trim name if being updated
-    if (updates.name !== undefined) {
-      updates.name = updates.name.trim();
-    }
-
-    players.value[index] = { ...players.value[index], ...updates };
-    savePlayers();
-    return true;
   }
-
   /**
    * Remove a player
    */
-  function removePlayer(id: string): boolean {
-    const index = players.value.findIndex(p => p.id === id);
-    if (index === -1) return false;
-
-    // Remove any partner references to this player
-    players.value.forEach(player => {
-      if (player.partnerId === id) {
-        player.partnerId = undefined;
+  async function removePlayer(id: string): Promise<boolean> {
+    try {
+      loading.value = true;
+      error.value = null;
+      
+      const result = await playerApi.deletePlayer(id);
+      if (!result.success) {
+        error.value = result.error || result.message;
+        return false;
       }
-    });
-
-    players.value.splice(index, 1);
-    savePlayers();
-    return true;
+      
+      // Remove from local array
+      players.value = players.value.filter(p => p.id !== id);
+      
+      // Remove any partner references to this player locally
+      players.value.forEach(player => {
+        if (player.partnerId === id) {
+          player.partnerId = undefined;
+        }
+      });
+      
+      return true;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to remove player';
+      console.error('Error removing player:', err);
+      return false;
+    } finally {
+      loading.value = false;
+    }
   }
+
   /**
-   * Get a player by ID
+   * Get a specific player by ID
    */
   function getPlayer(id: string): Player | undefined {
     return players.value.find(p => p.id === id);
   }
 
   /**
-   * Get players available for partner selection (excluding the current player)
+   * Get players with partner relationships resolved
    */
-  function getAvailablePartners(currentPlayerId: string): Player[] {
-    return players.value.filter(p => p.id !== currentPlayerId);
+  function getPlayersWithPartners(): (Player & { partner?: Player })[] {
+    return players.value.map(player => ({
+      ...player,
+      partner: player.partnerId ? getPlayer(player.partnerId) : undefined
+    }));
   }
 
   /**
    * Validate that minimum number of players exist for games
    */
-  function canGenerateGames(numberOfCourts: number): { valid: boolean; message?: string } {
+  function validatePlayersForGames(minPlayers = 4): { valid: boolean; message?: string } {
     const activePlayers = [...players.value];
-    const minPlayers = numberOfCourts * 4; // 4 players per court
-    const maxPlayers = numberOfCourts * 4 + 4; // Allow up to 4 to sit out
-
+    
     if (activePlayers.length < minPlayers) {
       return {
         valid: false,
-        message: `Need at least ${minPlayers} active players for ${numberOfCourts} court(s). Currently have ${activePlayers.length}.`
+        message: `Need at least ${minPlayers} players to generate games. Currently have ${activePlayers.length}.`
       };
     }
-
-    if (activePlayers.length > maxPlayers) {
-      return {
-        valid: false,
-        message: `Too many players for ${numberOfCourts} court(s). Maximum ${maxPlayers} players, currently have ${activePlayers.length}.`
-      };
-    }
-
+    
     return { valid: true };
   }
-
   /**
-   * Generate a unique player ID
+   * Import players from JSON data
    */
-  function generatePlayerId(): string {
-    return `player_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  }
-
-  /**
-   * Clear all players (with confirmation)
-   */
-  function clearAllPlayers(): void {
-    players.value = [];
-    savePlayers();
-  }
-  /**
-   * Import players from JSON
-   */
-  function importPlayers(playersData: Player[]): { success: boolean; message: string } {
+  async function importPlayers(playersData: any[]): Promise<{ success: boolean; message: string }> {
     try {
-      // Validate the imported data
+      loading.value = true;
+      error.value = null;
+
       if (!Array.isArray(playersData)) {
         return { success: false, message: 'Invalid data format' };
       }
 
       const validPlayers = playersData.filter(p => 
-        p.name && 
+        typeof p.name === 'string' && 
         typeof p.skillLevel === 'number' && 
         p.skillLevel >= 1 && 
         p.skillLevel <= 5
       );
 
-      if (validPlayers.length === 0) {
-        return { success: false, message: 'No valid players found in import data' };
+      const result = await playerApi.importPlayers(validPlayers);
+      if (!result.success) {
+        return { success: false, message: result.error || result.message };
       }
 
-      // Generate new IDs and ensure proper structure
-      const importedPlayers: Player[] = validPlayers.map(p => ({
-        id: generatePlayerId(),
-        name: p.name.trim(),
-        skillLevel: Math.max(1, Math.min(5, p.skillLevel)),
-        partnerId: undefined
-      }));
-
-      players.value = [...players.value, ...importedPlayers];
-      savePlayers();
-
-      return { 
-        success: true, 
-        message: `Successfully imported ${importedPlayers.length} players` 
-      };
-    } catch (error) {
-      return { success: false, message: 'Error importing players: ' + JSON.stringify(error) };
+      await loadPlayers();
+      return { success: true, message: `Imported ${validPlayers.length} players` };
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to import players';
+      return { success: false, message: error.value || 'Unknown error' };
+    } finally {
+      loading.value = false;
     }
   }
 
   /**
-   * Export players to JSON
+   * Get available partners for a specific player (excluding the player themselves)
    */
-  function exportPlayers(): string {
-    return JSON.stringify(players.value, null, 2);
+  function getAvailablePartners(playerId: string): Player[] {
+    return players.value.filter(p => p.id !== playerId);
   }
 
-  // Load players on composable initialization
-  onMounted(() => {
-    loadPlayers();
-  });
+  /**
+   * Check if minimum number of players exist for generating games
+   */
+  const canGenerateGames = computed(() => {
+    return players.value.length >= 4;
+  });  /**
+   * Clear all players
+   */
+  async function clearAllPlayers(): Promise<boolean> {
+    try {
+      loading.value = true;
+      error.value = null;
+      
+      const result = await playerApi.clearAllPlayers();
+      if (!result.success) {
+        error.value = result.error || result.message;
+        return false;
+      }
+      
+      players.value = [];
+      return true;
+    } catch (err) {
+      error.value = err instanceof Error ? err.message : 'Failed to clear players';
+      console.error('Error clearing players:', err);
+      return false;
+    } finally {
+      loading.value = false;
+    }
+  }
 
-  // Watch for changes and auto-save
-  watch(players, savePlayers, { deep: true });
+  /**
+   * Export players as JSON
+   */
+  function exportPlayers(): string {
+    const exportData = players.value.map(player => ({
+      name: player.name,
+      skillLevel: player.skillLevel,
+      partnerId: player.partnerId
+    }));
+    return JSON.stringify(exportData, null, 2);
+  }
+  // Load players when user changes or component mounts
+  watch(user, (newUser) => {
+    if (newUser || isDemo.value) {
+      loadPlayers();
+    } else {
+      players.value = [];
+    }
+  }, { immediate: true });
 
   return {
     players: readonly(players),
+    loading: readonly(loading),
+    error: readonly(error),
+    isDemo: readonly(isDemo),
+    loadPlayers,
     addPlayer,
     updatePlayer,
     removePlayer,
     getPlayer,
+    getPlayersWithPartners,
+    validatePlayersForGames,
+    importPlayers,
     getAvailablePartners,
     canGenerateGames,
     clearAllPlayers,
-    importPlayers,
-    exportPlayers,
-    loadPlayers
+    exportPlayers
   };
 };

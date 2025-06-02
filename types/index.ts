@@ -6,7 +6,7 @@
  * Represents a pickleball player with their skill level and optional partner
  */
 export interface Player {
-  /** Unique identifier for the player */
+  /** Unique identifier for the player (UUID from database) */
   id: string;
   /** Player's full name */
   name: string;
@@ -14,6 +14,12 @@ export interface Player {
   skillLevel: number;
   /** Optional reference to another player's ID for partner preference */
   partnerId?: string;
+  /** User ID who owns this player (for multi-tenancy) */
+  user_id?: string;
+  /** Timestamp when player was created */
+  created_at?: string;
+  /** Timestamp when player was last updated */
+  updated_at?: string;
 }
 
 /**

@@ -9,10 +9,27 @@ export default defineNuxtConfig({
     '@nuxt/icon',
     '@nuxt/test-utils',
     '@nuxt/ui',
-    '@pinia/nuxt'
+    '@pinia/nuxt',
+    '@nuxtjs/supabase'
   ],
   
   css: ['~/assets/css/main.css'],
+  
+  supabase: {
+    redirectOptions: {
+      login: '/auth/login',
+      callback: '/auth/callback',
+      exclude: []
+    },
+    url: process.env.SUPABASE_URL,
+    key: process.env.SUPABASE_ANON_KEY
+  },
+  
+  runtimeConfig: {
+    public: {
+      enableGoogleAuth: process.env.ENABLE_GOOGLE_AUTH === 'true' || false
+    }
+  },
   
   typescript: {
     typeCheck: true

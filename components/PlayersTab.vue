@@ -3,7 +3,19 @@ import type { TableColumn } from '@nuxt/ui';
 import { z } from 'zod';
 import type { Player } from '~/types';
 
-const playerStore = usePlayerStore();
+const { 
+  players, 
+  loading, 
+  error,
+  addPlayer,
+  updatePlayer,
+  removePlayer,
+  getPlayer,
+  getAvailablePartners,
+  clearAllPlayers,
+  importPlayers,
+  exportPlayers
+} = usePlayerManager();
 
 const toast = useToast();
 
@@ -51,27 +63,27 @@ const columns: TableColumn<Player>[] = [
 ];
 
 // Computed properties
-const totalPlayers = computed(() => playerStore.players.length);
+const totalPlayers = computed(() => players.value.length);
 
 const averageSkillLevel = computed(() => {
-  if (playerStore.players.length === 0) {
+  if (players.value.length === 0) {
     return '0.0';
   }
-  const total = playerStore.players.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
-  return (total / playerStore.players.length).toFixed(1);
+  const total = players.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
+  return (total / players.value.length).toFixed(1);
 });
 
 const playersWithPartners = computed(() => {
-  return playerStore.players.filter((player: Player) => player.partnerId).length;
+  return players.value.filter((player: Player) => player.partnerId).length;
 });
 
 const filteredPlayers = computed(() => {
   if (!searchQuery.value) {
-    return playerStore.players.slice();
+    return players.value.slice();
   }
 
   const query = searchQuery.value.toLowerCase();
-  return playerStore.players.filter((player: Player) =>
+  return players.value.filter((player: Player) =>
     player.name.toLowerCase().includes(query)
   ).slice();
 });
@@ -79,8 +91,8 @@ const filteredPlayers = computed(() => {
 const partnerOptions = computed(() => {
   const currentPlayerId = editingPlayer.value?.id;
   const availablePartners = currentPlayerId
-    ? playerStore.getAvailablePartners(currentPlayerId)
-    : playerStore.players;
+    ? getAvailablePartners(currentPlayerId)
+    : players.value;
 
   return [
     { label: 'No Partner', value: 'none' },
@@ -95,17 +107,16 @@ const partnerOptions = computed(() => {
 
 // Methods
 function getPlayerName(playerId: string): string {
-  const player = playerStore.getPlayer(playerId);
+  const player = getPlayer(playerId);
   return player ? player.name : 'Unknown';
 }
 
 function editPlayer(player: Player): void {
   editingPlayer.value = player;
-  
-  // Check if the player's current partner is still available
+    // Check if the player's current partner is still available
   const currentPartnerId = player.partnerId;
-  const availablePartners = playerStore.getAvailablePartners(player.id);
-  const isPartnerAvailable = currentPartnerId && availablePartners.some(p => p.id === currentPartnerId);
+  const availablePartners = getAvailablePartners(player.id);
+  const isPartnerAvailable = currentPartnerId && availablePartners.some((p: Player) => p.id === currentPartnerId);
   
   playerForm.value = {
     name: player.name,
@@ -126,7 +137,7 @@ async function deletePlayer(): Promise<void> {
   if (playerToDelete.value) {
     console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
     
-    const success = await playerStore.removePlayer(playerToDelete.value.id);
+    const success = await removePlayer(playerToDelete.value.id);
     
     console.log('Remove result:', success); // Debug log
     
@@ -151,7 +162,7 @@ async function deletePlayer(): Promise<void> {
 async function savePlayer(): Promise<void> {  try {
     const partnerIdToSave = playerForm.value.partnerId === 'none' ? undefined : playerForm.value.partnerId;
     if (editingPlayer.value) {
-      const success = await playerStore.updatePlayer(editingPlayer.value.id, {
+      const success = await updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
         skillLevel: playerForm.value.skillLevel,
         partnerId: partnerIdToSave
@@ -160,10 +171,10 @@ async function savePlayer(): Promise<void> {  try {
       if (success) {
         // Update partner relationship
         if (partnerIdToSave) {
-          await playerStore.updatePlayer(partnerIdToSave, { partnerId: editingPlayer.value.id });
+          await updatePlayer(partnerIdToSave, { partnerId: editingPlayer.value.id });
         } else if (editingPlayer.value.partnerId) {
           // Clear previous partner's partnerId
-          await playerStore.updatePlayer(editingPlayer.value.partnerId, { partnerId: undefined });
+          await updatePlayer(editingPlayer.value.partnerId, { partnerId: undefined });
         }
 
         toast.add({
@@ -173,16 +184,14 @@ async function savePlayer(): Promise<void> {  try {
         });
       }
     } else {
-      const newPlayer = await playerStore.addPlayer(
+      const newPlayer = await addPlayer(
         playerForm.value.name,
         playerForm.value.skillLevel,
         partnerIdToSave
-      );
-
-      if (newPlayer) {
+      );      if (newPlayer) {
         // Update partner relationship for new player
         if (partnerIdToSave) {
-          await playerStore.updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
+          await updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
         }
 
         toast.add({
@@ -219,7 +228,7 @@ function cancelPlayerForm(): void {
 async function performImport(): Promise<void> {
   try {
     const playersData = JSON.parse(importData.value);
-    const result = await playerStore.importPlayers(playersData);
+    const result = await importPlayers(playersData);
 
     if (result.success) {
       toast.add({
@@ -246,9 +255,9 @@ async function performImport(): Promise<void> {
   }
 }
 
-function exportPlayers(): void {
+function handleExportPlayers(): void {
   try {
-    const data = playerStore.exportPlayers();
+    const data = exportPlayers();
     const blob = new Blob([data], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -291,7 +300,7 @@ function exportPlayers(): void {
             <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button" @click="showImportModal = true">
               Import
             </UButton>
-            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button" @click="exportPlayers">
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button" @click="handleExportPlayers">
               Export
             </UButton>
           </div>

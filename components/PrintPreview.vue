@@ -7,13 +7,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const playerStore = usePlayerStore();
+const { getPlayer } = usePlayerManager();
 
 /**
  * Get player name safely
  */
 function getPlayerName(id: string): string {
-  return playerStore.getPlayer(id)?.name || 'Unknown Player';
+  return getPlayer(id)?.name || 'Unknown Player';
 }
 
 /**
@@ -73,8 +73,8 @@ const getAllPlayers = computed(() => {
       playerIds.add(playerId);
     });
   });
-    return Array.from(playerIds)
-    .map(id => playerStore.getPlayer(id))
+  return Array.from(playerIds)
+    .map(id => getPlayer(id))
     .filter((player): player is NonNullable<typeof player> => player !== undefined);
 });
 </script>
@@ -134,16 +134,16 @@ const getAllPlayers = computed(() => {
               <div class="team">
                 <span class="team-label">Team 1:</span>
                 {{ getPlayerName(game.team1[0]) }} & {{ getPlayerName(game.team1[1]) }}                <div class="skill-levels">
-                  ({{ formatSkillLevel(playerStore.getPlayer(game.team1[0])?.skillLevel || 0) }}, 
-                   {{ formatSkillLevel(playerStore.getPlayer(game.team1[1])?.skillLevel || 0) }})
+                  ({{ formatSkillLevel(getPlayer(game.team1[0])?.skillLevel || 0) }}, 
+                   {{ formatSkillLevel(getPlayer(game.team1[1])?.skillLevel || 0) }})
                 </div>
               </div>
               <div class="vs">vs</div>
               <div class="team">
                 <span class="team-label">Team 2:</span>
                 {{ getPlayerName(game.team2[0]) }} & {{ getPlayerName(game.team2[1]) }}                <div class="skill-levels">
-                  ({{ formatSkillLevel(playerStore.getPlayer(game.team2[0])?.skillLevel || 0) }}, 
-                   {{ formatSkillLevel(playerStore.getPlayer(game.team2[1])?.skillLevel || 0) }})
+                  ({{ formatSkillLevel(getPlayer(game.team2[0])?.skillLevel || 0) }}, 
+                   {{ formatSkillLevel(getPlayer(game.team2[1])?.skillLevel || 0) }})
                 </div>
               </div>
             </div>

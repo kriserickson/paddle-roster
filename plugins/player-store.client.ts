@@ -1,10 +1,6 @@
 export default defineNuxtPlugin(async () => {
-  const playerStore = usePlayerStore();
-  
-  // Initialize the store by loading saved data
-  const result = await playerStore.initializeStore();
-  
-  if (!result.success) {
-    console.warn('Failed to initialize player store:', result.message);
-  }
+  // Note: Player loading is now handled automatically by usePlayerManager
+  // when the user authentication state changes. This plugin is kept
+  // for compatibility but doesn't need to do anything.
+  console.log('Player store plugin loaded - players will be loaded automatically when authenticated');
 });

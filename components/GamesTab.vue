@@ -1,7 +1,15 @@
 <script setup lang="ts">
-import type { MatchingOptions } from '~/types';
+import type { MatchingOptions, Player } from '~/types';
 
-const playerStore = usePlayerStore();
+const { players, canGenerateGames } = usePlayerManager();
+const { 
+  selectedPlayers: selectedPlayersFromSelection, 
+  togglePlayerSelection, 
+  selectAllPlayers, 
+  deselectAllPlayers, 
+  isPlayerSelected,
+  getPlayer 
+} = usePlayerSelection();
 const gameStore = useGameStore();
 
 const toast = useToast();
@@ -43,10 +51,10 @@ const partnerFilterOptions = [
 ];
 
 // Computed properties
-const selectedPlayers = computed(() => playerStore.selectedPlayers);
+const selectedPlayers = computed(() => selectedPlayersFromSelection.value);
 
 const filteredPlayers = computed(() => {
-  let filtered = playerStore.players;
+  let filtered = players.value;
 
   // Apply search filter
   if (playerSearchQuery.value) {
@@ -96,7 +104,7 @@ const restingPerRound = computed(() => {
 
 const averageSkillLevel = computed(() => {
   if (selectedPlayers.value.length === 0) return '0.0';
-  const total = selectedPlayers.value.reduce((sum, player) => sum + player.skillLevel, 0);
+  const total = selectedPlayers.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
   return (total / selectedPlayers.value.length).toFixed(1);
 });
 
@@ -109,16 +117,16 @@ const validationErrors = computed(() => validationResult.value.errors);
 // Methods
 function selectFilteredPlayers(): void {
   filteredPlayers.value.forEach(player => {
-    if (!playerStore.isPlayerSelected(player.id)) {
-      playerStore.togglePlayerSelection(player.id);
+    if (!isPlayerSelected(player.id)) {
+      togglePlayerSelection(player.id);
     }
   });
 }
 
 function deselectFilteredPlayers(): void {
   filteredPlayers.value.forEach(player => {
-    if (playerStore.isPlayerSelected(player.id)) {
-      playerStore.togglePlayerSelection(player.id);
+    if (isPlayerSelected(player.id)) {
+      togglePlayerSelection(player.id);
     }
   });
 }
@@ -374,7 +382,7 @@ onMounted(() => {
               variant="ghost" 
               size="sm" 
               class="btn-secondary"
-              @click="playerStore.selectAllPlayers()"
+              @click="selectAllPlayers()"
             >
               Select All
             </UButton>
@@ -382,7 +390,7 @@ onMounted(() => {
               variant="ghost" 
               size="sm" 
               class="btn-secondary"
-              @click="playerStore.deselectAllPlayers()"
+              @click="deselectAllPlayers()"
             >
               Deselect All
             </UButton>
@@ -437,7 +445,7 @@ onMounted(() => {
           <div class="flex items-center gap-2 text-sm text-gray-600">
             <Icon name="mdi:information" class="text-paddle-teal" />
             <span>
-              Showing {{ filteredPlayers.length }} of {{ playerStore.players.length }} players.
+              Showing {{ filteredPlayers.length }} of {{ players.length }} players.
               You need at least {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).
             </span>
           </div>
@@ -472,7 +480,7 @@ onMounted(() => {
           </div>
         </div>
         
-        <div v-if="playerStore.players.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="players.length === 0" class="text-center py-8 text-gray-500">
           <Icon name="mdi:account-plus" class="text-4xl text-gray-300 mb-3 mx-auto" />          <p class="text-lg mb-2">No players available</p>
           <p class="text-sm">Add some players first in the Players tab.</p>
         </div>
@@ -489,18 +497,18 @@ onMounted(() => {
             :key="player.id"
             :class="[
               'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
-              playerStore.isPlayerSelected(player.id) 
+              isPlayerSelected(player.id) 
                 ? 'border-paddle-teal bg-paddle-teal/5' 
                 : 'border-gray-200 hover:border-paddle-teal/50'
             ]"
-            @click="playerStore.togglePlayerSelection(player.id)"
+            @click="togglePlayerSelection(player.id)"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <UCheckbox 
-                  :checked="playerStore.isPlayerSelected(player.id)"
+                  :checked="isPlayerSelected(player.id)"
                   class="pointer-events-none"
-                  @change="playerStore.togglePlayerSelection(player.id)"
+                  @change="togglePlayerSelection(player.id)"
                 />
                 <div class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
@@ -513,7 +521,7 @@ onMounted(() => {
             </div>
             <div v-if="player.partnerId" class="mt-2 text-xs text-gray-600 flex items-center gap-1">
               <Icon name="mdi:account-heart" class="text-paddle-red" />
-              Partner: {{ playerStore.getPlayer(player.partnerId)?.name || 'Unknown' }}
+              Partner: {{ getPlayer(player.partnerId)?.name || 'Unknown' }}
             </div>
           </div>
         </div>

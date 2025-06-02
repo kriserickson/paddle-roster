@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Game } from '~/types';
 
-const playerStore = usePlayerStore();
+const { getPlayer } = usePlayerManager();
 const gameStore = useGameStore();
 
 const toast = useToast();
@@ -40,12 +40,12 @@ const selectedRoundResting = computed(() => {
 
 // Methods
 function getPlayerName(playerId: string): string {
-  const player = playerStore.getPlayer(playerId);
+  const player = getPlayer(playerId);
   return player ? player.name : 'Unknown Player';
 }
 
 function getPlayerSkill(playerId: string): number {
-  const player = playerStore.getPlayer(playerId);
+  const player = getPlayer(playerId);
   return player ? player.skillLevel : 0;
 }
 

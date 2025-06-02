@@ -43,24 +43,21 @@ export const useGameStore = defineStore('game', () => {
       averageSkillDifference: calculateAverageSkillDifference(schedule),
       generatedAt: schedule.generatedAt
     };
-  });
-  /**
+  });  /**
    * Actions
    */
   async function generateSchedule(eventLabel: string = ''): Promise<GameSchedule | null> {
-    const playerStore = usePlayerStore();
+    const { selectedPlayers } = usePlayerSelection();
     
     try {
       isGenerating.value = true;
 
-      const selectedPlayers = playerStore.selectedPlayers;
+      const selectedPlayersValue = selectedPlayers.value;
       
-      if (selectedPlayers.length < matchingOptions.value.numberOfCourts * 4) {
+      if (selectedPlayersValue.length < matchingOptions.value.numberOfCourts * 4) {
         throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} selected players`);
-      }
-
-      // Create matcher instance
-      const matcher = new PickleballMatcher(selectedPlayers, matchingOptions.value);
+      }      // Create matcher instance
+      const matcher = new PickleballMatcher(selectedPlayersValue, matchingOptions.value);
       
       // Generate schedule
       const schedule = matcher.generateSchedule(eventLabel);
@@ -88,17 +85,19 @@ export const useGameStore = defineStore('game', () => {
   function resetOptions(): void {
     matchingOptions.value = { ...defaultOptions };
   }  function validateOptions(): { valid: boolean; errors: string[] } {
-    const playerStore = usePlayerStore();
+    const { selectedPlayers } = usePlayerSelection();
     const errors: string[] = [];
-    const selectedPlayers = playerStore.selectedPlayers;
+    const selectedPlayersValue = selectedPlayers.value;
 
     // Check minimum players
     const minPlayers = matchingOptions.value.numberOfCourts * 4;
-    if (selectedPlayers.length < minPlayers) {
+    if (selectedPlayersValue.length < minPlayers) {
       errors.push(`Need at least ${minPlayers} selected players for ${matchingOptions.value.numberOfCourts} courts`);
-    }    // Check maximum players (allowing up to 4 to sit out per round)
+    }
+
+    // Check maximum players (allowing up to 4 to sit out per round)
     const maxPlayers = matchingOptions.value.numberOfCourts * 4 + 4;
-    if (selectedPlayers.length > maxPlayers) {
+    if (selectedPlayersValue.length > maxPlayers) {
       errors.push(`Too many players for ${matchingOptions.value.numberOfCourts} courts. Maximum ${maxPlayers} players`);
     }
 

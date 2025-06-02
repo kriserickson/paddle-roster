@@ -25,12 +25,11 @@ export const usePrintStore = defineStore('print', () => {
 
   /**
    * Actions
-   */
-  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
-    const playerStore = usePlayerStore();
+   */  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
+    const { getPlayer } = usePlayerManager();
     
     function playerName(id: string): string {
-      return playerStore.getPlayer(id)?.name || 'Unknown Player';
+      return getPlayer(id)?.name || 'Unknown Player';
     }
 
     function formatSkillLevel(level: number): string {
