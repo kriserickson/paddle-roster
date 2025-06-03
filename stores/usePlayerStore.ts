@@ -74,10 +74,13 @@ export const usePlayerStore = defineStore('player', () => {
       console.log('PlayerStore: calling playerApi.getPlayers()...');
       const result = await playerApi.getPlayers();
       console.log('PlayerStore: API result:', result);
-      
+
       if (result.success && result.data) {
         players.value = result.data;
-        console.log(`PlayerStore: Successfully loaded ${result.data.length} players:`, result.data.map(p => p.name));
+        console.log(
+          `PlayerStore: Successfully loaded ${result.data.length} players:`,
+          result.data.map(p => p.name)
+        );
         return { success: true, message: `Loaded ${result.data.length} players` };
       }
       players.value = []; // Ensure it's reset if no data
@@ -272,7 +275,7 @@ export const usePlayerStore = defineStore('player', () => {
     deselectAllPlayers,
     isPlayerSelected,
 
-    // Actions    
+    // Actions
     loadPlayers,
     addPlayer,
     updatePlayer,

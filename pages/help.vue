@@ -25,7 +25,6 @@ function navigateToHome(): void {
     <UContainer class="py-8">
       <!-- Header -->
       <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
-
         <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
           <Icon name="mdi:information" class="text-white text-5xl" />
           Getting Started

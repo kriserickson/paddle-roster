@@ -89,7 +89,6 @@ The Nuxt.js pickleball roster application has been successfully migrated from In
 │ PlayersTab      │────│ usePlayerManager  │────│ PlayerApiSupabase│
 │ GamesTab        │    │ usePlayerSelection│    │ DemoPlayerStorage│
 │ ScheduleTab     │    │ useMockAuth       │    │                  │
-│ PrintTab        │    │                   │    │                  │
 └─────────────────┘    └───────────────────┘    └──────────────────┘
          │                       │                       │
          └───────────────────────┼───────────────────────┘

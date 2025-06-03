@@ -1,15 +1,34 @@
 <script setup lang="ts">
-import type { Game } from '~/types';
+import type { Game, GameSchedule, PrintOptions } from '~/types';
 
 const playerStore = usePlayerStore();
 const gameStore = useGameStore();
+const printStore = usePrintStore();
 
 const toast = useToast();
 
 // Local state
 const selectedRound = ref(1);
-const showImportModal = ref(false);
-const importData = ref('');
+
+// Print functionality
+const showPrintModal = ref(false);
+const previewGenerated = ref(false);
+const printPreviewRef = ref<HTMLElement>();
+
+// Print configuration
+const printOptions = ref<PrintOptions>({
+  eventTitle: 'Pickleball League',
+  eventSubtitle: new Date().toLocaleDateString(),
+  eventDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
+  location: '',
+  organizer: '',
+  includePlayerList: true,
+  includeStats: true,
+  includeRestPeriods: true,
+  includeCourtAssignments: true,
+  orientation: 'landscape',
+  compactLayout: false
+});
 
 // Computed properties
 const totalGames = computed(() => {
@@ -60,60 +79,51 @@ function getGameForCourt(round: readonly Game[], courtNumber: number): Game | un
   return round.find(game => game.court === courtNumber) as Game | undefined;
 }
 
-function exportScheduleData(): void {
+// Print functionality
+async function generatePreview(): Promise<void> {
+  if (!gameStore.currentSchedule) {
+    return;
+  }
+
   try {
-    const data = gameStore.exportSchedule();
-    if (data) {
-      const blob = new Blob([data], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `pickleball-schedule-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-      toast.add({
-        title: 'Export Successful',
-        description: 'Schedule has been downloaded as JSON.',
-        color: 'success'
-      });
+    previewGenerated.value = true;
+    showPrintModal.value = true;
+
+    // Scroll to preview
+    await nextTick();
+    if (printPreviewRef.value) {
+      printPreviewRef.value.scrollIntoView({ behavior: 'smooth' });
     }
   } catch (error) {
-    console.error('Export failed:', error);
-    toast.add({
-      title: 'Export Failed',
-      description: 'Failed to export schedule.',
-      color: 'error'
-    });
+    console.error('Error generating preview:', error);
   }
 }
 
-function performImport(): void {
-  try {
-    const result = gameStore.importSchedule(importData.value);
-    if (result.success) {
-      toast.add({
-        title: 'Import Successful',
-        description: result.message,
-        color: 'success'
-      });
-      showImportModal.value = false;
-      importData.value = '';
-      selectedRound.value = 1;
-    } else {
-      toast.add({
-        title: 'Import Failed',
-        description: result.message,
-        color: 'error'
-      });
-    }
-  } catch (error) {
-    console.error('Import error:', error);
-    toast.add({
-      title: 'Import Failed',
-      description: 'Invalid JSON format.',
-      color: 'error'
-    });
+async function print(): Promise<void> {
+  if (!gameStore.currentSchedule) {
+    return;
   }
+  try {
+    // Cast readonly types to mutable types for compatibility
+    const schedule = gameStore.currentSchedule as GameSchedule;
+    await printStore.printSchedule(schedule, printOptions.value);
+  } catch (error) {
+    console.error('Error printing schedule:', error);
+  }
+}
+
+async function downloadPdf(): Promise<void> {
+  if (!gameStore.currentSchedule) {
+    return;
+  }
+
+  // Generate preview first if not already generated
+  if (!previewGenerated.value) {
+    await generatePreview();
+  }
+
+  // Open print dialog which allows saving as PDF
+  await print();
 }
 
 function clearCurrentSchedule(): void {
@@ -148,11 +158,17 @@ watch(
             Game Schedule
           </h2>
           <div v-if="gameStore.currentSchedule" class="flex gap-3">
-            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" @click="exportScheduleData">
-              Export JSON
+            <UButton icon="i-heroicons-eye" class="btn-primary" @click="generatePreview">
+              <Icon name="mdi:eye" class="mr-2" />
+              Preview
             </UButton>
-            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" @click="showImportModal = true">
-              Import JSON
+            <UButton icon="i-heroicons-printer" class="btn-secondary" @click="print">
+              <Icon name="mdi:printer" class="mr-2" />
+              Print
+            </UButton>
+            <UButton icon="i-heroicons-document-arrow-down" class="btn-secondary" @click="downloadPdf">
+              <Icon name="mdi:file-pdf-box" class="mr-2" />
+              Download PDF
             </UButton>
             <UButton icon="i-heroicons-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
           </div>
@@ -231,31 +247,7 @@ watch(
         </div>
       </div>
 
-      <!-- Round Selector -->
-      <div class="content-card">
-        <div class="content-card-header">
-          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Icon name="mdi:numeric" class="text-paddle-teal" />
-            Select Round
-          </h3>
-        </div>
-
-        <div class="p-6">
-          <div class="flex flex-wrap gap-3">
-            <UButton
-              v-for="roundNumber in gameStore.currentSchedule.rounds.length"
-              :key="roundNumber"
-              :class="selectedRound === roundNumber ? 'btn-primary' : 'btn-secondary'"
-              size="sm"
-              @click="selectedRound = roundNumber"
-            >
-              Round {{ roundNumber }}
-            </UButton>
-          </div>
-        </div>
-      </div>
-
- <!-- All Rounds Overview -->
+      <!-- All Rounds Overview -->
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="text-xl font-semibold flex items-center gap-2">
@@ -324,6 +316,30 @@ watch(
                 </tr>
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- Round Selector -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+            <Icon name="mdi:numeric" class="text-paddle-teal" />
+            Select Round
+          </h3>
+        </div>
+
+        <div class="p-6">
+          <div class="flex flex-wrap gap-3">
+            <UButton
+              v-for="roundNumber in gameStore.currentSchedule.rounds.length"
+              :key="roundNumber"
+              :class="selectedRound === roundNumber ? 'btn-primary' : 'btn-secondary'"
+              size="sm"
+              @click="selectedRound = roundNumber"
+            >
+              Round {{ roundNumber }}
+            </UButton>
           </div>
         </div>
       </div>
@@ -446,29 +462,87 @@ watch(
           </div>
         </div>
       </div>
-     
     </div>
-    <!-- Import Modal -->
-    <UModal v-model:open="showImportModal" title="Import Schedule">
+
+    <!-- Print Configuration Modal -->
+    <UModal v-model:open="showPrintModal" title="Print Configuration">
       <template #body>
         <div class="space-y-6">
-          <div class="flex items-center gap-2 mb-4">
-            <Icon name="mdi:upload" class="text-paddle-teal text-xl" />
-            <p class="text-sm text-gray-600">Paste schedule JSON data to import.</p>
+          <!-- Header Configuration -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <UFormField label="Event Name">
+              <UInput v-model="printOptions.eventTitle" placeholder="Pickleball League" class="form-input" />
+            </UFormField>
+
+            <UFormField label="Event Date">
+              <UInput v-model="printOptions.eventDate" type="date" class="form-input" />
+            </UFormField>
+
+            <UFormField label="Location">
+              <UInput v-model="printOptions.location" placeholder="Community Center" class="form-input" />
+            </UFormField>
+
+            <UFormField label="Organizer">
+              <UInput v-model="printOptions.organizer" placeholder="League Coordinator" class="form-input" />
+            </UFormField>
           </div>
 
-          <UFormField label="JSON Data">
-            <UTextarea
-              v-model="importData"
-              :rows="10"
-              placeholder="Paste schedule JSON data here..."
-              class="form-input font-mono text-sm"
+          <!-- Print Options -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <UFormField label="Include Options">
+              <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                <UCheckbox v-model="printOptions.includePlayerList" label="Player List" class="text-blue-800" />
+                <UCheckbox v-model="printOptions.includeStats" label="Game Statistics" class="text-blue-800" />
+                <UCheckbox
+                  v-model="printOptions.includeRestPeriods"
+                  label="Rest Period Information"
+                  class="text-blue-800"
+                />
+                <UCheckbox
+                  v-model="printOptions.includeCourtAssignments"
+                  label="Court Assignments"
+                  class="text-blue-800"
+                />
+              </div>
+            </UFormField>
+
+            <UFormField label="Layout Options">
+              <div class="space-y-3 bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20 p-4 rounded-xl">
+                <URadioGroup
+                  v-model="printOptions.orientation"
+                  :options="[
+                    { value: 'portrait', label: 'Portrait' },
+                    { value: 'landscape', label: 'Landscape' }
+                  ]"
+                  class="text-paddle-teal-dark"
+                />
+                <UCheckbox v-model="printOptions.compactLayout" label="Compact Layout" class="text-paddle-teal-dark" />
+              </div>
+            </UFormField>
+          </div>
+
+          <!-- Print Preview -->
+          <div v-if="previewGenerated && gameStore.currentSchedule" class="border rounded-lg p-4 bg-gray-50">
+            <h4 class="text-lg font-semibold mb-4">Print Preview</h4>
+            <PrintPreview
+              ref="printPreviewRef"
+              :schedule="gameStore.currentSchedule as GameSchedule"
+              :options="printOptions"
+              class="print-preview bg-white border rounded-lg p-6 shadow-inner max-h-96 overflow-y-auto"
+              :class="{ compact: printOptions.compactLayout }"
             />
-          </UFormField>
+          </div>
 
           <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" class="btn-secondary" @click="showImportModal = false"> Cancel </UButton>
-            <UButton class="btn-primary" @click="performImport"> Import </UButton>
+            <UButton variant="ghost" class="btn-secondary" @click="showPrintModal = false"> Cancel </UButton>
+            <UButton class="btn-secondary" @click="print">
+              <Icon name="mdi:printer" class="mr-2" />
+              Print
+            </UButton>
+            <UButton class="btn-primary" @click="downloadPdf">
+              <Icon name="mdi:file-pdf-box" class="mr-2" />
+              Download PDF
+            </UButton>
           </div>
         </div>
       </template>

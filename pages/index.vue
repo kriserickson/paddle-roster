@@ -24,11 +24,6 @@ const tabs = [
     key: 'schedule',
     label: 'Schedule',
     icon: 'i-heroicons-calendar-days'
-  },
-  {
-    key: 'print',
-    label: 'Print',
-    icon: 'i-heroicons-printer'
   }
 ];
 
@@ -96,17 +91,9 @@ const userDisplayName = computed(() => {
   <div class="min-h-screen relative">
     <!-- Fixed Help/Settings Menu -->
     <div class="fixed top-4 right-4 z-50">
-      <UPopover
-        mode="hover"
-        :content="{ side: 'bottom', align: 'start', sideOffset: 4 }"
-        arrow
-      >
+      <UPopover mode="hover" :content="{ side: 'bottom', align: 'start', sideOffset: 4 }" arrow>
         <!-- Popover trigger -->
-        <UButton
-          icon="i-heroicons-bars-3"
-          variant="ghost"
-          class="text-teal-600 hover:bg-teal-100 p-2 text-2xl"
-        />
+        <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-teal-600 hover:bg-teal-100 p-2 text-2xl" />
 
         <!-- Popover content -->
         <template #content>
@@ -198,7 +185,6 @@ const userDisplayName = computed(() => {
           <PlayersTab v-if="activeTab === 'players'" />
           <GamesTab v-else-if="activeTab === 'games'" />
           <ScheduleTab v-else-if="activeTab === 'schedule'" />
-          <PrintTab v-else-if="activeTab === 'print'" />
         </div>
       </div>
     </UContainer>

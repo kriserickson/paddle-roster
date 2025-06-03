@@ -213,7 +213,7 @@ onMounted(() => {
       </div>
     </div>
 
-     <!-- Generation Results -->
+    <!-- Generation Results -->
     <div v-if="gameStore.currentSchedule && scheduleStats" class="content-card">
       <div class="content-card-header">
         <h3 class="text-xl font-semibold flex items-center gap-2">
@@ -368,7 +368,9 @@ onMounted(() => {
             Player Selection
           </h3>
           <div class="flex gap-2">
-            <UButton variant="ghost" size="sm" class="btn-secondary" @click="playerStore.selectAllPlayers()"> Select All </UButton>
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="playerStore.selectAllPlayers()">
+              Select All
+            </UButton>
             <UButton variant="ghost" size="sm" class="btn-secondary" @click="playerStore.deselectAllPlayers()">
               Deselect All
             </UButton>
@@ -564,7 +566,5 @@ onMounted(() => {
         </div>
       </div>
     </div>
-
-   
   </div>
 </template>

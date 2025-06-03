@@ -65,10 +65,8 @@ export class PlayerApiSupabase implements IPlayerApi {
   async getPlayers(): Promise<ApiResponse<Player[]>> {
     try {
       console.log('PlayerApiSupabase: Starting getPlayers...');
-      
-      let query = this.supabase
-        .from('players')
-        .select('*');
+
+      let query = this.supabase.from('players').select('*');
 
       // If user is authenticated, filter by user_id
       if (this.user.value) {
@@ -78,7 +76,7 @@ export class PlayerApiSupabase implements IPlayerApi {
         console.log('User not authenticated, loading all players for data recovery');
       }
       // If not authenticated, load all players (temporary for data recovery)
-      
+
       console.log('Executing Supabase query...');
       const { data, error } = await query.order('name');
 
@@ -92,7 +90,7 @@ export class PlayerApiSupabase implements IPlayerApi {
       console.log('Raw data from Supabase:', data);
       const players = (data || []).map(row => this.mapRowToPlayer(row));
       console.log('Mapped players:', players);
-      
+
       return {
         success: true,
         data: players,
@@ -163,10 +161,7 @@ export class PlayerApiSupabase implements IPlayerApi {
       }
 
       const updateData = this.mapPlayerToUpdate({ id, ...updates } as Player);
-      let query = this.supabase
-        .from('players')
-        .update(updateData)
-        .eq('id', id);
+      let query = this.supabase.from('players').update(updateData).eq('id', id);
 
       // If user is authenticated, also filter by user_id
       if (this.user.value) {

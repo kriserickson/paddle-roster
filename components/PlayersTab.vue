@@ -185,7 +185,11 @@ async function savePlayer(): Promise<void> {
         });
       }
     } else {
-      const newPlayer = await playerStore.addPlayer(playerForm.value.name, playerForm.value.skillLevel, partnerIdToSave);
+      const newPlayer = await playerStore.addPlayer(
+        playerForm.value.name,
+        playerForm.value.skillLevel,
+        partnerIdToSave
+      );
       if (newPlayer) {
         // Update partner relationship for new player
         if (partnerIdToSave) {
@@ -264,7 +268,7 @@ async function performImport(): Promise<void> {
       name: p.name,
       skillLevel: p.skillLevel
     }));
-    
+
     const importResult = await playerStore.importPlayers(tempPlayers);
 
     if (!importResult.success) {

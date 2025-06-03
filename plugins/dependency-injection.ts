@@ -5,7 +5,7 @@ import { PlayerApiSupabase } from '~/services/playerApiSupabase';
 import { TOKENS } from '~/types/api';
 
 export default defineNuxtPlugin(() => {
-  const config = useRuntimeConfig();  
+  const config = useRuntimeConfig();
   // Check if we're in demo mode
   const isDemo =
     !config.public.supabase?.url ||
