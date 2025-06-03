@@ -472,19 +472,29 @@ function handleExportPlayers(): void {
   </div>
 </template>
 
-<style scoped>
+<style>
 /* Additional component-specific styles */
 .button-container {
   display: flex;
   gap: 0.5rem;
-}
 
-.button-container button {
-  transition: all 0.2s ease;
-}
+  button {
+    transition: all 0.2s ease;
+    opacity: 0.7;
+  }
 
-.button-container button:hover {
-  transform: translateY(-1px);
+  button:hover {
+    transform: translateY(-1px);
+    opacity: 1;
+  }
+
+  .i-heroicons\:eye-slash,
+  .i-heroicons\:trash,
+  .i-heroicons\:pencil,
+  .i-heroicons\:eye {
+    width: 2rem;
+    height: 2rem;
+  }
 }
 
 /* Print-specific overrides */

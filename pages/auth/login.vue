@@ -106,7 +106,7 @@ function handleEmailAuth() {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-paddle-teal to-blue-600 p-4">
+  <div class="flex items-center justify-center bg-gradient-to-br from-paddle-teal to-blue-600 p-4">
     <div class="max-w-md w-full">
       <UCard class="p-8 shadow-2xl">
         <div class="text-center mb-8">

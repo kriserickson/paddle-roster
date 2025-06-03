@@ -12,20 +12,19 @@ function navigateToHome(): void {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50">
+  <div class="bg-gray-50 relative min-h-screen">
+    <!-- Fixed Back Button -->
+    <div class="absolute top-4 left-4 z-50">
+      <UButton
+        icon="i-heroicons-arrow-left"
+        variant="ghost"
+        class="text-teal-600 hover:bg-teal-100 p-4 text-4xl rounded-full shadow-lg"
+        @click="navigateToHome"
+      />
+    </div>
     <UContainer class="py-8">
       <!-- Header -->
       <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
-        <!-- Back Button -->
-        <div class="absolute top-6 left-6">
-          <UButton
-            icon="i-heroicons-arrow-left"
-            variant="ghost"
-            class="text-white hover:bg-white/20"
-            size="lg"
-            @click="navigateToHome"
-          />
-        </div>
 
         <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
           <Icon name="mdi:information" class="text-white text-5xl" />

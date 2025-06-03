@@ -42,8 +42,25 @@ const localPlayerForm = computed({
   set: (value: { name: string; skillLevel: number; partnerId: string }) => emit('update:player-form', value)
 });
 
+const nameInputRef = ref<{ inputRef: HTMLInputElement } | null>(null);
+
+// Autofocus name field when modal opens
+watch(isOpen, async (val: boolean) => {
+  if (val) {
+    await nextTick();
+    nameInputRef.value?.inputRef.focus();
+  }
+});
+
 // Methods
 function handleSave(): void {
+  // Round skill level to nearest 0.25 on save
+  const skillLevel = localPlayerForm.value.skillLevel;
+  const rounded = Math.round(Math.min(Math.max(skillLevel, 1), 5) * 4) / 4;
+  localPlayerForm.value = {
+    ...localPlayerForm.value,
+    skillLevel: Number(rounded)
+  };
   emit('save');
 }
 
@@ -52,33 +69,35 @@ function handleCancel(): void {
 }
 
 /**
- * Handles input for the skill level field, ensuring only valid numbers between 1.0 and 5.0 with up to two decimals.
- * @param event Input event from the skill level input field.
+ * Handles input for the skill level field, allowing only valid numbers between 1.0 and 5.0.
+ * Does not round while typing, only clamps if out of bounds.
  */
-function onSkillLevelInput(event: Event): void {
+
+/**
+ * Rounds the skill level to the nearest 0.25 when the input loses focus.
+ */
+function onSkillLevelBlur(event: Event): void {
   const input = event.target as HTMLInputElement;
-  let value = input.value.replace(/[^0-9.]/g, '');
-  // Only allow one decimal point
-  const parts = value.split('.');
-  if (parts.length > 2) {
-    value = parts[0] + '.' + parts.slice(1).join('');
+  const num = parseFloat(input.value);
+  if (!isNaN(num)) {
+    let rounded = Math.round(Math.min(Math.max(num, 1), 5) * 4) / 4;
+    rounded = Number(rounded.toFixed(2));
+    localPlayerForm.value = {
+      ...localPlayerForm.value,
+      skillLevel: rounded
+    };
+    input.value = rounded.toString();
   }
-  // Limit to two decimal places
-  if (parts[1]) {
-    parts[1] = parts[1].slice(0, 2);
-    value = parts[0] + '.' + parts[1];
+}
+
+/**
+ * Handles Enter key to submit the form.
+ */
+function onFormKeydown(event: KeyboardEvent): void {
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    handleSave();
   }
-  let num = parseFloat(value);
-  if (isNaN(num)) {
-    num = 1.0;
-  }
-  if (num < 1) {
-    num = 1.0;
-  }
-  if (num > 5) {
-    num = 5.0;
-  }
-  input.value = num.toString();
 }
 </script>
 
@@ -95,26 +114,29 @@ function onSkillLevelInput(event: Event): void {
           :state="localPlayerForm"
           class="space-y-6"
           data-testid="player-form"
-          @submit="handleSave"
+          @submit.prevent="handleSave"
+          @keydown="onFormKeydown"
         >
           <UFormField label="Name" name="name" required>
             <UInput
+              ref="nameInputRef"
               v-model="localPlayerForm.name"
               placeholder="Enter player name"
               class="form-input w-full"
               data-testid="player-name-input"
+              autofocus
             />
           </UFormField>
           <UFormField label="Skill Level" name="skillLevel" required>
             <UInput
-              v-model="localPlayerForm.skillLevel"
+              :model-value="localPlayerForm.skillLevel.toString()"
               type="text"
               inputmode="decimal"
               pattern="^\d(\.\d{1,2})?$"
               placeholder="1.0 - 5.0"
               class="form-input w-full"
               data-testid="player-skill-level-input"
-              @input="onSkillLevelInput"
+              @blur="onSkillLevelBlur"
             />
             <template #help>
               <span class="text-sm text-gray-600">

@@ -11,7 +11,7 @@ watchEffect(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-paddle-teal to-blue-600">
+  <div class="flex items-center justify-center bg-gradient-to-br from-paddle-teal to-blue-600">
     <div class="text-center">
       <div class="mb-4">
         <UIcon name="i-heroicons-arrow-path" class="w-8 h-8 text-white animate-spin mx-auto" />

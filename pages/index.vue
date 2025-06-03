@@ -93,61 +93,58 @@ const userDisplayName = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen">
+  <div class="min-h-screen relative">
+    <!-- Fixed Help/Settings Menu -->
+    <div class="fixed top-4 right-4 z-50">
+      <UPopover
+        mode="hover"
+        :content="{ side: 'bottom', align: 'start', sideOffset: 4 }"
+        arrow
+      >
+        <!-- Popover trigger -->
+        <UButton
+          icon="i-heroicons-bars-3"
+          variant="ghost"
+          class="text-teal-600 hover:bg-teal-100 p-2 text-2xl"
+        />
+
+        <!-- Popover content -->
+        <template #content>
+          <div class="p-1 space-y-1">
+            <UButton
+              icon="i-heroicons-question-mark-circle"
+              variant="ghost"
+              color="neutral"
+              class="w-full justify-start text-gray-800"
+              @click="openHelp"
+            >
+              Help
+            </UButton>
+            <UButton
+              icon="i-heroicons-cog-6-tooth"
+              variant="ghost"
+              color="neutral"
+              class="w-full justify-start text-gray-800"
+              @click="openSettings"
+            >
+              Settings
+            </UButton>
+            <UButton
+              icon="i-heroicons-arrow-right-on-rectangle"
+              variant="ghost"
+              color="neutral"
+              class="w-full justify-start text-gray-800"
+              @click="logout"
+            >
+              Logout
+            </UButton>
+          </div>
+        </template>
+      </UPopover>
+    </div>
     <UContainer class="py-8">
       <!-- Header -->
       <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
-        <!-- Hamburger Menu -->
-        <div class="absolute top-6 right-6">
-          <UPopover :popper="{ placement: 'bottom-end' }">
-            <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-white hover:bg-white/20" size="lg" />
-
-            <template #panel="{ close }">
-              <div class="p-1 space-y-1">
-                <UButton
-                  icon="i-heroicons-question-mark-circle"
-                  variant="ghost"
-                  class="w-full justify-start"
-                  @click="
-                    () => {
-                      openHelp();
-                      close();
-                    }
-                  "
-                >
-                  Help
-                </UButton>
-                <UButton
-                  icon="i-heroicons-cog-6-tooth"
-                  variant="ghost"
-                  class="w-full justify-start"
-                  @click="
-                    () => {
-                      openSettings();
-                      close();
-                    }
-                  "
-                >
-                  Settings
-                </UButton>
-                <UButton
-                  icon="i-heroicons-arrow-right-on-rectangle"
-                  variant="ghost"
-                  class="w-full justify-start"
-                  @click="
-                    () => {
-                      logout();
-                      close();
-                    }
-                  "
-                >
-                  Logout
-                </UButton>
-              </div>
-            </template>
-          </UPopover>
-        </div>
-
         <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
           <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16" />
           Paddle Roster
