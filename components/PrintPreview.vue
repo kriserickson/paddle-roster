@@ -7,13 +7,13 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const { getPlayer } = usePlayerManager();
+const playerStore = usePlayerStore();
 
 /**
  * Get player name safely
  */
 function getPlayerName(id: string): string {
-  return getPlayer(id)?.name || 'Unknown Player';
+  return playerStore.getPlayer(id)?.name || 'Unknown Player';
 }
 
 /**
@@ -76,7 +76,7 @@ const getAllPlayers = computed(() => {
     });
   });
   return Array.from(playerIds)
-    .map(id => getPlayer(id))
+    .map(id => playerStore.getPlayer(id))
     .filter((player): player is NonNullable<typeof player> => player !== undefined);
 });
 </script>
@@ -120,8 +120,8 @@ const getAllPlayers = computed(() => {
                 <span class="team-label">Team 1:</span>
                 {{ getPlayerName(game.team1[0]) }} & {{ getPlayerName(game.team1[1]) }}
                 <div class="skill-levels">
-                  ({{ formatSkillLevel(getPlayer(game.team1[0])?.skillLevel || 0) }},
-                  {{ formatSkillLevel(getPlayer(game.team1[1])?.skillLevel || 0) }})
+                  ({{ formatSkillLevel(playerStore.getPlayer(game.team1[0])?.skillLevel || 0) }},
+                  {{ formatSkillLevel(playerStore.getPlayer(game.team1[1])?.skillLevel || 0) }})
                 </div>
               </div>
               <div class="vs">vs</div>
@@ -129,8 +129,8 @@ const getAllPlayers = computed(() => {
                 <span class="team-label">Team 2:</span>
                 {{ getPlayerName(game.team2[0]) }} & {{ getPlayerName(game.team2[1]) }}
                 <div class="skill-levels">
-                  ({{ formatSkillLevel(getPlayer(game.team2[0])?.skillLevel || 0) }},
-                  {{ formatSkillLevel(getPlayer(game.team2[1])?.skillLevel || 0) }})
+                  ({{ formatSkillLevel(playerStore.getPlayer(game.team2[0])?.skillLevel || 0) }},
+                  {{ formatSkillLevel(playerStore.getPlayer(game.team2[1])?.skillLevel || 0) }})
                 </div>
               </div>
             </div>

@@ -47,12 +47,12 @@ export const useGameStore = defineStore('game', () => {
    * Actions
    */
   async function generateSchedule(eventLabel: string = ''): Promise<GameSchedule | null> {
-    const { selectedPlayers } = usePlayerSelection();
+    const playerStore = usePlayerStore();
 
     try {
       isGenerating.value = true;
 
-      const selectedPlayersValue = selectedPlayers.value;
+      const selectedPlayersValue = playerStore.selectedPlayers;
 
       if (selectedPlayersValue.length < matchingOptions.value.numberOfCourts * 4) {
         throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} selected players`);
@@ -85,9 +85,9 @@ export const useGameStore = defineStore('game', () => {
     matchingOptions.value = { ...defaultOptions };
   }
   function validateOptions(): { valid: boolean; errors: string[] } {
-    const { selectedPlayers } = usePlayerSelection();
+    const playerStore = usePlayerStore();
     const errors: string[] = [];
-    const selectedPlayersValue = selectedPlayers.value;
+    const selectedPlayersValue = playerStore.selectedPlayers;
 
     // Check minimum players
     const minPlayers = matchingOptions.value.numberOfCourts * 4;

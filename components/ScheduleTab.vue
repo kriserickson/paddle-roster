@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Game } from '~/types';
 
-const { getPlayer } = usePlayerManager();
+const playerStore = usePlayerStore();
 const gameStore = useGameStore();
 
 const toast = useToast();
@@ -40,12 +40,12 @@ const selectedRoundResting = computed(() => {
 
 // Methods
 function getPlayerName(playerId: string): string {
-  const player = getPlayer(playerId);
+  const player = playerStore.getPlayer(playerId);
   return player ? player.name : 'Unknown Player';
 }
 
 function getPlayerSkill(playerId: string): number {
-  const player = getPlayer(playerId);
+  const player = playerStore.getPlayer(playerId);
   return player ? player.skillLevel : 0;
 }
 
@@ -254,6 +254,80 @@ watch(
           </div>
         </div>
       </div>
+
+ <!-- All Rounds Overview -->
+      <div class="content-card">
+        <div class="content-card-header">
+          <h3 class="text-xl font-semibold flex items-center gap-2">
+            <Icon name="mdi:table" class="text-paddle-teal" />
+            All Rounds Overview
+          </h3>
+        </div>
+
+        <div class="p-6">
+          <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
+              <thead class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light">
+                <tr>
+                  <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Round</th>
+                  <th
+                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
+                    :key="court"
+                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider"
+                  >
+                    Court {{ court }}
+                  </th>
+                  <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">Resting</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-200">
+                <tr
+                  v-for="(round, roundIndex) in gameStore.currentSchedule.rounds"
+                  :key="roundIndex"
+                  class="hover:bg-paddle-teal/5 transition-colors duration-200"
+                  :class="{ 'bg-gray-50': roundIndex % 2 === 1 }"
+                >
+                  <td class="px-4 py-3 text-sm font-bold text-gray-900 bg-gray-50">
+                    <div class="flex items-center gap-2">
+                      <Icon name="mdi:numeric" class="text-paddle-teal" />
+                      Round {{ roundIndex + 1 }}
+                    </div>
+                  </td>
+                  <td
+                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
+                    :key="court"
+                    class="px-4 py-3 text-xs text-center"
+                  >
+                    <div v-if="getGameForCourt(round as Game[], court)" class="space-y-2">
+                      <div class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[0]) }},
+                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[1]) }}
+                      </div>
+                      <div class="text-paddle-teal font-bold text-xs">vs</div>
+                      <div class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">
+                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[0]) }},
+                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[1]) }}
+                      </div>
+                    </div>
+                  </td>
+                  <td class="px-4 py-3 text-xs text-center">
+                    <div class="flex flex-wrap gap-1 justify-center">
+                      <span
+                        v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]"
+                        :key="playerId"
+                        class="inline-block px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium"
+                      >
+                        {{ getPlayerName(playerId) }}
+                      </span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
       <!-- Round Details -->
       <div v-if="selectedRoundGames" class="content-card">
         <div class="content-card-header">
@@ -372,78 +446,7 @@ watch(
           </div>
         </div>
       </div>
-      <!-- All Rounds Overview -->
-      <div class="content-card">
-        <div class="content-card-header">
-          <h3 class="text-xl font-semibold flex items-center gap-2">
-            <Icon name="mdi:table" class="text-paddle-teal" />
-            All Rounds Overview
-          </h3>
-        </div>
-
-        <div class="p-6">
-          <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden">
-              <thead class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light">
-                <tr>
-                  <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Round</th>
-                  <th
-                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
-                    :key="court"
-                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider"
-                  >
-                    Court {{ court }}
-                  </th>
-                  <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">Resting</th>
-                </tr>
-              </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
-                <tr
-                  v-for="(round, roundIndex) in gameStore.currentSchedule.rounds"
-                  :key="roundIndex"
-                  class="hover:bg-paddle-teal/5 transition-colors duration-200"
-                  :class="{ 'bg-gray-50': roundIndex % 2 === 1 }"
-                >
-                  <td class="px-4 py-3 text-sm font-bold text-gray-900 bg-gray-50">
-                    <div class="flex items-center gap-2">
-                      <Icon name="mdi:numeric" class="text-paddle-teal" />
-                      Round {{ roundIndex + 1 }}
-                    </div>
-                  </td>
-                  <td
-                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
-                    :key="court"
-                    class="px-4 py-3 text-xs text-center"
-                  >
-                    <div v-if="getGameForCourt(round as Game[], court)" class="space-y-2">
-                      <div class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
-                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[0]) }},
-                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[1]) }}
-                      </div>
-                      <div class="text-paddle-teal font-bold text-xs">vs</div>
-                      <div class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">
-                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[0]) }},
-                        {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[1]) }}
-                      </div>
-                    </div>
-                  </td>
-                  <td class="px-4 py-3 text-xs text-center">
-                    <div class="flex flex-wrap gap-1 justify-center">
-                      <span
-                        v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]"
-                        :key="playerId"
-                        class="inline-block px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium"
-                      >
-                        {{ getPlayerName(playerId) }}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+     
     </div>
     <!-- Import Modal -->
     <UModal v-model:open="showImportModal" title="Import Schedule">

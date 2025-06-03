@@ -13,8 +13,7 @@ interface PlayerImportData {
   [key: string]: string | number | undefined; // Allow for additional fields in CSV
 }
 
-const { players, addPlayer, updatePlayer, removePlayer, getPlayer, getAvailablePartners, importPlayers } =
-  usePlayerManager();
+const playerStore = usePlayerStore();
 
 const toast = useToast();
 
@@ -54,32 +53,32 @@ const columns: TableColumn<Player>[] = [
 ];
 
 // Computed properties
-const totalPlayers = computed(() => players.value.length);
+const totalPlayers = computed(() => playerStore.players.length);
 
 const averageSkillLevel = computed(() => {
-  if (players.value.length === 0) {
+  if (playerStore.players.length === 0) {
     return '0.0';
   }
-  const total = players.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
-  return (total / players.value.length).toFixed(1);
+  const total = playerStore.players.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
+  return (total / playerStore.players.length).toFixed(1);
 });
 
 const playersWithPartners = computed(() => {
-  return players.value.filter((player: Player) => player.partnerId).length;
+  return playerStore.players.filter((player: Player) => player.partnerId).length;
 });
 
 const filteredPlayers = computed(() => {
   if (!searchQuery.value) {
-    return players.value.slice();
+    return playerStore.players.slice();
   }
 
   const query = searchQuery.value.toLowerCase();
-  return players.value.filter((player: Player) => player.name.toLowerCase().includes(query)).slice();
+  return playerStore.players.filter((player: Player) => player.name.toLowerCase().includes(query)).slice();
 });
 
 const partnerOptions = computed(() => {
   const currentPlayerId = editingPlayer.value?.id;
-  const availablePartners = currentPlayerId ? getAvailablePartners(currentPlayerId) : players.value;
+  const availablePartners = currentPlayerId ? playerStore.getAvailablePartners(currentPlayerId) : playerStore.players;
 
   return [
     { label: 'No Partner', value: 'none' },
@@ -94,7 +93,7 @@ const partnerOptions = computed(() => {
 
 // Methods
 function getPlayerName(playerId: string): string {
-  const player = getPlayer(playerId);
+  const player = playerStore.getPlayer(playerId);
   if (player) {
     return player.name;
   } else {
@@ -116,7 +115,7 @@ function editPlayer(player: Player): void {
   editingPlayer.value = player;
   // Check if the player's current partner is still available
   const currentPartnerId = player.partnerId;
-  const availablePartners = getAvailablePartners(player.id);
+  const availablePartners = playerStore.getAvailablePartners(player.id);
   const isPartnerAvailable = currentPartnerId && availablePartners.some((p: Player) => p.id === currentPartnerId);
 
   playerForm.value = {
@@ -138,7 +137,7 @@ async function deletePlayer(): Promise<void> {
   if (playerToDelete.value) {
     console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
 
-    const success = await removePlayer(playerToDelete.value.id);
+    const success = await playerStore.removePlayer(playerToDelete.value.id);
 
     console.log('Remove result:', success); // Debug log
 
@@ -164,7 +163,7 @@ async function savePlayer(): Promise<void> {
   try {
     const partnerIdToSave = playerForm.value.partnerId === 'none' ? undefined : playerForm.value.partnerId;
     if (editingPlayer.value) {
-      const success = await updatePlayer(editingPlayer.value.id, {
+      const success = await playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
         skillLevel: playerForm.value.skillLevel,
         partnerId: partnerIdToSave
@@ -173,10 +172,10 @@ async function savePlayer(): Promise<void> {
       if (success) {
         // Update partner relationship
         if (partnerIdToSave) {
-          await updatePlayer(partnerIdToSave, { partnerId: editingPlayer.value.id });
+          await playerStore.updatePlayer(partnerIdToSave, { partnerId: editingPlayer.value.id });
         } else if (editingPlayer.value.partnerId) {
           // Clear previous partner's partnerId
-          await updatePlayer(editingPlayer.value.partnerId, { partnerId: undefined });
+          await playerStore.updatePlayer(editingPlayer.value.partnerId, { partnerId: undefined });
         }
 
         toast.add({
@@ -186,11 +185,11 @@ async function savePlayer(): Promise<void> {
         });
       }
     } else {
-      const newPlayer = await addPlayer(playerForm.value.name, playerForm.value.skillLevel, partnerIdToSave);
+      const newPlayer = await playerStore.addPlayer(playerForm.value.name, playerForm.value.skillLevel, partnerIdToSave);
       if (newPlayer) {
         // Update partner relationship for new player
         if (partnerIdToSave) {
-          await updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
+          await playerStore.updatePlayer(partnerIdToSave, { partnerId: newPlayer.id });
         }
 
         toast.add({
@@ -260,9 +259,13 @@ async function performImport(): Promise<void> {
     });
 
     // Import players without partners first
-    const importResult = await importPlayers(
-      playersData.map(p => ({ name: p.name, skillLevel: p.skillLevel }))
-    );
+    const tempPlayers: Player[] = playersData.map(p => ({
+      id: crypto.randomUUID(), // Temporary ID, will be replaced by the store
+      name: p.name,
+      skillLevel: p.skillLevel
+    }));
+    
+    const importResult = await playerStore.importPlayers(tempPlayers);
 
     if (!importResult.success) {
       toast.add({
@@ -276,11 +279,11 @@ async function performImport(): Promise<void> {
     // Now that all players are added, update partners
     for (const playerData of playersData) {
       if (playerData.partnerName) {
-        const player = players.value.find(p => p.name === playerData.name);
-        const partner = players.value.find(p => p.name === playerData.partnerName);
+        const player = playerStore.players.find(p => p.name === playerData.name);
+        const partner = playerStore.players.find(p => p.name === playerData.partnerName);
 
         if (player && partner) {
-          await updatePlayer(player.id, { ...player, partnerId: partner.id });
+          await playerStore.updatePlayer(player.id, { ...player, partnerId: partner.id });
         } else {
           toast.add({
             title: 'Warning',
@@ -311,14 +314,14 @@ async function performImport(): Promise<void> {
 function handleExportPlayers(): void {
   try {
     // Get players and convert to CSV
-    const data = players.value;
+    const data = playerStore.players;
     if (!data.length) {
       throw new Error('No players to export.');
     }
     const headers = ['name', 'skillLevel', 'partnerName'];
     const csv = [
       headers.join(','),
-      ...data.map(player =>
+      ...data.map((player: Player) =>
         headers
           .map(h => {
             if (h === 'name') {

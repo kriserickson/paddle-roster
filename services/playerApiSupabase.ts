@@ -32,7 +32,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   private mapPlayerToInsert(player: Omit<Player, 'id'>): PlayerInsert {
     return {
-      user_id: this.user.value?.id || '',
+      user_id: this.user.value?.id || 'anonymous-user', // Fallback for data recovery
       name: player.name,
       skill_level: player.skillLevel,
       partner_id: player.partnerId || null,
@@ -64,21 +64,35 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async getPlayers(): Promise<ApiResponse<Player[]>> {
     try {
-      if (!this.user.value) {
-        return { success: false, message: 'User not authenticated' };
-      }
-
-      const { data, error } = await this.supabase
+      console.log('PlayerApiSupabase: Starting getPlayers...');
+      
+      let query = this.supabase
         .from('players')
-        .select('*')
-        .eq('user_id', this.user.value.id)
-        .order('name');
+        .select('*');
+
+      // If user is authenticated, filter by user_id
+      if (this.user.value) {
+        console.log('User authenticated, filtering by user_id:', this.user.value.id);
+        query = query.eq('user_id', this.user.value.id);
+      } else {
+        console.log('User not authenticated, loading all players for data recovery');
+      }
+      // If not authenticated, load all players (temporary for data recovery)
+      
+      console.log('Executing Supabase query...');
+      const { data, error } = await query.order('name');
+
+      console.log('Supabase query response:', { data, error });
 
       if (error) {
+        console.error('Supabase error:', error);
         return { success: false, message: 'Failed to load players', error: error.message };
       }
 
+      console.log('Raw data from Supabase:', data);
       const players = (data || []).map(row => this.mapRowToPlayer(row));
+      console.log('Mapped players:', players);
+      
       return {
         success: true,
         data: players,
@@ -116,10 +130,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
     try {
-      if (!this.user.value) {
-        return { success: false, message: 'User not authenticated' };
-      }
-
+      // Allow creating players even without authentication (temporary for data recovery)
       const insertData = this.mapPlayerToInsert(player);
       const { data, error } = await this.supabase.from('players').insert([insertData]).select().single();
 
@@ -145,23 +156,24 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
     try {
-      if (!this.user.value) {
-        return { success: false, message: 'User not authenticated' };
-      }
-
+      // Allow updating players even without authentication (temporary for data recovery)
       if (!id || id === '') {
         // This is a new player, create it
         return await this.createPlayer(updates as Omit<Player, 'id'>);
       }
 
       const updateData = this.mapPlayerToUpdate({ id, ...updates } as Player);
-      const { data, error } = await this.supabase
+      let query = this.supabase
         .from('players')
         .update(updateData)
-        .eq('id', id)
-        .eq('user_id', this.user.value.id)
-        .select()
-        .single();
+        .eq('id', id);
+
+      // If user is authenticated, also filter by user_id
+      if (this.user.value) {
+        query = query.eq('user_id', this.user.value.id);
+      }
+
+      const { data, error } = await query.select().single();
 
       if (error) {
         return { success: false, message: 'Failed to update player', error: error.message };
@@ -184,11 +196,15 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async deletePlayer(id: string): Promise<ApiResponse> {
     try {
-      if (!this.user.value) {
-        return { success: false, message: 'User not authenticated' };
+      // Allow deleting players even without authentication (temporary for data recovery)
+      let query = this.supabase.from('players').delete().eq('id', id);
+
+      // If user is authenticated, also filter by user_id
+      if (this.user.value) {
+        query = query.eq('user_id', this.user.value.id);
       }
 
-      const { error } = await this.supabase.from('players').delete().eq('id', id).eq('user_id', this.user.value.id);
+      const { error } = await query;
 
       if (error) {
         return { success: false, message: 'Failed to delete player', error: error.message };

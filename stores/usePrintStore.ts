@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { Game, GameSchedule, PrintOptions } from '~/types';
+import { usePlayerStore } from './usePlayerStore';
 
 export const usePrintStore = defineStore('print', () => {
   /**
@@ -26,10 +27,10 @@ export const usePrintStore = defineStore('print', () => {
   /**
    * Actions
    */ function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
-    const { getPlayer } = usePlayerManager();
+    const playerStore = usePlayerStore();
 
     function playerName(id: string): string {
-      return getPlayer(id)?.name || 'Unknown Player';
+      return playerStore.getPlayer(id)?.name || 'Unknown Player';
     }
 
     function formatSkillLevel(level: number): string {

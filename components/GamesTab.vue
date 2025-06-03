@@ -1,15 +1,7 @@
 <script setup lang="ts">
 import type { MatchingOptions, Player } from '~/types';
 
-const { players } = usePlayerManager();
-const {
-  selectedPlayers: selectedPlayersFromSelection,
-  togglePlayerSelection,
-  selectAllPlayers,
-  deselectAllPlayers,
-  isPlayerSelected,
-  getPlayer
-} = usePlayerSelection();
+const playerStore = usePlayerStore();
 const gameStore = useGameStore();
 
 const toast = useToast();
@@ -40,15 +32,15 @@ const skillLevelFilterOptions = [
 ];
 
 // Computed properties
-const selectedPlayers = computed(() => selectedPlayersFromSelection.value);
+const selectedPlayers = computed(() => playerStore.selectedPlayers);
 
 const filteredPlayers = computed(() => {
-  let filtered = players.value;
+  let filtered = playerStore.players;
 
   // Apply search filter
   if (playerSearchQuery.value) {
     const query = playerSearchQuery.value.toLowerCase();
-    filtered = filtered.filter(player => player.name.toLowerCase().includes(query));
+    filtered = filtered.filter((player: Player) => player.name.toLowerCase().includes(query));
   }
 
   // Apply skill level filter
@@ -95,17 +87,17 @@ const validationErrors = computed(() => validationResult.value.errors);
 
 // Methods
 function selectFilteredPlayers(): void {
-  filteredPlayers.value.forEach(player => {
-    if (!isPlayerSelected(player.id)) {
-      togglePlayerSelection(player.id);
+  filteredPlayers.value.forEach((player: Player) => {
+    if (!playerStore.isPlayerSelected(player.id)) {
+      playerStore.togglePlayerSelection(player.id);
     }
   });
 }
 
 function deselectFilteredPlayers(): void {
-  filteredPlayers.value.forEach(player => {
-    if (isPlayerSelected(player.id)) {
-      togglePlayerSelection(player.id);
+  filteredPlayers.value.forEach((player: Player) => {
+    if (playerStore.isPlayerSelected(player.id)) {
+      playerStore.togglePlayerSelection(player.id);
     }
   });
 }
@@ -221,6 +213,56 @@ onMounted(() => {
       </div>
     </div>
 
+     <!-- Generation Results -->
+    <div v-if="gameStore.currentSchedule && scheduleStats" class="content-card">
+      <div class="content-card-header">
+        <h3 class="text-xl font-semibold flex items-center gap-2">
+          <Icon name="mdi:chart-bar" class="text-paddle-teal" />
+          Generation Results
+        </h3>
+      </div>
+
+      <div class="p-6">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+              <Icon name="mdi:gamepad-variant" class="text-3xl text-blue-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-blue-700">{{ scheduleStats.totalGames }}</div>
+              <div class="text-sm font-medium text-blue-600">Total Games</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
+              <Icon name="mdi:counter" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-paddle-teal">{{ scheduleStats.totalRounds }}</div>
+              <div class="text-sm font-medium text-paddle-teal-dark">Rounds</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+              <Icon name="mdi:balance-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-amber-700">{{ scheduleStats.averageSkillDifference }}</div>
+              <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
+            </div>
+          </div>
+          <div class="content-card overflow-hidden">
+            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+              <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
+              <div class="text-2xl font-bold text-purple-700">{{ scheduleStats.restingPerRound }}</div>
+              <div class="text-sm font-medium text-purple-600">Resting per Round</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="text-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
+          <Icon name="mdi:clock-check" class="text-paddle-teal mr-2" />
+          <span class="text-sm font-medium text-gray-700">
+            Generated: {{ formatDateTime(scheduleStats.generatedAt) }}
+          </span>
+        </div>
+      </div>
+    </div>
+
     <!-- Configuration -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Game Settings -->
@@ -326,8 +368,8 @@ onMounted(() => {
             Player Selection
           </h3>
           <div class="flex gap-2">
-            <UButton variant="ghost" size="sm" class="btn-secondary" @click="selectAllPlayers()"> Select All </UButton>
-            <UButton variant="ghost" size="sm" class="btn-secondary" @click="deselectAllPlayers()">
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="playerStore.selectAllPlayers()"> Select All </UButton>
+            <UButton variant="ghost" size="sm" class="btn-secondary" @click="playerStore.deselectAllPlayers()">
               Deselect All
             </UButton>
           </div>
@@ -362,7 +404,7 @@ onMounted(() => {
           <div class="flex items-center gap-2 text-sm text-gray-600">
             <Icon name="mdi:information" class="text-paddle-teal" />
             <span>
-              Showing {{ filteredPlayers.length }} of {{ players.length }} players. You need at least
+              Showing {{ filteredPlayers.length }} of {{ playerStore.players.length }} players. You need at least
               {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).
             </span>
           </div>
@@ -392,7 +434,7 @@ onMounted(() => {
           </div>
         </div>
 
-        <div v-if="players.length === 0" class="text-center py-8 text-gray-500">
+        <div v-if="playerStore.players.length === 0" class="text-center py-8 text-gray-500">
           <Icon name="mdi:account-plus" class="text-4xl text-gray-300 mb-3 mx-auto" />
           <p class="text-lg mb-2">No players available</p>
           <p class="text-sm">Add some players first in the Players tab.</p>
@@ -410,18 +452,18 @@ onMounted(() => {
             :key="player.id"
             :class="[
               'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
-              isPlayerSelected(player.id)
+              playerStore.isPlayerSelected(player.id)
                 ? 'border-paddle-teal bg-paddle-teal/5'
                 : 'border-gray-200 hover:border-paddle-teal/50'
             ]"
-            @click="togglePlayerSelection(player.id)"
+            @click="playerStore.togglePlayerSelection(player.id)"
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <UCheckbox
-                  :checked="isPlayerSelected(player.id)"
+                  :checked="playerStore.isPlayerSelected(player.id)"
                   class="pointer-events-none"
-                  @change="togglePlayerSelection(player.id)"
+                  @change="playerStore.togglePlayerSelection(player.id)"
                 />
                 <div
                   class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
@@ -436,7 +478,7 @@ onMounted(() => {
             </div>
             <div v-if="player.partnerId" class="mt-2 text-xs text-gray-600 flex items-center gap-1">
               <Icon name="mdi:account-heart" class="text-paddle-red" />
-              Partner: {{ getPlayer(player.partnerId)?.name || 'Unknown' }}
+              Partner: {{ playerStore.getPlayer(player.partnerId)?.name || 'Unknown' }}
             </div>
           </div>
         </div>
@@ -523,54 +565,6 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Generation Results -->
-    <div v-if="gameStore.currentSchedule && scheduleStats" class="content-card">
-      <div class="content-card-header">
-        <h3 class="text-xl font-semibold flex items-center gap-2">
-          <Icon name="mdi:chart-bar" class="text-paddle-teal" />
-          Generation Results
-        </h3>
-      </div>
-
-      <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-              <Icon name="mdi:gamepad-variant" class="text-3xl text-blue-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-blue-700">{{ scheduleStats.totalGames }}</div>
-              <div class="text-sm font-medium text-blue-600">Total Games</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
-              <Icon name="mdi:counter" class="text-3xl text-paddle-teal mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-paddle-teal">{{ scheduleStats.totalRounds }}</div>
-              <div class="text-sm font-medium text-paddle-teal-dark">Rounds</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
-              <Icon name="mdi:balance-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-amber-700">{{ scheduleStats.averageSkillDifference }}</div>
-              <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
-              <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-purple-700">{{ scheduleStats.restingPerRound }}</div>
-              <div class="text-sm font-medium text-purple-600">Resting per Round</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
-          <Icon name="mdi:clock-check" class="text-paddle-teal mr-2" />
-          <span class="text-sm font-medium text-gray-700">
-            Generated: {{ formatDateTime(scheduleStats.generatedAt) }}
-          </span>
-        </div>
-      </div>
-    </div>
+   
   </div>
 </template>

@@ -54,10 +54,13 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   async function initializeStore(): Promise<{ success: boolean; message: string }> {
+    console.log('PlayerStore: initializeStore() starting...');
     const initResult = await playerApi.initialize();
+    console.log('PlayerStore: API initialize result:', initResult);
     if (!initResult.success) {
       return initResult;
     } else {
+      console.log('PlayerStore: API initialized successfully, now loading players...');
       return await loadPlayers();
     }
   }
@@ -67,15 +70,21 @@ export const usePlayerStore = defineStore('player', () => {
    */
   async function loadPlayers(): Promise<{ success: boolean; message: string }> {
     try {
+      console.log('PlayerStore: loadPlayers() starting...');
+      console.log('PlayerStore: calling playerApi.getPlayers()...');
       const result = await playerApi.getPlayers();
+      console.log('PlayerStore: API result:', result);
+      
       if (result.success && result.data) {
         players.value = result.data;
+        console.log(`PlayerStore: Successfully loaded ${result.data.length} players:`, result.data.map(p => p.name));
         return { success: true, message: `Loaded ${result.data.length} players` };
       }
       players.value = []; // Ensure it's reset if no data
+      console.log('PlayerStore: No players found in API response');
       return { success: true, message: 'No saved players found' };
     } catch (error) {
-      console.error('Error loading players:', error);
+      console.error('PlayerStore: Error loading players:', error);
       return {
         success: false,
         message: 'Failed to load players'
@@ -232,6 +241,8 @@ export const usePlayerStore = defineStore('player', () => {
     }
   }
 
+  initializeStore();
+
   /**
    * Export players as JSON string
    */
@@ -261,8 +272,7 @@ export const usePlayerStore = defineStore('player', () => {
     deselectAllPlayers,
     isPlayerSelected,
 
-    // Actions
-    initializeStore,
+    // Actions    
     loadPlayers,
     addPlayer,
     updatePlayer,
