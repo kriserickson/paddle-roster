@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { MatchingOptions, Player } from '~/types';
 
-const { players, canGenerateGames: _canGenerateGames } = usePlayerManager();
+const { players } = usePlayerManager();
 const {
   selectedPlayers: selectedPlayersFromSelection,
   togglePlayerSelection,

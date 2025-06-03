@@ -42,15 +42,15 @@ function handleCancel(): void {
       <div class="space-y-6">
         <div class="flex items-center gap-2 mb-4">
           <Icon name="mdi:upload" class="text-paddle-teal text-xl" />
-          <p class="text-sm text-gray-600">Paste JSON data to import players.</p>
+          <p class="text-sm text-gray-600">Paste CSV data to import players.</p>
         </div>
 
-        <UFormField label="JSON Data">
+        <UFormField label="CSV Data">
           <UTextarea
             v-model="importDataModel"
             :rows="10"
-            placeholder="Paste JSON data here..."
-            class="form-input font-mono text-sm"
+            placeholder="Paste CSV data here in the form name,skillLevel,[partnerName]"
+            class="form-input font-mono text-sm w-full"
           />
         </UFormField>
 

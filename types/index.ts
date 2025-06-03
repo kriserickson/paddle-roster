@@ -82,6 +82,7 @@ export interface GameSchedule {
  * Statistics about player participation
  */
 export interface PlayerStats {
+  restRounds: number[];
   /** Player ID */
   playerId: string;
   /** Number of games played */

@@ -174,30 +174,6 @@ export const usePlayerManager = () => {
   }
 
   /**
-   * Get players with partner relationships resolved
-   */
-  function getPlayersWithPartners(): (Player & { partner?: Player })[] {
-    return players.value.map(player => ({
-      ...player,
-      partner: player.partnerId ? getPlayer(player.partnerId) : undefined
-    }));
-  }
-
-  /**
-   * Validate that minimum number of players exist for games
-   */
-  function validatePlayersForGames(minPlayers = 4): { valid: boolean; message?: string } {
-    const activePlayers = [...players.value];
-
-    if (activePlayers.length < minPlayers) {
-      return {
-        valid: false,
-        message: `Need at least ${minPlayers} players to generate games. Currently have ${activePlayers.length}.`
-      };
-    }
-
-    return { valid: true };
-  } /**
    * Import players from JSON data
    */
   async function importPlayers(playersData: unknown[]): Promise<{ success: boolean; message: string }> {
@@ -248,7 +224,9 @@ export const usePlayerManager = () => {
    */
   const canGenerateGames = computed(() => {
     return players.value.length >= 4;
-  }); /**
+  });
+
+  /**
    * Clear all players
    */
   async function clearAllPlayers(): Promise<boolean> {
@@ -284,6 +262,7 @@ export const usePlayerManager = () => {
     }));
     return JSON.stringify(exportData, null, 2);
   }
+
   // Load players when user changes or component mounts
   watch(
     user,
@@ -307,8 +286,6 @@ export const usePlayerManager = () => {
     updatePlayer,
     removePlayer,
     getPlayer,
-    getPlayersWithPartners,
-    validatePlayersForGames,
     importPlayers,
     getAvailablePartners,
     canGenerateGames,

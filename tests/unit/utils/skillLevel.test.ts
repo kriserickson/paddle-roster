@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { getSkillLevelColor } from '../../../utils/skillLevel';
+import { getSkillLevelColor } from '~/utils/skillLevel';
 
 describe('skillLevel utils', () => {
   describe('getSkillLevelColor', () => {

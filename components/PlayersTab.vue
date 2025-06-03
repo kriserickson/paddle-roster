@@ -5,19 +5,16 @@ import AddEditPlayerModal from '~/components/modals/AddEditPlayerModal.vue';
 import ImportPlayersModal from '~/components/modals/ImportPlayersModal.vue';
 import DeletePlayerModal from '~/components/modals/DeletePlayerModal.vue';
 
-const {
-  players,
-  loading: _loading,
-  error: _error,
-  addPlayer,
-  updatePlayer,
-  removePlayer,
-  getPlayer,
-  getAvailablePartners,
-  clearAllPlayers: _clearAllPlayers,
-  importPlayers,
-  exportPlayers
-} = usePlayerManager();
+// Define interfaces for CSV import
+interface PlayerImportData {
+  name: string;
+  skillLevel: number;
+  partnerName?: string;
+  [key: string]: string | number | undefined; // Allow for additional fields in CSV
+}
+
+const { players, addPlayer, updatePlayer, removePlayer, getPlayer, getAvailablePartners, importPlayers } =
+  usePlayerManager();
 
 const toast = useToast();
 
@@ -98,7 +95,11 @@ const partnerOptions = computed(() => {
 // Methods
 function getPlayerName(playerId: string): string {
   const player = getPlayer(playerId);
-  return player ? player.name : 'Unknown';
+  if (player) {
+    return player.name;
+  } else {
+    return 'Unknown';
+  }
 }
 
 function handleAddPlayer(): void {
@@ -225,29 +226,83 @@ function cancelPlayerForm(): void {
 
 async function performImport(): Promise<void> {
   try {
-    const playersData = JSON.parse(importData.value);
-    const result = await importPlayers(playersData);
-
-    if (result.success) {
-      toast.add({
-        title: 'Import successful',
-        description: result.message,
-        color: 'success'
+    // Parse CSV
+    const lines = importData.value.trim().split('\n');
+    if (lines.length < 2) {
+      throw new Error('CSV must have a header and at least one row.');
+    }
+    const headers = lines[0].split(',').map(h => h.trim());
+    const playersData: PlayerImportData[] = lines.slice(1).map(line => {
+      const values = line.split(',').map(v => v.trim());
+      const obj: PlayerImportData = {
+        name: '',
+        skillLevel: 3.0
+      };
+      headers.forEach((h, i) => {
+        if (h === 'skillLevel') {
+          obj.skillLevel = parseFloat(values[i] || '3.0');
+        } else if (h === 'partnerName') {
+          obj.partnerName = values[i] ? values[i] : undefined;
+        } else {
+          obj[h] = values[i];
+        }
       });
-      showImportModal.value = false;
-      importData.value = '';
-    } else {
+
+      // Validate required fields
+      if (!obj.name) {
+        obj.name = 'Unnamed Player';
+      }
+      if (isNaN(obj.skillLevel)) {
+        obj.skillLevel = 3.0;
+      }
+
+      return obj;
+    });
+
+    // Import players without partners first
+    const importResult = await importPlayers(
+      playersData.map(p => ({ name: p.name, skillLevel: p.skillLevel }))
+    );
+
+    if (!importResult.success) {
       toast.add({
         title: 'Import failed',
-        description: result.message,
+        description: importResult.message,
         color: 'error'
       });
+      return;
     }
+
+    // Now that all players are added, update partners
+    for (const playerData of playersData) {
+      if (playerData.partnerName) {
+        const player = players.value.find(p => p.name === playerData.name);
+        const partner = players.value.find(p => p.name === playerData.partnerName);
+
+        if (player && partner) {
+          await updatePlayer(player.id, { ...player, partnerId: partner.id });
+        } else {
+          toast.add({
+            title: 'Warning',
+            description: `Partner "${playerData.partnerName}" not found for player "${playerData.name}".`,
+            color: 'warning'
+          });
+        }
+      }
+    }
+
+    toast.add({
+      title: 'Import successful',
+      description: importResult.message,
+      color: 'success'
+    });
+    showImportModal.value = false;
+    importData.value = '';
   } catch (error) {
     console.error('Error importing players:', error);
     toast.add({
       title: 'Import failed',
-      description: 'Invalid JSON format.',
+      description: 'Invalid CSV format.',
       color: 'error'
     });
   }
@@ -255,18 +310,45 @@ async function performImport(): Promise<void> {
 
 function handleExportPlayers(): void {
   try {
-    const data = exportPlayers();
-    const blob = new Blob([data], { type: 'application/json' });
+    // Get players and convert to CSV
+    const data = players.value;
+    if (!data.length) {
+      throw new Error('No players to export.');
+    }
+    const headers = ['name', 'skillLevel', 'partnerName'];
+    const csv = [
+      headers.join(','),
+      ...data.map(player =>
+        headers
+          .map(h => {
+            if (h === 'name') {
+              return player.name;
+            } else if (h === 'skillLevel') {
+              return player.skillLevel;
+            } else if (h === 'partnerName') {
+              if (player.partnerId) {
+                return getPlayerName(player.partnerId);
+              } else {
+                return '';
+              }
+            }
+            return ''; // Default case, should not happen
+          })
+          .join(',')
+      )
+    ].join('\n');
+
+    const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `pickleball-players-${new Date().toISOString().split('T')[0]}.json`;
+    link.download = `pickleball-players-${new Date().toISOString().split('T')[0]}.csv`;
     link.click();
     URL.revokeObjectURL(url);
 
     toast.add({
       title: 'Export successful',
-      description: 'Players data has been downloaded.',
+      description: 'Players data has been downloaded as CSV.',
       color: 'success'
     });
   } catch (error) {
