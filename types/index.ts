@@ -6,7 +6,7 @@
  * Represents a pickleball player with their skill level and optional partner
  */
 export interface Player {
-  /** Unique identifier for the player (UUID from database) */
+  /** Unique identifier for the player */
   id: string;
   /** Player's full name */
   name: string;
@@ -14,12 +14,8 @@ export interface Player {
   skillLevel: number;
   /** Optional reference to another player's ID for partner preference */
   partnerId?: string;
-  /** User ID who owns this player (for multi-tenancy) */
-  user_id?: string;
-  /** Timestamp when player was created */
-  created_at?: string;
-  /** Timestamp when player was last updated */
-  updated_at?: string;
+  /** Whether this player is currently active/available for games */
+  active?: boolean;
 }
 
 /**
@@ -67,36 +63,36 @@ export interface MatchingOptions {
  */
 export interface GameSchedule {
   /** All games organized by round */
-  rounds: Game[][];
+  rounds: Game[][]
   /** Players sitting out each round (1-4 players per round) */
-  restingPlayers: string[][];
+  restingPlayers: string[][]
   /** Tournament/event label for printing */
-  eventLabel: string;
+  eventLabel: string
   /** Configuration used to generate this schedule */
-  options: MatchingOptions;
+  options: MatchingOptions
   /** Timestamp when schedule was generated */
-  generatedAt: Date;
+  generatedAt: Date
 }
 
 /**
  * Statistics about player participation
  */
 export interface PlayerStats {
-  restRounds: number[];
   /** Player ID */
-  playerId: string;
+  playerId: string
   /** Number of games played */
-  gamesPlayed: number;
+  gamesPlayed: number
   /** Number of rounds rested */
-  roundsRested: number;
+  roundsRested: number
+  restRounds: number[];
   /** List of players this player has been paired with */
-  partneredWith: string[];
+  partneredWith: string[]
   /** List of players this player has played against */
-  playedAgainst: string[];
+  playedAgainst: string[]
   /** Number of times played with each partner */
-  partnerCounts: Record<string, number>;
+  partnerCounts: Record<string, number>
   /** Number of times played against each opponent */
-  opponentCounts: Record<string, number>;
+  opponentCounts: Record<string, number>
 }
 
 /**
@@ -104,25 +100,25 @@ export interface PlayerStats {
  */
 export interface PrintOptions {
   /** Event title/header for the printout */
-  eventTitle: string;
+  eventTitle: string
   /** Optional subtitle (e.g., date, location) */
-  eventSubtitle?: string;
+  eventSubtitle?: string
   /** Event date for the printout */
-  eventDate?: string;
+  eventDate?: string
   /** Location for the event */
-  location?: string;
+  location?: string
   /** Organizer name */
-  organizer?: string;
+  organizer?: string
   /** Whether to include player list */
-  includePlayerList?: boolean;
+  includePlayerList?: boolean
   /** Whether to include player stats */
-  includeStats: boolean;
+  includeStats: boolean
   /** Whether to include rest periods */
-  includeRestPeriods: boolean;
+  includeRestPeriods: boolean
   /** Whether to include court assignments */
-  includeCourtAssignments?: boolean;
+  includeCourtAssignments?: boolean
   /** Page orientation */
-  orientation: 'portrait' | 'landscape';
+  orientation: 'portrait' | 'landscape'
   /** Whether to use compact layout */
-  compactLayout?: boolean;
+  compactLayout?: boolean
 }

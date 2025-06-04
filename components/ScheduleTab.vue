@@ -145,6 +145,13 @@ watch(
     }
   }
 );
+
+// Auto-generate preview when print modal opens
+watch(showPrintModal, async newValue => {
+  if (newValue && gameStore.currentSchedule && !previewGenerated.value) {
+    await generatePreview();
+  }
+});
 </script>
 
 <template>
@@ -207,14 +214,14 @@ watch(
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-                <Icon name="mdi:gamepad-variant" class="text-3xl text-blue-600 mb-2 mx-auto" />
+                <Icon name="mdi:tournament" class="text-3xl text-blue-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-blue-700">{{ totalGames }}</div>
                 <div class="text-sm font-medium text-blue-600">Total Games</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
-                <Icon name="mdi:court-sport" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+                <Icon name="mdi:soccer-field" class="text-3xl text-paddle-teal mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-paddle-teal">
                   {{ gameStore.currentSchedule.options.numberOfCourts }}
                 </div>
@@ -223,7 +230,7 @@ watch(
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
-                <Icon name="mdi:balance-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
+                <Icon name="mdi:scale-balance" class="text-3xl text-amber-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-amber-700">{{ averageSkillDifference }}</div>
                 <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
               </div>
@@ -465,87 +472,243 @@ watch(
     </div>
 
     <!-- Print Configuration Modal -->
-    <UModal v-model:open="showPrintModal" title="Print Configuration">
+    <UModal
+      v-model:open="showPrintModal"
+      title="Print Configuration & Preview"
+      :ui="{
+        wrapper: 'w-full max-w-[95vw] h-full max-h-[95vh]',
+        content: 'w-full h-full max-w-none'
+      }"
+    >
       <template #body>
-        <div class="space-y-6">
-          <!-- Header Configuration -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <UFormField label="Event Name">
-              <UInput v-model="printOptions.eventTitle" placeholder="Pickleball League" class="form-input" />
-            </UFormField>
+        <div class="flex gap-6 h-full min-h-[80vh]">
+          <!-- Configuration Panel (Left Side) -->
+          <div class="w-80 flex-shrink-0 space-y-6 overflow-y-auto pr-4 border-r border-gray-200">
+            <!-- Header Configuration -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold text-gray-900">Event Information</h3>
+              <UFormField label="Event Name">
+                <UInput v-model="printOptions.eventTitle" placeholder="Pickleball League" class="form-input" />
+              </UFormField>
 
-            <UFormField label="Event Date">
-              <UInput v-model="printOptions.eventDate" type="date" class="form-input" />
-            </UFormField>
+              <UFormField label="Event Date">
+                <UInput v-model="printOptions.eventDate" type="date" class="form-input" />
+              </UFormField>
 
-            <UFormField label="Location">
-              <UInput v-model="printOptions.location" placeholder="Community Center" class="form-input" />
-            </UFormField>
+              <UFormField label="Location">
+                <UInput v-model="printOptions.location" placeholder="Community Center" class="form-input" />
+              </UFormField>
 
-            <UFormField label="Organizer">
-              <UInput v-model="printOptions.organizer" placeholder="League Coordinator" class="form-input" />
-            </UFormField>
+              <UFormField label="Organizer">
+                <UInput v-model="printOptions.organizer" placeholder="League Coordinator" class="form-input" />
+              </UFormField>
+            </div>
+
+            <!-- Print Options -->
+            <div class="space-y-4">
+              <h3 class="text-lg font-semibold text-gray-900">Print Options</h3>
+
+              <UFormField label="Include Options">
+                <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                  <UCheckbox v-model="printOptions.includePlayerList" label="Player List" class="text-blue-800" />
+                  <UCheckbox v-model="printOptions.includeStats" label="Game Statistics" class="text-blue-800" />
+                  <UCheckbox
+                    v-model="printOptions.includeRestPeriods"
+                    label="Rest Period Information"
+                    class="text-blue-800"
+                  />
+                  <UCheckbox
+                    v-model="printOptions.includeCourtAssignments"
+                    label="Court Assignments"
+                    class="text-blue-800"
+                  />
+                </div>
+              </UFormField>
+
+              <UFormField label="Layout Options">
+                <div class="space-y-3 bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20 p-4 rounded-xl">
+                  <URadioGroup
+                    v-model="printOptions.orientation"
+                    :options="[
+                      { value: 'portrait', label: 'Portrait' },
+                      { value: 'landscape', label: 'Landscape' }
+                    ]"
+                    class="text-paddle-teal-dark"
+                  />
+                  <UCheckbox
+                    v-model="printOptions.compactLayout"
+                    label="Compact Layout"
+                    class="text-paddle-teal-dark"
+                  />
+                </div>
+              </UFormField>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3 pt-4 border-t border-gray-200">
+              <UButton class="btn-primary w-full" @click="generatePreview">
+                <Icon name="mdi:eye" class="mr-2" />
+                {{ previewGenerated ? 'Refresh Preview' : 'Generate Preview' }}
+              </UButton>
+              <UButton class="btn-secondary w-full" @click="print">
+                <Icon name="mdi:printer" class="mr-2" />
+                Print
+              </UButton>
+              <UButton class="btn-primary w-full" @click="downloadPdf">
+                <Icon name="mdi:file-pdf-box" class="mr-2" />
+                Download PDF
+              </UButton>
+              <UButton variant="ghost" class="btn-secondary w-full" @click="showPrintModal = false"> Cancel </UButton>
+            </div>
           </div>
 
-          <!-- Print Options -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <UFormField label="Include Options">
-              <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                <UCheckbox v-model="printOptions.includePlayerList" label="Player List" class="text-blue-800" />
-                <UCheckbox v-model="printOptions.includeStats" label="Game Statistics" class="text-blue-800" />
-                <UCheckbox
-                  v-model="printOptions.includeRestPeriods"
-                  label="Rest Period Information"
-                  class="text-blue-800"
-                />
-                <UCheckbox
-                  v-model="printOptions.includeCourtAssignments"
-                  label="Court Assignments"
-                  class="text-blue-800"
+          <!-- Print Preview Panel (Right Side) -->
+          <div class="flex-1 flex flex-col min-h-0 min-w-0">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-lg font-semibold text-gray-900">Print Preview</h3>
+              <div class="text-sm text-gray-600">
+                {{ printOptions.orientation === 'landscape' ? 'Landscape' : 'Portrait' }} •
+                {{ printOptions.compactLayout ? 'Compact' : 'Standard' }} Layout
+              </div>
+            </div>
+
+            <!-- Preview Container with Paper-like appearance -->
+            <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
+              <div
+                v-if="previewGenerated && gameStore.currentSchedule"
+                class="bg-white shadow-lg min-w-fit"
+                :class="{
+                  'print-page-portrait': printOptions.orientation === 'portrait',
+                  'print-page-landscape': printOptions.orientation === 'landscape'
+                }"
+              >
+                <PrintPreview
+                  ref="printPreviewRef"
+                  :schedule="gameStore.currentSchedule as GameSchedule"
+                  :options="printOptions"
+                  class="print-preview-actual"
+                  :class="{ compact: printOptions.compactLayout }"
                 />
               </div>
-            </UFormField>
 
-            <UFormField label="Layout Options">
-              <div class="space-y-3 bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20 p-4 rounded-xl">
-                <URadioGroup
-                  v-model="printOptions.orientation"
-                  :options="[
-                    { value: 'portrait', label: 'Portrait' },
-                    { value: 'landscape', label: 'Landscape' }
-                  ]"
-                  class="text-paddle-teal-dark"
-                />
-                <UCheckbox v-model="printOptions.compactLayout" label="Compact Layout" class="text-paddle-teal-dark" />
+              <div v-else class="flex items-center justify-center h-full min-h-[400px]">
+                <div class="text-center text-gray-500">
+                  <Icon name="mdi:file-document-outline" class="text-6xl mb-4 mx-auto" />
+                  <p class="text-lg">Click "Generate Preview" to show print preview</p>
+                  <p class="text-sm mt-2">Preview will show actual print dimensions scaled to fit</p>
+                </div>
               </div>
-            </UFormField>
-          </div>
-
-          <!-- Print Preview -->
-          <div v-if="previewGenerated && gameStore.currentSchedule" class="border rounded-lg p-4 bg-gray-50">
-            <h4 class="text-lg font-semibold mb-4">Print Preview</h4>
-            <PrintPreview
-              ref="printPreviewRef"
-              :schedule="gameStore.currentSchedule as GameSchedule"
-              :options="printOptions"
-              class="print-preview bg-white border rounded-lg p-6 shadow-inner max-h-96 overflow-y-auto"
-              :class="{ compact: printOptions.compactLayout }"
-            />
-          </div>
-
-          <div class="flex gap-3 justify-end pt-4 border-t border-gray-200">
-            <UButton variant="ghost" class="btn-secondary" @click="showPrintModal = false"> Cancel </UButton>
-            <UButton class="btn-secondary" @click="print">
-              <Icon name="mdi:printer" class="mr-2" />
-              Print
-            </UButton>
-            <UButton class="btn-primary" @click="downloadPdf">
-              <Icon name="mdi:file-pdf-box" class="mr-2" />
-              Download PDF
-            </UButton>
+            </div>
           </div>
         </div>
       </template>
     </UModal>
   </div>
 </template>
+
+<style scoped>
+/* Print Preview Styles */
+.print-page-portrait {
+  width: 8.5in;
+  height: 11in;
+  transform: scale(1.1);
+  transform-origin: top center;
+  margin: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.print-page-landscape {
+  width: 11in;
+  height: 8.5in;
+  transform: scale(0.9);
+  transform-origin: top center;
+  margin: 0;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e5e7eb;
+}
+
+.print-preview-actual {
+  width: 100%;
+  height: 100%;
+  padding: 0.75in;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* Ensure the preview looks like actual print output */
+.print-preview-actual :deep(.print-preview-safe) {
+  font-family: 'Times New Roman', serif;
+  font-size: 12pt;
+  line-height: 1.4;
+  color: #000;
+  background: transparent;
+  padding: 0;
+  min-height: auto;
+}
+
+.print-preview-actual :deep(.header h1) {
+  font-size: 20pt;
+  margin-bottom: 12pt;
+}
+
+.print-preview-actual :deep(.section h2) {
+  font-size: 16pt;
+  margin: 12pt 0 8pt 0;
+}
+
+.print-preview-actual :deep(.games-grid) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 8pt;
+  margin-bottom: 12pt;
+}
+
+.print-preview-actual :deep(.game-card) {
+  border: 1pt solid #333;
+  padding: 8pt;
+  border-radius: 3pt;
+  background-color: #fafafa;
+  break-inside: avoid;
+}
+
+.print-preview-actual :deep(.stats-table) {
+  font-size: 10pt;
+}
+
+.print-preview-actual :deep(.player-list) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 4pt;
+  margin-bottom: 12pt;
+}
+
+.print-preview-actual :deep(.player-item) {
+  font-size: 10pt;
+  padding: 2pt 4pt;
+}
+
+/* Compact layout adjustments */
+.print-preview-actual.compact :deep(.section) {
+  margin-bottom: 16pt;
+}
+
+.print-preview-actual.compact :deep(.games-grid) {
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 6pt;
+}
+
+.print-preview-actual.compact :deep(.game-card) {
+  padding: 6pt;
+}
+
+.print-preview-actual.compact :deep(.header h1) {
+  font-size: 18pt;
+  margin-bottom: 10pt;
+}
+
+.print-preview-actual.compact :deep(.section h2) {
+  font-size: 14pt;
+  margin: 10pt 0 6pt 0;
+}
+</style>

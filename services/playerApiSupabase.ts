@@ -21,9 +21,9 @@ export class PlayerApiSupabase implements IPlayerApi {
       name: row.name,
       skillLevel: row.skill_level,
       partnerId: row.partner_id || undefined,
-      user_id: row.user_id,
-      created_at: row.created_at,
-      updated_at: row.updated_at
+      // createdAt: row.created_at,
+      // updatedAt: row.updated_at,
+      // userId: row.user_id
     };
   }
 
@@ -64,32 +64,32 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async getPlayers(): Promise<ApiResponse<Player[]>> {
     try {
-      console.log('PlayerApiSupabase: Starting getPlayers...');
+      //console.log('PlayerApiSupabase: Starting getPlayers...');
 
       let query = this.supabase.from('players').select('*');
 
       // If user is authenticated, filter by user_id
       if (this.user.value) {
-        console.log('User authenticated, filtering by user_id:', this.user.value.id);
+        //console.log('User authenticated, filtering by user_id:', this.user.value.id);
         query = query.eq('user_id', this.user.value.id);
       } else {
-        console.log('User not authenticated, loading all players for data recovery');
+        //console.log('User not authenticated, loading all players for data recovery');
       }
       // If not authenticated, load all players (temporary for data recovery)
 
-      console.log('Executing Supabase query...');
+      //console.log('Executing Supabase query...');
       const { data, error } = await query.order('name');
 
-      console.log('Supabase query response:', { data, error });
+      //console.log('Supabase query response:', { data, error });
 
       if (error) {
         console.error('Supabase error:', error);
         return { success: false, message: 'Failed to load players', error: error.message };
       }
 
-      console.log('Raw data from Supabase:', data);
+      //console.log('Raw data from Supabase:', data);
       const players = (data || []).map(row => this.mapRowToPlayer(row));
-      console.log('Mapped players:', players);
+      //console.log('Mapped players:', players);
 
       return {
         success: true,

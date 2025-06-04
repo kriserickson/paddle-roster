@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia';
 import type { Game, GameSchedule, PrintOptions } from '~/types';
-import { usePlayerStore } from './usePlayerStore';
 
 export const usePrintStore = defineStore('print', () => {
   /**
@@ -26,7 +25,8 @@ export const usePrintStore = defineStore('print', () => {
 
   /**
    * Actions
-   */ function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
+   */
+  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
     const playerStore = usePlayerStore();
 
     function playerName(id: string): string {

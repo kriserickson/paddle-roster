@@ -132,14 +132,14 @@ function confirmDelete(player: Player): void {
 }
 
 async function deletePlayer(): Promise<void> {
-  console.log('deletePlayer called with:', playerToDelete.value); // Debug log
+  //console.log('deletePlayer called with:', playerToDelete.value); // Debug log
 
   if (playerToDelete.value) {
-    console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
+    //console.log('Attempting to remove player:', playerToDelete.value.id); // Debug log
 
     const success = await playerStore.removePlayer(playerToDelete.value.id);
 
-    console.log('Remove result:', success); // Debug log
+    //console.log('Remove result:', success); // Debug log
 
     if (success) {
       toast.add({
