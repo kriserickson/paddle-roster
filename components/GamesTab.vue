@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { MatchingOptions, Player } from '~/types';
 
+// Define emits
+const emit = defineEmits<{
+  switchTab: [tabKey: string];
+}>();
+
 const playerStore = usePlayerStore();
 const gameStore = useGameStore();
 
@@ -63,8 +68,6 @@ const filteredPlayers = computed(() => {
   return filtered;
 });
 
-const scheduleStats = computed(() => gameStore.scheduleStats);
-
 const playersPerRound = computed(() => {
   return matchingOptions.value.numberOfCourts * 4;
 });
@@ -107,13 +110,6 @@ function clearAllFilters(): void {
   skillLevelFilter.value = 'all';
 }
 
-function formatDateTime(date: Date): string {
-  return new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short'
-  }).format(date);
-}
-
 async function generateGames(): Promise<void> {
   try {
     const schedule = await gameStore.generateSchedule(eventLabel.value);
@@ -123,32 +119,15 @@ async function generateGames(): Promise<void> {
         description: `Successfully created ${schedule.rounds.length} rounds with ${schedule.rounds.reduce((sum, round) => sum + round.length, 0)} total games.`,
         color: 'success'
       });
+
+      // Switch to schedule tab after successful generation
+      emit('switchTab', 'schedule');
     }
   } catch (error) {
     console.error('Generation error:', error);
     toast.add({
       title: 'Generation Failed',
       description: error instanceof Error ? error.message : 'Failed to generate schedule',
-      color: 'error'
-    });
-  }
-}
-
-async function regenerateGames(): Promise<void> {
-  try {
-    const schedule = await gameStore.regenerateSchedule();
-    if (schedule) {
-      toast.add({
-        title: 'Schedule Regenerated',
-        description: 'Successfully created a new schedule with the same settings.',
-        color: 'success'
-      });
-    }
-  } catch (error) {
-    console.error('Regeneration error:', error);
-    toast.add({
-      title: 'Regeneration Failed',
-      description: error instanceof Error ? error.message : 'Failed to regenerate schedule',
       color: 'error'
     });
   }
@@ -189,16 +168,6 @@ onMounted(() => {
               <UIcon name="i-heroicons-play" class="mr-2" />
               Generate Schedule
             </UButton>
-            <UButton
-              v-if="gameStore.currentSchedule"
-              :disabled="gameStore.isGenerating"
-              class="btn-secondary"
-              data-testid="regenerate-games-button"
-              @click="regenerateGames"
-            >
-              <UIcon name="i-heroicons-arrow-path" class="mr-2" />
-              Regenerate
-            </UButton>
           </div>
         </div>
       </div>
@@ -210,56 +179,6 @@ onMounted(() => {
       <div>
         <p class="font-semibold">Cannot Generate Games</p>
         <p class="text-sm">{{ validationErrors.join(', ') }}</p>
-      </div>
-    </div>
-
-    <!-- Generation Results -->
-    <div v-if="gameStore.currentSchedule && scheduleStats" class="content-card">
-      <div class="content-card-header">
-        <h3 class="text-xl font-semibold flex items-center gap-2">
-          <Icon name="mdi:chart-bar" class="text-paddle-teal" />
-          Generation Results
-        </h3>
-      </div>
-
-      <div class="p-6">
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-              <Icon name="mdi:gamepad-variant" class="text-3xl text-blue-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-blue-700">{{ scheduleStats.totalGames }}</div>
-              <div class="text-sm font-medium text-blue-600">Total Games</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
-              <Icon name="mdi:counter" class="text-3xl text-paddle-teal mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-paddle-teal">{{ scheduleStats.totalRounds }}</div>
-              <div class="text-sm font-medium text-paddle-teal-dark">Rounds</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
-              <Icon name="mdi:balance-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-amber-700">{{ scheduleStats.averageSkillDifference }}</div>
-              <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
-            </div>
-          </div>
-          <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
-              <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
-              <div class="text-2xl font-bold text-purple-700">{{ scheduleStats.restingPerRound }}</div>
-              <div class="text-sm font-medium text-purple-600">Resting per Round</div>
-            </div>
-          </div>
-        </div>
-
-        <div class="text-center p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl">
-          <Icon name="mdi:clock-check" class="text-paddle-teal mr-2" />
-          <span class="text-sm font-medium text-gray-700">
-            Generated: {{ formatDateTime(scheduleStats.generatedAt) }}
-          </span>
-        </div>
       </div>
     </div>
 

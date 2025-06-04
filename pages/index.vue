@@ -40,6 +40,12 @@ onMounted(() => {
 });
 
 // Methods
+function switchToTab(tabKey: string): void {
+  if (tabs.some(tab => tab.key === tabKey)) {
+    activeTab.value = tabKey;
+  }
+}
+
 function openHelp(): void {
   navigateTo('/help');
 }
@@ -183,7 +189,7 @@ const userDisplayName = computed(() => {
         <!-- Tab Content -->
         <div class="p-8">
           <PlayersTab v-if="activeTab === 'players'" />
-          <GamesTab v-else-if="activeTab === 'games'" />
+          <GamesTab v-else-if="activeTab === 'games'" @switch-tab="switchToTab" />
           <ScheduleTab v-else-if="activeTab === 'schedule'" />
         </div>
       </div>
