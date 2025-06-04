@@ -9,6 +9,9 @@
   --paddle-teal-dark: #2a9fa3;
   --paddle-red-light: #ff4c50;
   --paddle-red-dark: #e01f23;
+
+    /* Override @nuxt/ui primary color */
+  --ui-primary: var(--paddle-teal);  
 }
 
 /* Global Background and Layout */
@@ -47,6 +50,11 @@ body {
   .tab-button:hover:not(.active) {
     background: #2d3748 !important;
     color: #4dd8de !important;
+  }
+  .tab-button.disabled {
+    opacity: 0.5 !important;
+    cursor: not-allowed !important;
+    pointer-events: none !important;
   }
   .content-card-header,
   .game-generation-header,
@@ -109,6 +117,12 @@ body {
 .tab-button:hover:not(.active) {
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   color: var(--paddle-teal);
+}
+
+.tab-button.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .content-card-header,
@@ -304,18 +318,6 @@ body {
   font-weight: 600;
   padding: 6px 12px;
   box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3);
-}
-
-.round-header {
-  background: linear-gradient(90deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
-  color: white;
-  border-radius: 12px;
-  padding: 1rem;
-  text-align: center;
-  font-weight: 700;
-  font-size: 1.25rem;
-  box-shadow: 0 4px 16px rgba(58, 182, 187, 0.3);
-  margin-bottom: 1rem;
 }
 
 /* Rest Players */

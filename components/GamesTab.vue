@@ -44,17 +44,17 @@ watch(
   async (newOptions, oldOptions) => {
     // Don't save if the change came from the store
     if (isUpdatingFromStore.value) {
-      console.log('🔄 Skipping save - updating from store');
+      //console.log('🔄 Skipping save - updating from store');
       return;
     }
     
     // Don't save if values haven't actually changed (deep comparison)
     if (oldOptions && optionsAreEqual(newOptions, oldOptions)) {
-      console.log('🔄 Skipping save - no actual changes detected');
+      //console.log('🔄 Skipping save - no actual changes detected');
       return;
     }
     
-    console.log('💾 User changed preferences, scheduling save...');
+    //console.log('💾 User changed preferences, scheduling save...');
     
     // Clear existing timeout
     if (saveTimeout) {
@@ -64,10 +64,10 @@ watch(
     // Debounce the save operation
     saveTimeout = setTimeout(async () => {
       try {
-        console.log('💾 Saving preferences to Supabase...');
+        //console.log('💾 Saving preferences to Supabase...');
         isSavingPreferences.value = true;
         await gameStore.updateOptions(newOptions);
-        console.log('✅ Preferences saved successfully');
+        //console.log('✅ Preferences saved successfully');
         // Only show success toast occasionally to avoid spam
         if (Math.random() < 0.3) { // 30% chance to show success message
           toast.add({
@@ -472,25 +472,22 @@ onMounted(() => {
           >
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
-                <UCheckbox
-                  :checked="playerStore.isPlayerSelected(player.id)"
-                  class="pointer-events-none"
-                  @change="playerStore.togglePlayerSelection(player.id)"
-                />
                 <div
                   class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
                 >
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
-                <span class="text-sm font-medium">{{ player.name }}</span>
+                <div class="flex flex-row align-items-center">
+                  <span class="text-sm font-medium">{{ player.name }}</span>
+                  <div v-if="player.partnerId" class="text-xs text-gray-600 flex items-center gap-1 ml-4">
+                    <Icon name="mdi:account-heart" />
+                    Partner: {{ playerStore.getPlayer(player.partnerId)?.name || 'Unknown' }}
+                  </div>
+                </div>
               </div>
               <div class="player-skill-badge text-xs">
                 {{ player.skillLevel }}
               </div>
-            </div>
-            <div v-if="player.partnerId" class="mt-2 text-xs text-gray-600 flex items-center gap-1">
-              <Icon name="mdi:account-heart" class="text-paddle-red" />
-              Partner: {{ playerStore.getPlayer(player.partnerId)?.name || 'Unknown' }}
             </div>
           </div>
         </div>

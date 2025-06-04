@@ -109,16 +109,12 @@ export interface PrintOptions {
   location?: string;
   /** Organizer name */
   organizer?: string;
-  /** Whether to include player list */
-  includePlayerList?: boolean;
-  /** Whether to include player stats */
-  includeStats: boolean;
-  /** Whether to include rest periods */
-  includeRestPeriods: boolean;
-  /** Whether to include court assignments */
-  includeCourtAssignments?: boolean;
   /** Page orientation */
   orientation: 'portrait' | 'landscape';
   /** Whether to use compact layout */
   compactLayout?: boolean;
+  /** Whether to show colors (false for black and white printers) */
+  colorMode?: boolean;
+  /** Whether to show player skill ratings and differences */
+  showRatings?: boolean;
 }

@@ -33,6 +33,8 @@
     "@pinia/nuxt": "^0.11.0",
     "@supabase/supabase-js": "^2.49.8",
     "eslint": "^9.28.0",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^3.0.1",
     "nuxt": "^3.17.4",
     "pinia": "^3.0.2",
     "reflect-metadata": "^0.2.2",

@@ -11,11 +11,10 @@ export const usePrintStore = defineStore('print', () => {
     eventDate: '',
     location: '',
     organizer: '',
-    includeStats: false,
-    includeRestPeriods: true,
-    includeCourtAssignments: true,
     compactLayout: false,
-    orientation: 'landscape'
+    orientation: 'landscape',
+    colorMode: true,
+    showRatings: true
   };
 
   /**
@@ -36,6 +35,51 @@ export const usePrintStore = defineStore('print', () => {
     function formatSkillLevel(level: number): string {
       return level % 1 === 0 ? level.toString() : level.toFixed(2);
     }
+
+    function getPlayerSkill(id: string): number {
+      return playerStore.getPlayer(id)?.skillLevel || 0;
+    }
+
+    const colorStyles = options.colorMode ? `
+        .team1 {
+            background-color: #e8f4f8;
+            border: 1px solid #b8d4da;
+        }
+        
+        .team2 {
+            background-color: #f8e8e8;
+            border: 1px solid #dab8b8;
+        }
+        
+        .round-header {
+            background-color: #f8f8f8;
+        }
+        
+        .schedule-grid th {
+            background-color: #f0f0f0;
+        }
+        
+        .rest-players {
+            background-color: #fff8dc;
+        }
+    ` : `
+        .team1, .team2 {
+            background-color: transparent;
+            border: 1px solid #333;
+        }
+        
+        .round-header {
+            background-color: transparent;
+        }
+        
+        .schedule-grid th {
+            background-color: transparent;
+        }
+        
+        .rest-players {
+            background-color: transparent;
+        }
+    `;
 
     let html = `
 <!DOCTYPE html>
@@ -70,13 +114,6 @@ export const usePrintStore = defineStore('print', () => {
             font-weight: bold;
         }
         
-        .header h2 {
-            margin: 5px 0 0 0;
-            font-size: ${options.compactLayout ? '12px' : '14px'};
-            font-weight: normal;
-            color: #666;
-        }
-        
         .header .event-info {
             margin: 5px 0;
             font-size: ${options.compactLayout ? '10px' : '12px'};
@@ -98,14 +135,12 @@ export const usePrintStore = defineStore('print', () => {
         }
         
         .schedule-grid th {
-            background-color: #f0f0f0;
             font-weight: bold;
             font-size: ${options.compactLayout ? '10px' : '12px'};
         }
         
         .round-header {
             font-weight: bold;
-            background-color: #f8f8f8;
             font-size: ${options.compactLayout ? '9px' : '10px'};
         }
         
@@ -121,35 +156,20 @@ export const usePrintStore = defineStore('print', () => {
             border-radius: 2px;
         }
         
-        .team1 {
-            background-color: #e8f4f8;
-            border: 1px solid #b8d4da;
-        }
+        ${colorStyles}
         
-        .team2 {
-            background-color: #f8e8e8;
-            border: 1px solid #dab8b8;
-        }
-        
-        .vs {
-            font-weight: bold;
+        .team-divider {
+            border-top: 1px solid #333;
             margin: 2px 0;
-            font-size: ${options.compactLayout ? '7px' : '8px'};
         }
         
-        .skill-diff {
+        .skill-info {
             font-size: ${options.compactLayout ? '6px' : '7px'};
             color: #666;
             margin-top: 1px;
         }
         
-        .rest-section {
-            margin-top: 15px;
-            font-size: ${options.compactLayout ? '9px' : '10px'};
-        }
-        
         .rest-players {
-            background-color: #fff8dc;
             padding: 5px;
             border: 1px solid #ddd;
             border-radius: 3px;
@@ -169,21 +189,28 @@ export const usePrintStore = defineStore('print', () => {
     if (options.eventTitle) {
       html += `<h1>${options.eventTitle}</h1>`;
     }
-    if (options.eventSubtitle) {
-      html += `<h2>${options.eventSubtitle}</h2>`;
-    }
 
-    // Event info
+    // Event info - compact layout puts everything on one line
     if (options.eventDate || options.location || options.organizer) {
       html += '<div class="event-info">';
-      if (options.eventDate) {
-        html += `<div>Date: ${options.eventDate}</div>`;
-      }
-      if (options.location) {
-        html += `<div>Location: ${options.location}</div>`;
-      }
-      if (options.organizer) {
-        html += `<div>Organizer: ${options.organizer}</div>`;
+      if (options.compactLayout) {
+        // All on one line
+        const eventParts = [];
+        if (options.eventDate) eventParts.push(`Date: ${options.eventDate}`);
+        if (options.location) eventParts.push(`Location: ${options.location}`);
+        if (options.organizer) eventParts.push(`Organizer: ${options.organizer}`);
+        html += eventParts.join(' • ');
+      } else {
+        // Separate lines
+        if (options.eventDate) {
+          html += `<div>Date: ${options.eventDate}</div>`;
+        }
+        if (options.location) {
+          html += `<div>Location: ${options.location}</div>`;
+        }
+        if (options.organizer) {
+          html += `<div>Organizer: ${options.organizer}</div>`;
+        }
       }
       html += '</div>';
     }
@@ -194,16 +221,10 @@ export const usePrintStore = defineStore('print', () => {
 
     // Header row
     html += '<thead><tr><th>Round</th>';
-    if (options.includeCourtAssignments) {
-      for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
-        html += `<th>Court ${court}</th>`;
-      }
-    } else {
-      html += '<th>Games</th>';
+    for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
+      html += `<th>Court ${court}</th>`;
     }
-    if (options.includeRestPeriods) {
-      html += '<th>Resting</th>';
-    }
+    html += '<th>Resting</th>';
     html += '</tr></thead><tbody>';
 
     // Data rows
@@ -213,48 +234,31 @@ export const usePrintStore = defineStore('print', () => {
 
       html += `<tr><td class="round-header">Round ${roundIndex + 1}</td>`;
 
-      if (options.includeCourtAssignments) {
-        // Games for each court
-        for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
-          const game = round.find(g => g.court === court);
+      // Games for each court
+      for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
+        const game = round.find(g => g.court === court);
 
-          html += '<td class="game-cell">';
-          if (game) {
-            html += generateGameHTML(game, playerName, formatSkillLevel, options);
-          }
-          html += '</td>';
-        }
-      } else {
-        // All games in one column
         html += '<td class="game-cell">';
-        round.forEach((game, index) => {
-          if (index > 0) html += '<br><br>';
-          html += generateGameHTML(game, playerName, formatSkillLevel, options);
-        });
+        if (game) {
+          html += generateGameHTML(game, playerName, formatSkillLevel, getPlayerSkill, options);
+        }
         html += '</td>';
       }
 
       // Resting players
-      if (options.includeRestPeriods) {
-        html += '<td class="game-cell">';
-        if (restingPlayers.length > 0) {
-          const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
-          html += restingNames;
-        } else {
-          html += '-';
-        }
-        html += '</td>';
+      html += '<td class="game-cell">';
+      if (restingPlayers.length > 0) {
+        const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
+        html += `<div class="rest-players">${restingNames}</div>`;
+      } else {
+        html += '-';
       }
+      html += '</td>';
 
       html += '</tr>';
     }
 
     html += '</tbody></table>';
-
-    // Stats section
-    if (options.includeStats) {
-      html += generateStatsSection(schedule);
-    }
 
     html += `
     <div style="margin-top: 20px; font-size: 8px; color: #666; text-align: center;">
@@ -270,6 +274,7 @@ export const usePrintStore = defineStore('print', () => {
     game: Game,
     playerName: (id: string) => string,
     formatSkillLevel: (level: number) => string,
+    getPlayerSkill: (id: string) => number,
     options: PrintOptions
   ): string {
     const team1Player1 = playerName(game.team1[0]);
@@ -277,35 +282,54 @@ export const usePrintStore = defineStore('print', () => {
     const team2Player1 = playerName(game.team2[0]);
     const team2Player2 = playerName(game.team2[1]);
 
-    let html = `<div class="team team1">${team1Player1}<br>${team1Player2}</div>`;
-    html += '<div class="vs">vs</div>';
-    html += `<div class="team team2">${team2Player1}<br>${team2Player2}</div>`;
+    let html = '';
 
-    if (options.includeStats) {
-      html += `<div class="skill-diff">Diff: ${formatSkillLevel(game.skillDifference)}</div>`;
+    if (options.compactLayout) {
+      // Compact layout: players on same line with &, line divider instead of "vs"
+      html += `<div class="team team1">${team1Player1} & ${team1Player2}`;
+      if (options.showRatings) {
+        const skill1 = getPlayerSkill(game.team1[0]);
+        const skill2 = getPlayerSkill(game.team1[1]);
+        html += ` (${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})`;
+      }
+      html += '</div>';
+      
+      html += '<div class="team-divider"></div>';
+      
+      html += `<div class="team team2">${team2Player1} & ${team2Player2}`;
+      if (options.showRatings) {
+        const skill1 = getPlayerSkill(game.team2[0]);
+        const skill2 = getPlayerSkill(game.team2[1]);
+        html += ` (${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})`;
+      }
+      html += '</div>';
+    } else {
+      // Standard layout: separate lines for each player, "vs" divider
+      html += `<div class="team team1">${team1Player1}<br>${team1Player2}`;
+      if (options.showRatings) {
+        const skill1 = getPlayerSkill(game.team1[0]);
+        const skill2 = getPlayerSkill(game.team1[1]);
+        html += `<div class="skill-info">(${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})</div>`;
+      }
+      html += '</div>';
+      
+      html += '<div style="font-weight: bold; margin: 2px 0; font-size: ' + 
+              (options.compactLayout ? '7px' : '8px') + ';">vs</div>';
+      
+      html += `<div class="team team2">${team2Player1}<br>${team2Player2}`;
+      if (options.showRatings) {
+        const skill1 = getPlayerSkill(game.team2[0]);
+        const skill2 = getPlayerSkill(game.team2[1]);
+        html += `<div class="skill-info">(${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})</div>`;
+      }
+      html += '</div>';
+    }
+
+    if (options.showRatings) {
+      html += `<div class="skill-info">Diff: ${formatSkillLevel(game.skillDifference)}</div>`;
     }
 
     return html;
-  }
-
-  function generateStatsSection(schedule: GameSchedule): string {
-    const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
-    const allGames = schedule.rounds.flat();
-    const avgSkillDiff =
-      allGames.length > 0
-        ? (allGames.reduce((sum, game) => sum + game.skillDifference, 0) / allGames.length).toFixed(2)
-        : '0';
-
-    return `
-    <div style="margin-top: 20px; font-size: 10px; border-top: 1px solid #ccc; padding-top: 10px;">
-        <h3 style="margin: 0 0 10px 0; font-size: 12px;">Schedule Statistics</h3>
-        <div style="display: flex; justify-content: space-around;">
-            <div>Total Rounds: ${schedule.rounds.length}</div>
-            <div>Total Games: ${totalGames}</div>
-            <div>Courts Used: ${schedule.options.numberOfCourts}</div>
-            <div>Avg Skill Difference: ${avgSkillDiff}</div>
-        </div>
-    </div>`;
   }
 
   function printSchedule(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {

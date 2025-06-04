@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Game, GameSchedule, PrintOptions } from '~/types';
+import { generatePDFFromElement, generateMultiPagePDF } from '~/utils/pdfGenerator';
 
 const playerStore = usePlayerStore();
 const gameStore = useGameStore();
@@ -14,6 +15,7 @@ const selectedRound = ref(1);
 const showPrintModal = ref(false);
 const previewGenerated = ref(false);
 const printPreviewRef = ref<HTMLElement>();
+const generatedPreviewHTML = ref<string>('');
 
 // Print configuration
 const printOptions = ref<PrintOptions>({
@@ -22,12 +24,10 @@ const printOptions = ref<PrintOptions>({
   eventDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
   location: '',
   organizer: '',
-  includePlayerList: true,
-  includeStats: true,
-  includeRestPeriods: true,
-  includeCourtAssignments: true,
   orientation: 'landscape',
-  compactLayout: false
+  compactLayout: false,
+  colorMode: true,
+  showRatings: true
 });
 
 // Computed properties
@@ -86,10 +86,16 @@ async function generatePreview(): Promise<void> {
   }
 
   try {
+    // Generate HTML using the print store
+    generatedPreviewHTML.value = printStore.generatePrintHTML(
+      gameStore.currentSchedule as GameSchedule, 
+      printOptions.value
+    );
+    
     previewGenerated.value = true;
     showPrintModal.value = true;
 
-    // Scroll to preview
+    // Scroll to preview after DOM update
     await nextTick();
     if (printPreviewRef.value) {
       printPreviewRef.value.scrollIntoView({ behavior: 'smooth' });
@@ -117,13 +123,62 @@ async function downloadPdf(): Promise<void> {
     return;
   }
 
-  // Generate preview first if not already generated
-  if (!previewGenerated.value) {
-    await generatePreview();
+  // Check if we're on the client side
+  if (typeof window === 'undefined') {
+    toast.add({
+      title: 'PDF Generation Not Available',
+      description: 'PDF generation is only available in the browser.',
+      color: 'error'
+    });
+    return;
   }
 
-  // Open print dialog which allows saving as PDF
-  await print();
+  try {
+    // Show loading toast
+    const loadingToast = toast.add({
+      title: 'Generating PDF...',
+      description: 'Please wait while we create your PDF document.',
+      color: 'primary'
+    });
+
+    // Generate preview first if not already generated
+    if (!previewGenerated.value) {
+      await generatePreview();
+      // Wait for preview to fully render
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+
+    // Generate filename based on event details
+    const eventTitle = printOptions.value.eventTitle || 'pickleball-schedule';
+    const eventDate = printOptions.value.eventDate || new Date().toISOString().split('T')[0];
+    const filename = `${eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${eventDate}.pdf`;
+
+    // Generate PDF from the preview element
+    await generatePDFFromElement('print-preview-element', {
+      orientation: printOptions.value.orientation,
+      filename: filename,
+      quality: 0.95,
+      scale: 2,
+      backgroundColor: '#ffffff'
+    });
+
+    // Show success toast
+    toast.add({
+      title: 'PDF Generated Successfully',
+      description: `Your schedule has been downloaded as ${filename}`,
+      color: 'success'
+    });
+
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    
+    // Show error toast
+    toast.add({
+      title: 'PDF Generation Failed',
+      description: 'There was an error creating your PDF. Please try again.',
+      color: 'error'
+    });
+  }
 }
 
 function clearCurrentSchedule(): void {
@@ -173,10 +228,12 @@ watch(showPrintModal, async newValue => {
               <Icon name="mdi:printer" class="mr-2" />
               Print
             </UButton>
-            <UButton icon="i-heroicons-document-arrow-down" class="btn-secondary" @click="downloadPdf">
-              <Icon name="mdi:file-pdf-box" class="mr-2" />
-              Download PDF
-            </UButton>
+            <ClientOnly>
+              <UButton icon="i-heroicons-document-arrow-down" class="btn-secondary" @click="downloadPdf">
+                <Icon name="mdi:file-pdf-box" class="mr-2" />
+                Download PDF
+              </UButton>
+            </ClientOnly>
             <UButton icon="i-heroicons-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
           </div>
         </div>
@@ -508,38 +565,39 @@ watch(showPrintModal, async newValue => {
             <div class="space-y-4">
               <h3 class="text-lg font-semibold text-gray-900">Print Options</h3>
 
-              <UFormField label="Include Options">
-                <div class="space-y-3 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                  <UCheckbox v-model="printOptions.includePlayerList" label="Player List" class="text-blue-800" />
-                  <UCheckbox v-model="printOptions.includeStats" label="Game Statistics" class="text-blue-800" />
-                  <UCheckbox
-                    v-model="printOptions.includeRestPeriods"
-                    label="Rest Period Information"
-                    class="text-blue-800"
-                  />
-                  <UCheckbox
-                    v-model="printOptions.includeCourtAssignments"
-                    label="Court Assignments"
-                    class="text-blue-800"
-                  />
-                </div>
-              </UFormField>
-
-              <UFormField label="Layout Options">
-                <div class="space-y-3 bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20 p-4 rounded-xl">
-                  <URadioGroup
-                    v-model="printOptions.orientation"
-                    :options="[
-                      { value: 'portrait', label: 'Portrait' },
-                      { value: 'landscape', label: 'Landscape' }
-                    ]"
-                    class="text-paddle-teal-dark"
-                  />
-                  <UCheckbox
-                    v-model="printOptions.compactLayout"
-                    label="Compact Layout"
-                    class="text-paddle-teal-dark"
-                  />
+              <UFormField label="Configuration">
+                <div class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                  <!-- Page Orientation -->
+                  <div>
+                    <label class="block text-sm font-medium text-blue-800 mb-2">Page Orientation</label>
+                    <URadioGroup
+                      v-model="printOptions.orientation"
+                      :options="[
+                        { value: 'portrait', label: 'Portrait' },
+                        { value: 'landscape', label: 'Landscape' }
+                      ]"
+                      class="text-blue-800"
+                    />
+                  </div>
+                  
+                  <!-- Layout and Display Options -->
+                  <div class="space-y-3">
+                    <UCheckbox
+                      v-model="printOptions.compactLayout"
+                      label="Compact Layout"
+                      class="text-blue-800"
+                    />
+                    <UCheckbox
+                      v-model="printOptions.colorMode"
+                      label="Color Mode (uncheck for black & white printers)"
+                      class="text-blue-800"
+                    />
+                    <UCheckbox
+                      v-model="printOptions.showRatings"
+                      label="Show Player Skill Ratings"
+                      class="text-blue-800"
+                    />
+                  </div>
                 </div>
               </UFormField>
             </div>
@@ -550,10 +608,12 @@ watch(showPrintModal, async newValue => {
                 <Icon name="mdi:printer" class="mr-2" />
                 Print
               </UButton>
-              <UButton class="btn-primary w-full" @click="downloadPdf">
-                <Icon name="mdi:file-pdf-box" class="mr-2" />
-                Download PDF
-              </UButton>
+              <ClientOnly>
+                <UButton class="btn-primary w-full" @click="downloadPdf">
+                  <Icon name="mdi:file-pdf-box" class="mr-2" />
+                  Download PDF
+                </UButton>
+              </ClientOnly>
               <UButton variant="ghost" class="btn-secondary w-full" @click="showPrintModal = false"> 
                 Cancel 
               </UButton>
@@ -573,21 +633,17 @@ watch(showPrintModal, async newValue => {
             <!-- Preview Container with Paper-like appearance -->
             <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
               <div
-                v-if="previewGenerated && gameStore.currentSchedule"
-                class="bg-white shadow-lg min-w-fit"
+                v-if="previewGenerated && gameStore.currentSchedule && generatedPreviewHTML"
+                id="print-preview-element"
+                ref="printPreviewRef"
+                class="bg-white shadow-lg print-preview-container"
                 :class="{
                   'print-page-portrait': printOptions.orientation === 'portrait',
-                  'print-page-landscape': printOptions.orientation === 'landscape'
+                  'print-page-landscape': printOptions.orientation === 'landscape',
+                  'compact': printOptions.compactLayout
                 }"
-              >
-                <PrintPreview
-                  ref="printPreviewRef"
-                  :schedule="gameStore.currentSchedule as GameSchedule"
-                  :options="printOptions"
-                  class="print-preview-actual"
-                  :class="{ compact: printOptions.compactLayout }"
-                />
-              </div>
+                v-html="generatedPreviewHTML"
+              ></div>
 
               <div v-else class="flex items-center justify-center h-full min-h-[400px]">
                 <div class="text-center text-gray-500">
@@ -626,7 +682,7 @@ watch(showPrintModal, async newValue => {
   border: 1px solid #e5e7eb;
 }
 
-.print-preview-actual {
+.print-preview-container {
   width: 100%;
   height: 100%;
   padding: 0.75in;
@@ -635,7 +691,7 @@ watch(showPrintModal, async newValue => {
 }
 
 /* Ensure the preview looks like actual print output */
-.print-preview-actual :deep(.print-preview-safe) {
+.print-preview-container :deep(.print-preview-safe) {
   font-family: 'Times New Roman', serif;
   font-size: 12pt;
   line-height: 1.4;
@@ -645,24 +701,24 @@ watch(showPrintModal, async newValue => {
   min-height: auto;
 }
 
-.print-preview-actual :deep(.header h1) {
+.print-preview-container :deep(.header h1) {
   font-size: 20pt;
   margin-bottom: 12pt;
 }
 
-.print-preview-actual :deep(.section h2) {
+.print-preview-container :deep(.section h2) {
   font-size: 16pt;
   margin: 12pt 0 8pt 0;
 }
 
-.print-preview-actual :deep(.games-grid) {
+.print-preview-container :deep(.games-grid) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 8pt;
   margin-bottom: 12pt;
 }
 
-.print-preview-actual :deep(.game-card) {
+.print-preview-container :deep(.game-card) {
   border: 1pt solid #333;
   padding: 8pt;
   border-radius: 3pt;
@@ -670,42 +726,42 @@ watch(showPrintModal, async newValue => {
   break-inside: avoid;
 }
 
-.print-preview-actual :deep(.stats-table) {
+.print-preview-container :deep(.stats-table) {
   font-size: 10pt;
 }
 
-.print-preview-actual :deep(.player-list) {
+.print-preview-container :deep(.player-list) {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 4pt;
   margin-bottom: 12pt;
 }
 
-.print-preview-actual :deep(.player-item) {
+.print-preview-container :deep(.player-item) {
   font-size: 10pt;
   padding: 2pt 4pt;
 }
 
 /* Compact layout adjustments */
-.print-preview-actual.compact :deep(.section) {
+.print-preview-container.compact :deep(.section) {
   margin-bottom: 16pt;
 }
 
-.print-preview-actual.compact :deep(.games-grid) {
+.print-preview-container.compact :deep(.games-grid) {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 6pt;
 }
 
-.print-preview-actual.compact :deep(.game-card) {
+.print-preview-container.compact :deep(.game-card) {
   padding: 6pt;
 }
 
-.print-preview-actual.compact :deep(.header h1) {
+.print-preview-container.compact :deep(.header h1) {
   font-size: 18pt;
   margin-bottom: 10pt;
 }
 
-.print-preview-actual.compact :deep(.section h2) {
+.print-preview-container.compact :deep(.section h2) {
   font-size: 14pt;
   margin: 10pt 0 6pt 0;
 }

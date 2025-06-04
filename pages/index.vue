@@ -2,6 +2,7 @@
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
 const { isDemo, mockUser } = useMockAuth();
+const gameStore = useGameStore();
 
 // Use mock user in demo mode
 const currentUser = computed(() => {
@@ -23,7 +24,8 @@ const tabs = [
   {
     key: 'schedule',
     label: 'Schedule',
-    icon: 'i-heroicons-calendar-days'
+    icon: 'i-heroicons-calendar-days',
+    disabled: computed(() => !gameStore.currentSchedule)
   }
 ];
 
@@ -177,9 +179,11 @@ const userDisplayName = computed(() => {
               :key="tab.key"
               :class="[
                 'tab-button flex-1 py-4 px-6 text-center font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300',
-                activeTab === tab.key ? 'active' : ''
+                activeTab === tab.key ? 'active' : '',
+                tab.disabled?.value ? 'disabled opacity-50 cursor-not-allowed' : ''
               ]"
-              @click="activeTab = tab.key"
+              :disabled="tab.disabled?.value"
+              @click="!tab.disabled?.value && (activeTab = tab.key)"
             >
               <UIcon :name="tab.icon" class="w-5 h-5" />
               <span class="hidden sm:inline">{{ tab.label }}</span>
