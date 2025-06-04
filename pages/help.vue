@@ -12,38 +12,40 @@ function navigateToHome(): void {
 </script>
 
 <template>
-  <div class="bg-gray-50 relative min-h-screen">
+  <div class="bg-gray-50 dark:bg-gray-900 relative min-h-screen">
     <!-- Fixed Back Button -->
     <div class="absolute top-4 left-4 z-50">
       <UButton
         icon="i-heroicons-arrow-left"
         variant="ghost"
-        class="text-teal-600 hover:bg-teal-100 p-4 text-4xl rounded-full shadow-lg"
+        class="text-teal-600 dark:text-paddle-teal-light hover:bg-teal-100 dark:hover:bg-gray-800 p-4 text-4xl rounded-full shadow-lg"
         @click="navigateToHome"
       />
     </div>
     <UContainer class="py-8">
       <!-- Header -->
-      <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
-        <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
-          <Icon name="mdi:information" class="text-white text-5xl" />
+      <div class="app-header rounded-2xl mb-8 p-8 text-center relative dark:bg-paddle-teal-dark">
+        <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4 dark:text-white">
+          <Icon name="mdi:information" class="text-white dark:text-paddle-teal-light text-5xl" />
           Getting Started
         </h1>
-        <p class="text-xl text-white/90 mb-4 font-medium">
+        <p class="text-xl text-white/90 dark:text-gray-200 mb-4 font-medium">
           Learn how to manage your pickleball league with Paddle Roster
         </p>
       </div>
 
       <!-- Main Content -->
-      <div class="content-card">
+      <div class="content-card dark:bg-gray-800 dark:text-gray-100">
         <div class="p-8">
           <!-- Introduction -->
           <div class="mb-8 text-center">
             <div class="flex items-center justify-center gap-2 mb-4">
-              <Icon name="mdi:information" class="text-paddle-teal text-2xl" />
-              <h2 class="text-2xl font-bold text-gray-900">Follow these steps to manage your pickleball league</h2>
+              <Icon name="mdi:information" class="text-paddle-teal dark:text-paddle-teal-light text-2xl" />
+              <h2 class="text-2xl font-bold text-gray-900 dark:text-white">
+                Follow these steps to manage your pickleball league
+              </h2>
             </div>
-            <p class="text-gray-600 max-w-2xl mx-auto">
+            <p class="text-gray-600 dark:text-gray-300 max-w-2xl mx-auto">
               Paddle Roster makes it easy to organize players, generate balanced games, and create professional
               schedules for your recreational pickleball league.
             </p>

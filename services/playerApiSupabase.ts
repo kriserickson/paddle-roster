@@ -20,7 +20,7 @@ export class PlayerApiSupabase implements IPlayerApi {
       id: row.id,
       name: row.name,
       skillLevel: row.skill_level,
-      partnerId: row.partner_id || undefined,
+      partnerId: row.partner_id || undefined
       // createdAt: row.created_at,
       // updatedAt: row.updated_at,
       // userId: row.user_id

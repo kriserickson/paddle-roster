@@ -372,10 +372,10 @@ function handleExportPlayers(): void {
 <template>
   <div class="space-y-6">
     <!-- Player Management Header -->
-    <div class="content-card">
+    <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <Icon name="mdi:account-multiple" class="text-paddle-teal text-3xl" />
             Player Management
           </h2>
@@ -410,7 +410,7 @@ function handleExportPlayers(): void {
     </div>
     <!-- Players Summary -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="content-card overflow-hidden">
+      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
             <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
@@ -427,7 +427,7 @@ function handleExportPlayers(): void {
         </ClientOnly>
       </div>
 
-      <div class="content-card overflow-hidden">
+      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
             <Icon name="mdi:star" class="text-4xl text-amber-600 mb-2 mx-auto" />
@@ -444,7 +444,7 @@ function handleExportPlayers(): void {
         </ClientOnly>
       </div>
 
-      <div class="content-card overflow-hidden">
+      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
             <Icon name="mdi:account-heart" class="text-4xl text-purple-600 mb-2 mx-auto" />
@@ -462,10 +462,10 @@ function handleExportPlayers(): void {
       </div>
     </div>
     <!-- Players Table -->
-    <div class="content-card">
+    <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h3 class="text-xl font-semibold text-gray-900 flex items-center gap-2">
+          <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
             <Icon name="mdi:format-list-bulleted" class="text-paddle-teal" />
             Players List
           </h3>

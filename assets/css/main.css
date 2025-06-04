@@ -17,6 +17,133 @@ body {
   min-height: 100vh;
 }
 
+@media (prefers-color-scheme: dark) {
+  body {
+    background: linear-gradient(135deg, #18181b 0%, #27272a 100%) !important;
+  }
+  .content-card,
+  .player-card,
+  .game-card,
+  .modal-content,
+  .UCard,
+  .u-card {
+    background: #18181b !important;
+    color: #f3f4f6 !important;
+    border-color: #27272a !important;
+  }
+  .tab-nav {
+    background: #23272f !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
+  }
+  .tab-button {
+    background: transparent !important;
+    color: #b6c2d1 !important;
+  }
+  .tab-button.active {
+    background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3) !important;
+  }
+  .tab-button:hover:not(.active) {
+    background: #2d3748 !important;
+    color: #4dd8de !important;
+  }
+  .content-card-header,
+  .game-generation-header,
+  .player-management-header,
+  .player-list-header {
+    background: linear-gradient(90deg, #4b5563 0%, #64748b 100%) !important;
+    color: #fff !important;
+    border-bottom: 2px solid #3ab6bb !important;
+    box-shadow: 0 2px 8px #18181b33 !important;
+  }
+  .player-stats {
+    background: #374151 !important;
+    color: #fff !important;
+    border-radius: 10px !important;
+    box-shadow: 0 2px 8px #18181b33 !important;
+  }
+  .player-stats .stat-label {
+    color: #4dd8de !important;
+  }
+  .search-bar {
+    background: #374151 !important;
+    color: #fff !important;
+    border: 1.5px solid #3ab6bb !important;
+    box-shadow: 0 2px 8px #18181b33 !important;
+  }
+  .search-bar input {
+    background: transparent !important;
+    color: #fff !important;
+  }
+}
+
+/* Remove all !important from light mode selectors to allow dark mode to override */
+.content-card,
+.player-card,
+.game-card,
+.modal-content,
+.UCard,
+.u-card {
+  background: white;
+  color: #18181b;
+  border-color: #e2e8f0;
+}
+
+.tab-nav {
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+.tab-button {
+  background: transparent;
+  color: #23272f;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
+  color: white;
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3);
+}
+
+.tab-button:hover:not(.active) {
+  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+  color: var(--paddle-teal);
+}
+
+.content-card-header,
+.game-generation-header,
+.player-management-header,
+.player-list-header {
+  background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
+  color: #18181b;
+  border-bottom: 2px solid var(--paddle-teal);
+  box-shadow: 0 2px 8px #e2e8f0cc;
+}
+
+.player-stats {
+  background: #f1f5f9;
+  color: #18181b;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px #e2e8f0cc;
+}
+
+.player-stats .stat-label {
+  color: var(--paddle-teal);
+}
+
+.search-bar {
+  background: #f1f5f9;
+  color: #18181b;
+  border: 1.5px solid var(--paddle-teal);
+  box-shadow: 0 2px 8px #e2e8f0cc;
+}
+
+.search-bar input {
+  background: transparent;
+  color: #18181b;
+}
+
 /* Header Styling */
 .app-header {
   background: linear-gradient(90deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);

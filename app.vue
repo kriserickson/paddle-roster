@@ -7,6 +7,5 @@
     <div class="min-h-screen">
       <NuxtPage />
     </div>
-    <UNotifications :ui="{ position: 'top-center' }" />
   </UApp>
 </template>

@@ -51,7 +51,7 @@ function openHelp(): void {
 }
 
 function openSettings() {
-  // TODO: Implement settings
+  navigateTo('/settings');
 }
 
 async function logout() {
@@ -94,21 +94,22 @@ const userDisplayName = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen relative">
+  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Fixed Help/Settings Menu -->
     <div class="fixed top-4 right-4 z-50">
       <UPopover mode="hover" :content="{ side: 'bottom', align: 'start', sideOffset: 4 }" arrow>
-        <!-- Popover trigger -->
-        <UButton icon="i-heroicons-bars-3" variant="ghost" class="text-teal-600 hover:bg-teal-100 p-2 text-2xl" />
-
-        <!-- Popover content -->
+        <UButton
+          icon="i-heroicons-bars-3"
+          variant="ghost"
+          class="text-teal-600 hover:bg-teal-100 p-2 text-2xl dark:text-paddle-teal-light dark:hover:bg-gray-800"
+        />
         <template #content>
-          <div class="p-1 space-y-1">
+          <div class="p-1 space-y-1 bg-white dark:bg-gray-900 rounded-lg shadow-lg">
             <UButton
               icon="i-heroicons-question-mark-circle"
               variant="ghost"
               color="neutral"
-              class="w-full justify-start text-gray-800"
+              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
               @click="openHelp"
             >
               Help
@@ -117,7 +118,7 @@ const userDisplayName = computed(() => {
               icon="i-heroicons-cog-6-tooth"
               variant="ghost"
               color="neutral"
-              class="w-full justify-start text-gray-800"
+              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
               @click="openSettings"
             >
               Settings
@@ -126,7 +127,7 @@ const userDisplayName = computed(() => {
               icon="i-heroicons-arrow-right-on-rectangle"
               variant="ghost"
               color="neutral"
-              class="w-full justify-start text-gray-800"
+              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800"
               @click="logout"
             >
               Logout
@@ -167,9 +168,9 @@ const userDisplayName = computed(() => {
       </div>
 
       <!-- Main Content -->
-      <div class="content-card">
+      <div class="content-card bg-white dark:bg-gray-800 dark:text-gray-100">
         <!-- Tab Navigation -->
-        <div class="tab-nav">
+        <div class="tab-nav dark:bg-gray-800 dark:text-gray-100">
           <nav class="flex">
             <button
               v-for="tab in tabs"

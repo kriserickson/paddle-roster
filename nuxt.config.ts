@@ -3,6 +3,13 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
+  devServer: {
+    https: {
+      key: './localhost+2-key.pem',
+      cert: './localhost+2.pem'
+    }
+  },
+
   modules: [
     '@nuxt/eslint',
     '@nuxt/fonts',
@@ -10,7 +17,8 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxt/ui',
     '@pinia/nuxt',
-    '@nuxtjs/supabase'
+    '@nuxtjs/supabase',
+    '@nuxtjs/color-mode'
   ],
 
   css: ['~/assets/css/main.css'],
@@ -46,5 +54,12 @@ export default defineNuxtConfig({
         lang: 'en'
       }
     }
+  },
+
+  colorMode: {
+    classSuffix: '',
+    preference: 'system',
+    fallback: 'light',
+    storageKey: 'color-mode'
   }
 });
