@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import type { GameSchedule, MatchingOptions, Game } from '~/types';
 import { PickleballMatcher } from '~/utils/pickleballMatcher';
+import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 
 export const useGameStore = defineStore('game', () => {
   /**
@@ -8,12 +9,13 @@ export const useGameStore = defineStore('game', () => {
    */
   const currentSchedule = ref<GameSchedule | null>(null);
   const isGenerating = ref(false);
+  const isLoadingPreferences = ref(false);
 
   /**
-   * Default matching options
+   * Default matching options (fallback)
    */
   const defaultOptions: MatchingOptions = {
-    numberOfCourts: 2,
+    numberOfCourts: 3,
     numberOfRounds: 7,
     balanceSkillLevels: true,
     respectPartnerPreferences: true,
@@ -22,6 +24,7 @@ export const useGameStore = defineStore('game', () => {
   };
 
   const matchingOptions = ref<MatchingOptions>({ ...defaultOptions });
+  const preferencesApi = new UserPreferencesApiSupabase();
 
   /**
    * Getters
@@ -77,12 +80,56 @@ export const useGameStore = defineStore('game', () => {
     return generateSchedule(eventLabel);
   }
 
-  function updateOptions(newOptions: Partial<MatchingOptions>): void {
-    matchingOptions.value = { ...matchingOptions.value, ...newOptions };
+  /**
+   * Load user's saved preferences from Supabase
+   */
+  async function loadUserPreferences(): Promise<void> {
+    try {
+      isLoadingPreferences.value = true;
+      const preferences = await preferencesApi.getUserPreferences();
+      matchingOptions.value = preferences;
+    } catch (error) {
+      console.error('Error loading user preferences:', error);
+      // Fall back to default options if loading fails
+      matchingOptions.value = { ...defaultOptions };
+    } finally {
+      isLoadingPreferences.value = false;
+    }
   }
 
-  function resetOptions(): void {
-    matchingOptions.value = { ...defaultOptions };
+  /**
+   * Save current options as user's preferences
+   */
+  async function saveUserPreferences(): Promise<void> {
+    try {
+      await preferencesApi.saveUserPreferences(matchingOptions.value);
+    } catch (error) {
+      console.error('Error saving user preferences:', error);
+      throw error;
+    }
+  }
+
+  async function updateOptions(newOptions: Partial<MatchingOptions>): Promise<void> {
+    matchingOptions.value = { ...matchingOptions.value, ...newOptions };
+    
+    // Automatically save preferences to Supabase
+    try {
+      await saveUserPreferences();
+    } catch (error) {
+      console.warn('Failed to auto-save user preferences:', error);
+      // Continue without throwing to avoid breaking the UI
+    }
+  }
+
+  async function resetOptions(): Promise<void> {
+    try {
+      const resetPreferences = await preferencesApi.resetUserPreferences();
+      matchingOptions.value = resetPreferences;
+    } catch (error) {
+      console.error('Error resetting preferences:', error);
+      // Fall back to local defaults if reset fails
+      matchingOptions.value = { ...defaultOptions };
+    }
   }
   function validateOptions(): { valid: boolean; errors: string[] } {
     const playerStore = usePlayerStore();
@@ -174,6 +221,7 @@ export const useGameStore = defineStore('game', () => {
     currentSchedule: readonly(currentSchedule),
     matchingOptions: readonly(matchingOptions),
     isGenerating: readonly(isGenerating),
+    isLoadingPreferences: readonly(isLoadingPreferences),
     defaultOptions,
 
     // Getters
@@ -182,6 +230,8 @@ export const useGameStore = defineStore('game', () => {
     // Actions
     generateSchedule,
     regenerateSchedule,
+    loadUserPreferences,
+    saveUserPreferences,
     updateOptions,
     resetOptions,
     validateOptions,

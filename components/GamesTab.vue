@@ -14,16 +14,93 @@ const toast = useToast();
 // Local reactive state
 const eventLabel = ref('');
 const matchingOptions = ref<MatchingOptions>({ ...gameStore.matchingOptions });
+const isSavingPreferences = ref(false);
 
 // Player filtering state
 const playerSearchQuery = ref('');
 const skillLevelFilter = ref('all');
 
+// Flag to prevent saving when updating from store
+const isUpdatingFromStore = ref(false);
+
+// Debounced save function to avoid saving on every keystroke
+let saveTimeout: NodeJS.Timeout | null = null;
+
+// Helper function to compare MatchingOptions
+function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
+  return (
+    a.numberOfCourts === b.numberOfCourts &&
+    a.numberOfRounds === b.numberOfRounds &&
+    a.balanceSkillLevels === b.balanceSkillLevels &&
+    a.respectPartnerPreferences === b.respectPartnerPreferences &&
+    a.maxSkillDifference === b.maxSkillDifference &&
+    a.distributeRestEqually === b.distributeRestEqually
+  );
+}
+
 // Watch for changes and update the game generator
 watch(
   matchingOptions,
-  newOptions => {
-    gameStore.updateOptions(newOptions);
+  async (newOptions, oldOptions) => {
+    // Don't save if the change came from the store
+    if (isUpdatingFromStore.value) {
+      console.log('🔄 Skipping save - updating from store');
+      return;
+    }
+    
+    // Don't save if values haven't actually changed (deep comparison)
+    if (oldOptions && optionsAreEqual(newOptions, oldOptions)) {
+      console.log('🔄 Skipping save - no actual changes detected');
+      return;
+    }
+    
+    console.log('💾 User changed preferences, scheduling save...');
+    
+    // Clear existing timeout
+    if (saveTimeout) {
+      clearTimeout(saveTimeout);
+    }
+    
+    // Debounce the save operation
+    saveTimeout = setTimeout(async () => {
+      try {
+        console.log('💾 Saving preferences to Supabase...');
+        isSavingPreferences.value = true;
+        await gameStore.updateOptions(newOptions);
+        console.log('✅ Preferences saved successfully');
+        // Only show success toast occasionally to avoid spam
+        if (Math.random() < 0.3) { // 30% chance to show success message
+          toast.add({
+            title: 'Preferences Saved',
+            description: 'Your preferences have been automatically saved.',
+            color: 'success'
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to save preferences:', error);
+        // Always show error toast
+        toast.add({
+          title: 'Save Failed',
+          description: 'Failed to save your preferences. Please try again.',
+          color: 'error'
+        });
+      } finally {
+        isSavingPreferences.value = false;
+      }
+    }, 1500); // 1.5 second debounce
+  },
+  { deep: true }
+);
+
+// Watch for store matching options changes (e.g., when loaded from Supabase)
+watch(
+  () => gameStore.matchingOptions,
+  (newStoreOptions) => {
+    isUpdatingFromStore.value = true;
+    matchingOptions.value = { ...newStoreOptions };
+    nextTick(() => {
+      isUpdatingFromStore.value = false;
+    });
   },
   { deep: true }
 );
@@ -134,8 +211,12 @@ async function generateGames(): Promise<void> {
 }
 
 function resetToDefaults(): void {
+  isUpdatingFromStore.value = true;
   gameStore.resetOptions();
   matchingOptions.value = { ...gameStore.matchingOptions };
+  nextTick(() => {
+    isUpdatingFromStore.value = false;
+  });
   toast.add({
     title: 'Options Reset',
     description: 'All options have been reset to default values.',
@@ -145,7 +226,11 @@ function resetToDefaults(): void {
 
 // Initialize with current options
 onMounted(() => {
+  isUpdatingFromStore.value = true;
   matchingOptions.value = { ...gameStore.matchingOptions };
+  nextTick(() => {
+    isUpdatingFromStore.value = false;
+  });
 });
 </script>
 
@@ -155,7 +240,13 @@ onMounted(() => {
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">Game Generation</h2>
+          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+            Game Generation
+            <div v-if="isSavingPreferences" class="flex items-center gap-2 text-sm text-gray-500">
+              <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
+              <span>Saving...</span>
+            </div>
+          </h2>
           <div class="flex gap-3">
             <UButton
               :disabled="!canGenerate || gameStore.isGenerating"

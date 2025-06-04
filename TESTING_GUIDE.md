@@ -130,6 +130,6 @@ When ready to move to production with Supabase:
 
 ---
 
-**Current URL**: http://localhost:3004
+**Current URL**: http://localhost:3000
 **Mode**: Demo Mode with localStorage
 **Status**: Ready for testing! 🚀

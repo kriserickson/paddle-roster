@@ -44,3 +44,41 @@ $$ language 'plpgsql';
 CREATE TRIGGER update_players_updated_at 
     BEFORE UPDATE ON public.players
     FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- Create user_preferences table for storing matching options
+CREATE TABLE IF NOT EXISTS public.user_preferences (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL UNIQUE,
+    number_of_courts INTEGER DEFAULT 3 CHECK (number_of_courts >= 1 AND number_of_courts <= 4),
+    number_of_rounds INTEGER DEFAULT 7 CHECK (number_of_rounds >= 1 AND number_of_rounds <= 15),
+    balance_skill_levels BOOLEAN DEFAULT true,
+    respect_partner_preferences BOOLEAN DEFAULT true,
+    max_skill_difference DECIMAL(3,1) DEFAULT 2.0 CHECK (max_skill_difference >= 0.0 AND max_skill_difference <= 8.0),
+    distribute_rest_equally BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- Enable Row Level Security for user_preferences
+ALTER TABLE public.user_preferences ENABLE ROW LEVEL SECURITY;
+
+-- Create indexes for user_preferences
+CREATE INDEX IF NOT EXISTS user_preferences_user_id_idx ON public.user_preferences(user_id);
+
+-- Row Level Security Policies for user_preferences
+CREATE POLICY "Users can view their own preferences" ON public.user_preferences
+    FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert their own preferences" ON public.user_preferences
+    FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "Users can update their own preferences" ON public.user_preferences
+    FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can delete their own preferences" ON public.user_preferences
+    FOR DELETE USING (auth.uid() = user_id);
+
+-- Trigger to automatically update updated_at on user_preferences updates
+CREATE TRIGGER update_user_preferences_updated_at 
+    BEFORE UPDATE ON public.user_preferences
+    FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

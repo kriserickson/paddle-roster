@@ -545,11 +545,7 @@ watch(showPrintModal, async newValue => {
             </div>
 
             <!-- Action Buttons -->
-            <div class="space-y-3 pt-4 border-t border-gray-200">
-              <UButton class="btn-primary w-full" @click="generatePreview">
-                <Icon name="mdi:eye" class="mr-2" />
-                {{ previewGenerated ? 'Refresh Preview' : 'Generate Preview' }}
-              </UButton>
+            <div class="space-y-3 pt-4 border-t border-gray-200">              
               <UButton class="btn-secondary w-full" @click="print">
                 <Icon name="mdi:printer" class="mr-2" />
                 Print
@@ -558,7 +554,9 @@ watch(showPrintModal, async newValue => {
                 <Icon name="mdi:file-pdf-box" class="mr-2" />
                 Download PDF
               </UButton>
-              <UButton variant="ghost" class="btn-secondary w-full" @click="showPrintModal = false"> Cancel </UButton>
+              <UButton variant="ghost" class="btn-secondary w-full" @click="showPrintModal = false"> 
+                Cancel 
+              </UButton>
             </div>
           </div>
 

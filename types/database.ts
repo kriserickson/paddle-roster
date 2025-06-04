@@ -34,6 +34,44 @@ export interface Database {
           updated_at?: string;
         };
       };
+      user_preferences: {
+        Row: {
+          id: string;
+          user_id: string;
+          number_of_courts: number;
+          number_of_rounds: number;
+          balance_skill_levels: boolean;
+          respect_partner_preferences: boolean;
+          max_skill_difference: number;
+          distribute_rest_equally: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          number_of_courts?: number;
+          number_of_rounds?: number;
+          balance_skill_levels?: boolean;
+          respect_partner_preferences?: boolean;
+          max_skill_difference?: number;
+          distribute_rest_equally?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          number_of_courts?: number;
+          number_of_rounds?: number;
+          balance_skill_levels?: boolean;
+          respect_partner_preferences?: boolean;
+          max_skill_difference?: number;
+          distribute_rest_equally?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
     Views: {
       [_ in never]: never;
@@ -50,3 +88,7 @@ export interface Database {
 export type PlayerRow = Database['public']['Tables']['players']['Row'];
 export type PlayerInsert = Database['public']['Tables']['players']['Insert'];
 export type PlayerUpdate = Database['public']['Tables']['players']['Update'];
+
+export type UserPreferencesRow = Database['public']['Tables']['user_preferences']['Row'];
+export type UserPreferencesInsert = Database['public']['Tables']['user_preferences']['Insert'];
+export type UserPreferencesUpdate = Database['public']['Tables']['user_preferences']['Update'];
