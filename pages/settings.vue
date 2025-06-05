@@ -22,8 +22,8 @@ function handleDarkModeChange(event: Event) {
     <!-- Back Button -->
     <button
       aria-label="Back to Home"
-      @click="goBack"
       class="absolute top-4 left-4 flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-gray-800 text-paddle-teal dark:text-paddle-teal-light shadow hover:bg-gray-100 dark:hover:bg-gray-700 transition"
+      @click="goBack"
     >
       <Icon name="i-heroicons-arrow-left" class="w-5 h-5" />
       <span class="font-medium">Back</span>

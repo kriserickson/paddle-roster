@@ -11,10 +11,7 @@ export class UserPreferencesApiSupabase {
    * Get user's matching options preferences
    */
   async getUserPreferences(): Promise<MatchingOptions> {
-    const { data, error } = await this.supabase
-      .from('user_preferences')
-      .select('*')
-      .single();
+    const { data, error } = await this.supabase.from('user_preferences').select('*').single();
 
     if (error) {
       if (error.code === 'PGRST116') {
@@ -27,7 +24,7 @@ export class UserPreferencesApiSupabase {
           maxSkillDifference: 2.0,
           distributeRestEqually: true
         };
-        
+
         // Create default preferences for this user
         await this.saveUserPreferences(defaultOptions);
         return defaultOptions;
@@ -44,11 +41,9 @@ export class UserPreferencesApiSupabase {
   async saveUserPreferences(options: MatchingOptions): Promise<void> {
     const rowData = this.mapMatchingOptionsToRow(options);
 
-    const { error } = await this.supabase
-      .from('user_preferences')
-      .upsert(rowData, {
-        onConflict: 'user_id'
-      });
+    const { error } = await this.supabase.from('user_preferences').upsert(rowData, {
+      onConflict: 'user_id'
+    });
 
     if (error) {
       throw error;
@@ -91,7 +86,7 @@ export class UserPreferencesApiSupabase {
    */
   private mapMatchingOptionsToRow(options: MatchingOptions): Partial<UserPreferencesRow> {
     const user = useSupabaseUser();
-    
+
     return {
       user_id: user.value?.id,
       number_of_courts: options.numberOfCourts,

@@ -47,20 +47,20 @@ watch(
       //console.log('🔄 Skipping save - updating from store');
       return;
     }
-    
+
     // Don't save if values haven't actually changed (deep comparison)
     if (oldOptions && optionsAreEqual(newOptions, oldOptions)) {
       //console.log('🔄 Skipping save - no actual changes detected');
       return;
     }
-    
+
     //console.log('💾 User changed preferences, scheduling save...');
-    
+
     // Clear existing timeout
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
-    
+
     // Debounce the save operation
     saveTimeout = setTimeout(async () => {
       try {
@@ -69,7 +69,8 @@ watch(
         await gameStore.updateOptions(newOptions);
         //console.log('✅ Preferences saved successfully');
         // Only show success toast occasionally to avoid spam
-        if (Math.random() < 0.3) { // 30% chance to show success message
+        if (Math.random() < 0.3) {
+          // 30% chance to show success message
           toast.add({
             title: 'Preferences Saved',
             description: 'Your preferences have been automatically saved.',
@@ -95,7 +96,7 @@ watch(
 // Watch for store matching options changes (e.g., when loaded from Supabase)
 watch(
   () => gameStore.matchingOptions,
-  (newStoreOptions) => {
+  newStoreOptions => {
     isUpdatingFromStore.value = true;
     matchingOptions.value = { ...newStoreOptions };
     nextTick(() => {

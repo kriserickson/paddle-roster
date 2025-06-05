@@ -10,10 +10,7 @@ export interface PDFGenerationOptions {
  * Generate PDF from an HTML element using jsPDF and html2canvas
  * This function only works on the client side
  */
-export async function generatePDFFromElement(
-  elementId: string,
-  options: PDFGenerationOptions = {}
-): Promise<void> {
+export async function generatePDFFromElement(elementId: string, options: PDFGenerationOptions = {}): Promise<void> {
   // Check if we're running on the client side
   if (typeof window === 'undefined') {
     throw new Error('PDF generation can only be performed on the client side');
@@ -29,34 +26,90 @@ export async function generatePDFFromElement(
 
   try {
     // Dynamic imports for client-side only
-    const [jsPDFModule, html2canvasModule] = await Promise.all([
-      import('jspdf'),
-      import('html2canvas')
-    ]);
-    
-    const jsPDF = jsPDFModule.default;
-    const html2canvas = html2canvasModule.default;
+    const [jsPDFModule, html2canvasModule] = await Promise.all([import('jspdf'), import('html2canvas')]);
 
-    // Find the element
+    const jsPDF = jsPDFModule.default;
+    const html2canvas = html2canvasModule.default; // Find the element
     const element = document.getElementById(elementId);
     if (!element) {
       throw new Error(`Element with ID '${elementId}' not found`);
     }
 
-    // Show loading state by temporarily making the element visible if needed
-    const originalDisplay = element.style.display;
-    const originalVisibility = element.style.visibility;
-    const originalPosition = element.style.position;
-    
-    // Ensure element is visible for canvas capture
-    element.style.display = 'block';
-    element.style.visibility = 'visible';
-    
-    // Wait a moment for any dynamic content to render
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Check if element has content
+    if (!element.innerHTML || element.innerHTML.trim() === '') {
+      throw new Error('Element has no content to convert to PDF');
+    }
 
-    // Convert HTML to canvas with high quality settings
-    const canvas = await html2canvas(element, {
+    // Create a temporary container for better capture
+    const tempContainer = document.createElement('div');
+    tempContainer.style.position = 'absolute';
+    tempContainer.style.top = '-9999px';
+    tempContainer.style.left = '0';
+    tempContainer.style.zIndex = '9999';
+    tempContainer.style.background = '#ffffff';
+    tempContainer.style.padding = '20px';
+    tempContainer.style.border = 'none';
+    tempContainer.style.boxShadow = 'none';
+    tempContainer.style.width = '816px'; // Fixed width for consistency
+    tempContainer.style.height = 'auto';
+
+    // Clone the element content
+    const elementClone = element.cloneNode(true) as HTMLElement;
+    elementClone.id = elementId + '-temp-clone';
+    elementClone.style.display = 'block';
+    elementClone.style.visibility = 'visible';
+    elementClone.style.position = 'static';
+    elementClone.style.transform = 'none';
+    elementClone.style.margin = '0';
+    elementClone.style.padding = '20px';
+    elementClone.style.width = '776px'; // 816 - 40px padding
+    elementClone.style.height = 'auto';
+    elementClone.style.maxWidth = 'none';
+    elementClone.style.maxHeight = 'none';
+    elementClone.style.fontSize = '12px';
+    elementClone.style.fontFamily = 'Arial, sans-serif';
+    elementClone.style.lineHeight = '1.4';
+    elementClone.style.color = '#000';
+
+    // Copy all stylesheets to ensure proper rendering
+    const allStyles = Array.from(document.styleSheets);
+    const styleElement = document.createElement('style');
+    let combinedCSS = '';
+
+    try {
+      allStyles.forEach(sheet => {
+        try {
+          const rules = Array.from(sheet.cssRules || sheet.rules);
+          rules.forEach(rule => {
+            combinedCSS += rule.cssText + '\n';
+          });
+        } catch (e) {
+          // Skip stylesheets that can't be accessed (CORS)
+          console.log('Skipping stylesheet due to CORS:', e);
+        }
+      });
+    } catch (e) {
+      console.log('Error copying styles:', e);
+    }
+
+    styleElement.textContent = combinedCSS;
+    tempContainer.appendChild(styleElement);
+    tempContainer.appendChild(elementClone);
+    document.body.appendChild(tempContainer);
+
+    // Wait a moment for any dynamic content to render
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Check element dimensions
+    const rect = elementClone.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      document.body.removeChild(tempContainer);
+      throw new Error(`Element has no dimensions: ${rect.width}x${rect.height}`);
+    }
+
+    console.log('PDF Generator - Element dimensions:', rect.width, 'x', rect.height);
+    console.log('PDF Generator - Element scroll dimensions:', elementClone.scrollWidth, 'x', elementClone.scrollHeight); // Convert HTML to canvas with high quality settings
+    const canvas = await html2canvas(elementClone, {
       scale: scale,
       useCORS: true,
       allowTaint: false,
@@ -64,24 +117,45 @@ export async function generatePDFFromElement(
       removeContainer: false,
       foreignObjectRendering: true,
       imageTimeout: 0,
-      logging: false,
-      onclone: (clonedDoc: Document) => {
-        // Ensure all fonts are loaded in the cloned document
-        const clonedElement = clonedDoc.getElementById(elementId);
-        if (clonedElement) {
-          // Force font rendering
-          clonedElement.style.fontFamily = '"Times New Roman", serif';
-        }
-      }
+      logging: true,
+      width: elementClone.scrollWidth,
+      height: elementClone.scrollHeight,
+      windowWidth: elementClone.scrollWidth,
+      windowHeight: elementClone.scrollHeight
     });
 
-    // Restore original element styles
-    element.style.display = originalDisplay;
-    element.style.visibility = originalVisibility;
-    element.style.position = originalPosition;
+    // Clean up the temporary container
+    document.body.removeChild(tempContainer);
+
+    // Check if canvas was created successfully
+    if (!canvas || canvas.width === 0 || canvas.height === 0) {
+      throw new Error(`Failed to create canvas from element: ${canvas?.width || 0}x${canvas?.height || 0}`);
+    }
+    console.log('PDF Generator - Canvas dimensions:', canvas.width, 'x', canvas.height);
 
     // Calculate PDF dimensions
     const imgData = canvas.toDataURL('image/png', quality);
+
+    // Check if image data was created successfully
+    if (!imgData || imgData === 'data:,' || imgData.length < 100) {
+      throw new Error('Failed to generate image data from canvas');
+    }
+    console.log('PDF Generator - Image data length:', imgData.length);
+    console.log('PDF Generator - Image data prefix:', imgData.substring(0, 50));
+
+    // Debug: Create a temporary image to verify the canvas content
+    const testImg = new Image();
+    testImg.onload = () => {
+      console.log('PDF Generator - Test image loaded successfully, dimensions:', testImg.width, 'x', testImg.height);
+    };
+    testImg.onerror = () => {
+      console.error('PDF Generator - Test image failed to load - canvas data may be empty');
+    };
+    testImg.src = imgData;
+
+    // Wait a moment for the test image to load
+    await new Promise(resolve => setTimeout(resolve, 100));
+
     const pdf = new jsPDF({
       orientation: orientation,
       unit: 'mm',
@@ -92,29 +166,34 @@ export async function generatePDFFromElement(
     // Get page dimensions
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
-    
+
+    console.log('PDF Generator - PDF page dimensions:', pageWidth, 'x', pageHeight);
+
     // Calculate image dimensions to fit page
     const imgWidth = pageWidth - 20; // 10mm margin on each side
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-    
+
+    console.log('PDF Generator - Image dimensions for PDF:', imgWidth, 'x', imgHeight);
+
     let heightLeft = imgHeight;
     let position = 10; // 10mm top margin
 
     // Add first page
+    console.log('PDF Generator - Adding image to PDF...');
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= (pageHeight - 20); // Account for top and bottom margins
+    heightLeft -= pageHeight - 20; // Account for top and bottom margins
 
     // Add additional pages if content is longer than one page
     while (heightLeft >= 0) {
       position = heightLeft - imgHeight + 10; // 10mm top margin
       pdf.addPage();
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= (pageHeight - 20);
+      heightLeft -= pageHeight - 20;
     }
 
+    console.log('PDF Generator - Saving PDF with filename:', filename);
     // Save the PDF
     pdf.save(filename);
-
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -125,10 +204,7 @@ export async function generatePDFFromElement(
  * Generate PDF with better page handling for long content
  * This function only works on the client side
  */
-export async function generateMultiPagePDF(
-  elementId: string,
-  options: PDFGenerationOptions = {}
-): Promise<void> {
+export async function generateMultiPagePDF(elementId: string, options: PDFGenerationOptions = {}): Promise<void> {
   // Check if we're running on the client side
   if (typeof window === 'undefined') {
     throw new Error('PDF generation can only be performed on the client side');
@@ -144,11 +220,8 @@ export async function generateMultiPagePDF(
 
   try {
     // Dynamic imports for client-side only
-    const [jsPDFModule, html2canvasModule] = await Promise.all([
-      import('jspdf'),
-      import('html2canvas')
-    ]);
-    
+    const [jsPDFModule, html2canvasModule] = await Promise.all([import('jspdf'), import('html2canvas')]);
+
     const jsPDF = jsPDFModule.default;
     const html2canvas = html2canvasModule.default;
 
@@ -165,7 +238,7 @@ export async function generateMultiPagePDF(
       left: element.style.left,
       top: element.style.top
     };
-    
+
     element.style.display = 'block';
     element.style.visibility = 'visible';
     element.style.position = 'absolute';
@@ -192,7 +265,7 @@ export async function generateMultiPagePDF(
 
     // Restore original styles
     Object.entries(originalStyles).forEach(([key, value]) => {
-      (element.style as any)[key] = value;
+      element.style.setProperty(key, value);
     });
 
     // Create PDF
@@ -208,7 +281,6 @@ export async function generateMultiPagePDF(
 
     // Save the PDF
     pdf.save(filename);
-
   } catch (error) {
     console.error('Error generating multi-page PDF:', error);
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);

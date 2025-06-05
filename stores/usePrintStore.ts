@@ -25,11 +25,20 @@ export const usePrintStore = defineStore('print', () => {
   /**
    * Actions
    */
-  function generatePrintHTML(schedule: GameSchedule, options: PrintOptions): string {
-    const playerStore = usePlayerStore();
+  function generatePrintHTML(
+    schedule: GameSchedule,
+    options: PrintOptions,
+    playerStore?: ReturnType<typeof usePlayerStore>
+  ): string {
+    // Use the passed playerStore or try to get it (for backwards compatibility)
+    const store = playerStore || (typeof usePlayerStore === 'function' ? usePlayerStore() : null);
+
+    if (!store) {
+      throw new Error('Player store not available for generating print HTML');
+    }
 
     function playerName(id: string): string {
-      return playerStore.getPlayer(id)?.name || 'Unknown Player';
+      return store!.getPlayer(id)?.name || 'Unknown Player';
     }
 
     function formatSkillLevel(level: number): string {
@@ -37,10 +46,11 @@ export const usePrintStore = defineStore('print', () => {
     }
 
     function getPlayerSkill(id: string): number {
-      return playerStore.getPlayer(id)?.skillLevel || 0;
+      return store!.getPlayer(id)?.skillLevel || 0;
     }
 
-    const colorStyles = options.colorMode ? `
+    const colorStyles = options.colorMode
+      ? `
         .team1 {
             background-color: #e8f4f8;
             border: 1px solid #b8d4da;
@@ -58,7 +68,8 @@ export const usePrintStore = defineStore('print', () => {
         .schedule-grid th {
             background-color: #f0f0f0;
         }
-    ` : `
+    `
+      : `
         .team2 {
             background: #ccc;
             border: none;
@@ -289,8 +300,6 @@ export const usePrintStore = defineStore('print', () => {
       // Compact layout: players on same line with &, line divider instead of "vs"
       html += `<div class="team team1">`;
 
-
-      
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team1[0]);
         const skill2 = getPlayerSkill(game.team1[1]);
@@ -299,8 +308,7 @@ export const usePrintStore = defineStore('print', () => {
         html += `${team1Player1} & ${team1Player2}`;
       }
       html += '</div>';
-      
-      
+
       html += `<div class="team team2">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team2[0]);
@@ -321,10 +329,12 @@ export const usePrintStore = defineStore('print', () => {
         html += `${team1Player1}<br>${team1Player2}`;
       }
       html += '</div>';
-      
-      html += '<div style="font-weight: bold; margin: 2px 0; font-size: ' + 
-              (options.compactLayout ? '7px' : '8px') + ';">vs</div>';
-      
+
+      html +=
+        '<div style="font-weight: bold; margin: 2px 0; font-size: ' +
+        (options.compactLayout ? '7px' : '8px') +
+        ';">vs</div>';
+
       html += `<div class="team team2">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team2[0]);
@@ -341,9 +351,13 @@ export const usePrintStore = defineStore('print', () => {
     return html;
   }
 
-  function printSchedule(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
+  function printSchedule(
+    schedule: GameSchedule,
+    customOptions?: Partial<PrintOptions>,
+    playerStore?: ReturnType<typeof usePlayerStore>
+  ): void {
     const options = { ...printOptions.value, ...customOptions };
-    const html = generatePrintHTML(schedule, options);
+    const html = generatePrintHTML(schedule, options, playerStore);
 
     // Create a new window for printing
     const printWindow = window.open('', '_blank');
@@ -370,9 +384,13 @@ export const usePrintStore = defineStore('print', () => {
     }
   }
 
-  function downloadScheduleHTML(schedule: GameSchedule, customOptions?: Partial<PrintOptions>): void {
+  function downloadScheduleHTML(
+    schedule: GameSchedule,
+    customOptions?: Partial<PrintOptions>,
+    playerStore?: ReturnType<typeof usePlayerStore>
+  ): void {
     const options = { ...printOptions.value, ...customOptions };
-    const html = generatePrintHTML(schedule, options);
+    const html = generatePrintHTML(schedule, options, playerStore);
 
     const blob = new Blob([html], { type: 'text/html' });
     const url = URL.createObjectURL(blob);

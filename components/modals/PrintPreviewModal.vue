@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import type { Game, GameSchedule, PrintOptions } from '~/types';
+import type { GameSchedule, PrintOptions } from '~/types';
 import { generatePDFFromElement } from '~/utils/pdfGenerator';
+import { generatePDFFromHTML } from '~/utils/simplePdfGenerator';
 
 // Props
 interface Props {
@@ -20,6 +21,7 @@ const emit = defineEmits<Emits>();
 
 // Stores
 const printStore = usePrintStore();
+const playerStore = usePlayerStore();
 const toast = useToast();
 
 // Local state
@@ -40,7 +42,10 @@ const isOpen = computed({
 });
 
 const localPrintOptions = computed({
-  get: () => props.printOptions,
+  get: () => {
+    console.log('PrintPreviewModal printOptions getter:', props.printOptions);
+    return props.printOptions;
+  },
   set: (value: PrintOptions) => emit('update:print-options', value)
 });
 
@@ -53,10 +58,14 @@ async function generatePreview(): Promise<void> {
   try {
     // Generate HTML using the print store
     generatedPreviewHTML.value = printStore.generatePrintHTML(
-      props.schedule as GameSchedule, 
-      localPrintOptions.value
+      props.schedule as GameSchedule,
+      localPrintOptions.value,
+      playerStore
     );
-    
+
+    console.log('Generated HTML length:', generatedPreviewHTML.value.length);
+    console.log('Generated HTML preview:', generatedPreviewHTML.value.substring(0, 500));
+
     previewGenerated.value = true;
 
     // Scroll to preview after DOM update
@@ -76,7 +85,7 @@ async function print(): Promise<void> {
   try {
     // Cast readonly types to mutable types for compatibility
     const schedule = props.schedule as GameSchedule;
-    await printStore.printSchedule(schedule, localPrintOptions.value);
+    await printStore.printSchedule(schedule, localPrintOptions.value, playerStore);
   } catch (error) {
     console.error('Error printing schedule:', error);
   }
@@ -99,7 +108,7 @@ async function downloadPdf(): Promise<void> {
 
   try {
     // Show loading toast
-    const loadingToast = toast.add({
+    toast.add({
       title: 'Generating PDF...',
       description: 'Please wait while we create your PDF document.',
       color: 'primary'
@@ -108,21 +117,61 @@ async function downloadPdf(): Promise<void> {
     // Generate preview first if not already generated
     if (!previewGenerated.value) {
       await generatePreview();
-      // Wait for preview to fully render
-      await new Promise(resolve => setTimeout(resolve, 500));
     }
+
+    // Wait for preview to fully render and DOM to update
+    await nextTick();
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    // Check if the preview element exists and has content
+    const previewElement = document.getElementById('print-preview-element');
+    if (!previewElement) {
+      throw new Error('Print preview element not found');
+    }
+
+    // Check if element has content
+    if (!previewElement.innerHTML || previewElement.innerHTML.trim() === '') {
+      throw new Error('Print preview element is empty');
+    }
+
+    // Make sure element is visible and has proper dimensions
+    const rect = previewElement.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) {
+      throw new Error('Print preview element has no dimensions');
+    }
+    console.log('PDF Generation - Element dimensions:', rect.width, 'x', rect.height);
+    console.log('PDF Generation - Element content length:', previewElement.innerHTML.length);
 
     // Generate filename based on event details
     const eventTitle = localPrintOptions.value.eventTitle || 'pickleball-schedule';
     const eventDate = localPrintOptions.value.eventDate || new Date().toISOString().split('T')[0];
     const filename = `${eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${eventDate}.pdf`;
 
-    // Generate PDF from the preview element
+    // Try the new simple PDF generator first
+    try {
+      console.log('Trying simple PDF generator...');
+      await generatePDFFromHTML(generatedPreviewHTML.value, {
+        orientation: localPrintOptions.value.orientation,
+        filename: filename
+      });
+
+      // Show success toast
+      toast.add({
+        title: 'PDF Generated Successfully',
+        description: `Your schedule has been downloaded as ${filename}`,
+        color: 'success'
+      });
+      return;
+    } catch (simpleError) {
+      console.error('Simple PDF generator failed, trying advanced method:', simpleError);
+    }
+
+    // Fallback to original method
     await generatePDFFromElement('print-preview-element', {
       orientation: localPrintOptions.value.orientation,
       filename: filename,
-      quality: 0.95,
-      scale: 2,
+      quality: 1.0,
+      scale: 1.5,
       backgroundColor: '#ffffff'
     });
 
@@ -132,14 +181,13 @@ async function downloadPdf(): Promise<void> {
       description: `Your schedule has been downloaded as ${filename}`,
       color: 'success'
     });
-
   } catch (error) {
     console.error('Error generating PDF:', error);
-    
+
     // Show error toast
     toast.add({
       title: 'PDF Generation Failed',
-      description: 'There was an error creating your PDF. Please try again.',
+      description: `There was an error creating your PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
       color: 'error'
     });
   }
@@ -147,7 +195,9 @@ async function downloadPdf(): Promise<void> {
 
 // Auto-generate preview when modal opens
 watch(isOpen, async newValue => {
+  console.log('Modal open state changed:', newValue);
   if (newValue && props.schedule && !previewGenerated.value) {
+    console.log('Auto-generating preview...');
     await generatePreview();
   }
 });
@@ -156,6 +206,7 @@ watch(isOpen, async newValue => {
 watch(
   localPrintOptions,
   async () => {
+    console.log('Print options changed, regenerating preview...');
     if (isOpen.value && props.schedule && previewGenerated.value) {
       await generatePreview();
     }
@@ -181,7 +232,11 @@ watch(
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Event Information</h3>
             <UFormField label="Event Name">
-              <UInput v-model="localPrintOptions.eventTitle" placeholder="Pickleball League" class="form-input w-full" />
+              <UInput
+                v-model="localPrintOptions.eventTitle"
+                placeholder="Pickleball League"
+                class="form-input w-full"
+              />
             </UFormField>
 
             <UFormField label="Event Date">
@@ -193,7 +248,11 @@ watch(
             </UFormField>
 
             <UFormField label="Organizer">
-              <UInput v-model="localPrintOptions.organizer" placeholder="League Coordinator" class="form-input w-full" />
+              <UInput
+                v-model="localPrintOptions.organizer"
+                placeholder="League Coordinator"
+                class="form-input w-full"
+              />
             </UFormField>
           </div>
 
@@ -203,14 +262,9 @@ watch(
 
             <UFormField label="Configuration">
               <div class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
-                
                 <!-- Layout and Display Options -->
                 <div class="space-y-3">
-                  <UCheckbox
-                    v-model="localPrintOptions.compactLayout"
-                    label="Compact Layout"
-                    class="text-blue-800"
-                  />
+                  <UCheckbox v-model="localPrintOptions.compactLayout" label="Compact Layout" class="text-blue-800" />
                   <UCheckbox
                     v-model="localPrintOptions.colorMode"
                     label="Color Mode (uncheck for black & white printers)"
@@ -227,7 +281,7 @@ watch(
           </div>
 
           <!-- Action Buttons -->
-          <div class="space-y-3 pt-4 border-t border-gray-200">              
+          <div class="space-y-3 pt-4 border-t border-gray-200">
             <UButton class="btn-primary w-full" @click="print">
               <Icon name="mdi:printer" class="mr-2" />
               Print
@@ -238,9 +292,7 @@ watch(
                 Download PDF
               </UButton>
             </ClientOnly>
-            <UButton variant="ghost" class="btn-secondary w-full" @click="isOpen = false"> 
-              Cancel 
-            </UButton>
+            <UButton variant="ghost" class="btn-secondary w-full" @click="isOpen = false"> Cancel </UButton>
           </div>
         </div>
 
@@ -252,14 +304,13 @@ watch(
               {{ localPrintOptions.compactLayout ? 'Compact' : 'Standard' }} Layout
             </div>
           </div>
-
           <!-- Preview Container with Paper-like appearance -->
           <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
             <div
               v-if="previewGenerated && schedule && generatedPreviewHTML"
               id="print-preview-element"
               ref="printPreviewRef"
-              class="bg-white shadow-lg print-preview-container"              
+              class="bg-white shadow-lg print-preview-container min-w-[8.5in] min-h-[11in] w-full max-w-[11in]"
               v-html="generatedPreviewHTML"
             ></div>
 
@@ -301,10 +352,17 @@ watch(
 
 .print-preview-container {
   width: 100%;
-  height: 100%;
+  min-width: 8.5in;
+  height: auto;
+  min-height: 11in;
   padding: 0.75in;
   box-sizing: border-box;
-  overflow: hidden;
+  overflow: visible;
+  font-family: 'Times New Roman', serif;
+  font-size: 12pt;
+  line-height: 1.4;
+  color: #000;
+  background: white;
 }
 
 /* Ensure the preview looks like actual print output */

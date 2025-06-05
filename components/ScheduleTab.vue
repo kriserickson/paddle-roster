@@ -426,7 +426,7 @@ watch(
     <PrintPreviewModal
       v-model:open="showPrintModal"
       v-model:print-options="printOptions"
-      :schedule="gameStore.currentSchedule as GameSchedule | null"
+      :schedule="(gameStore.currentSchedule as GameSchedule) || null"
     />
   </div>
 </template>

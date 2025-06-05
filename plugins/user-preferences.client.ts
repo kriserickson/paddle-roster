@@ -6,14 +6,18 @@ export default defineNuxtPlugin(async () => {
   const gameStore = useGameStore();
 
   // Watch for authentication changes
-  watch(user, async (newUser) => {
-    if (newUser) {
-      // User is authenticated, load their preferences
-      try {
-        await gameStore.loadUserPreferences();
-      } catch (error) {
-        console.error('Failed to load user preferences:', error);
+  watch(
+    user,
+    async newUser => {
+      if (newUser) {
+        // User is authenticated, load their preferences
+        try {
+          await gameStore.loadUserPreferences();
+        } catch (error) {
+          console.error('Failed to load user preferences:', error);
+        }
       }
-    }
-  }, { immediate: true });
+    },
+    { immediate: true }
+  );
 });

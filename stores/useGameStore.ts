@@ -111,7 +111,7 @@ export const useGameStore = defineStore('game', () => {
 
   async function updateOptions(newOptions: Partial<MatchingOptions>): Promise<void> {
     matchingOptions.value = { ...matchingOptions.value, ...newOptions };
-    
+
     // Automatically save preferences to Supabase
     try {
       await saveUserPreferences();
