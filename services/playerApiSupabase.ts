@@ -1,4 +1,3 @@
-import { injectable } from 'tsyringe';
 import type { Player } from '~/types';
 import type { Database, PlayerRow, PlayerInsert, PlayerUpdate } from '~/types/database';
 import type { IPlayerApi, ApiResponse } from '~/types/api';
@@ -7,7 +6,6 @@ import type { IPlayerApi, ApiResponse } from '~/types/api';
  * Supabase service for player management
  * Handles CRUD operations for players using Supabase as the backend
  */
-@injectable()
 export class PlayerApiSupabase implements IPlayerApi {
   private supabase = useSupabaseClient<Database>();
   private user = useSupabaseUser();

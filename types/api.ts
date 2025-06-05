@@ -49,10 +49,3 @@ export interface IPlayerApi {
    */
   clearAllPlayers(): Promise<ApiResponse>;
 }
-
-/**
- * Dependency injection tokens
- */
-export const TOKENS = {
-  PlayerApi: Symbol('PlayerApi')
-} as const;

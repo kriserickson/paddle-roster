@@ -1,4 +1,3 @@
-import { injectable } from 'tsyringe';
 import type { IPlayerApi, ApiResponse } from '~/types/api';
 import type { Player } from '~/types';
 
@@ -6,7 +5,6 @@ import type { Player } from '~/types';
  * IndexedDB implementation of the Player API
  * This will be replaced with actual API calls in the future
  */
-@injectable()
 export class PlayerApiIndexedDb implements IPlayerApi {
   private dbName = 'pickleballApp';
   private storeName = 'players';

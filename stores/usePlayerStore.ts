@@ -1,12 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import { container } from 'tsyringe';
-import { TOKENS, type IPlayerApi } from '~/types/api';
+import { usePlayerApi } from '~/composables/usePlayerApi';
+import type { IPlayerApi } from '~/types/api';
 import type { Player } from '~/types';
 
 export const usePlayerStore = defineStore('player', () => {
   // Get API instance from DI container
-  const playerApi = container.resolve<IPlayerApi>(TOKENS.PlayerApi);
+  const playerApi: IPlayerApi = usePlayerApi();
 
   /**
    * State: List of all players
