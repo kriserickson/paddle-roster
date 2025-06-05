@@ -58,27 +58,31 @@ export const usePrintStore = defineStore('print', () => {
         .schedule-grid th {
             background-color: #f0f0f0;
         }
-        
-        .rest-players {
-            background-color: #fff8dc;
-        }
     ` : `
-        .team1, .team2 {
-            background-color: transparent;
-            border: 1px solid #333;
+        .team2 {
+            background: #ccc;
+            border: none;
+            padding: 2px 0;
         }
         
         .round-header {
-            background-color: transparent;
+            background: transparent;
         }
         
         .schedule-grid th {
-            background-color: transparent;
+            background: transparent;
         }
         
         .rest-players {
-            background-color: transparent;
+            background: transparent;
+            border: none !important;
+            padding: 5px 0;
         }
+        
+        .game-cell {
+            border: none;
+        }
+        
     `;
 
     let html = `
@@ -136,24 +140,33 @@ export const usePrintStore = defineStore('print', () => {
         
         .schedule-grid th {
             font-weight: bold;
-            font-size: ${options.compactLayout ? '10px' : '12px'};
+            font-size: ${options.compactLayout ? '10px' : '13px'};
         }
         
         .round-header {
             font-weight: bold;
-            font-size: ${options.compactLayout ? '9px' : '10px'};
+            font-size: ${options.compactLayout ? '10px' : '13px'};
         }
         
         .game-cell {
-            font-size: ${options.compactLayout ? '8px' : '9px'};
+            font-size: ${options.compactLayout ? '10px' : '13px'};
             line-height: 1.1;
             min-height: ${options.compactLayout ? '30px' : '40px'};
+        }
+
+        .game-holder {
+            height: 75px;
+            display: flex;
+            flex-direction: column;    
         }
         
         .team {
             margin: 1px 0;
             padding: 1px 2px;
             border-radius: 2px;
+            font-size: ${options.compactLayout ? '11px' : '13px'};            
+            flex: 1; 
+            align-content: center;
         }
         
         ${colorStyles}
@@ -163,16 +176,11 @@ export const usePrintStore = defineStore('print', () => {
             margin: 2px 0;
         }
         
-        .skill-info {
-            font-size: ${options.compactLayout ? '6px' : '7px'};
-            color: #666;
-            margin-top: 1px;
-        }
-        
         .rest-players {
             padding: 5px;
             border: 1px solid #ddd;
             border-radius: 3px;
+            font-size: ${options.compactLayout ? '11px' : '13px'};            
         }
         
         @media print {
@@ -258,14 +266,7 @@ export const usePrintStore = defineStore('print', () => {
       html += '</tr>';
     }
 
-    html += '</tbody></table>';
-
-    html += `
-    <div style="margin-top: 20px; font-size: 8px; color: #666; text-align: center;">
-        Generated: ${schedule.generatedAt.toLocaleString()}
-    </div>
-</body>
-</html>`;
+    html += '</tbody></table></body></html>';
 
     return html;
   }
@@ -282,52 +283,60 @@ export const usePrintStore = defineStore('print', () => {
     const team2Player1 = playerName(game.team2[0]);
     const team2Player2 = playerName(game.team2[1]);
 
-    let html = '';
+    let html = '<div class="game-holder">';
 
     if (options.compactLayout) {
       // Compact layout: players on same line with &, line divider instead of "vs"
-      html += `<div class="team team1">${team1Player1} & ${team1Player2}`;
+      html += `<div class="team team1">`;
+
+
+      
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team1[0]);
         const skill2 = getPlayerSkill(game.team1[1]);
-        html += ` (${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})`;
+        html += `${team1Player1} (${formatSkillLevel(skill1)}) & ${team1Player2} (${formatSkillLevel(skill2)})`;
+      } else {
+        html += `${team1Player1} & ${team1Player2}`;
       }
       html += '</div>';
       
-      html += '<div class="team-divider"></div>';
       
-      html += `<div class="team team2">${team2Player1} & ${team2Player2}`;
+      html += `<div class="team team2">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team2[0]);
         const skill2 = getPlayerSkill(game.team2[1]);
-        html += ` (${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})`;
+        html += `${team2Player1} (${formatSkillLevel(skill1)}) & ${team2Player2} (${formatSkillLevel(skill2)})`;
+      } else {
+        html += `${team2Player1} & ${team2Player2}`;
       }
       html += '</div>';
     } else {
       // Standard layout: separate lines for each player, "vs" divider
-      html += `<div class="team team1">${team1Player1}<br>${team1Player2}`;
+      html += `<div class="team team1">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team1[0]);
         const skill2 = getPlayerSkill(game.team1[1]);
-        html += `<div class="skill-info">(${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})</div>`;
+        html += `${team1Player1} (${formatSkillLevel(skill1)}) <br>${team1Player2} (${formatSkillLevel(skill2)})`;
+      } else {
+        html += `${team1Player1}<br>${team1Player2}`;
       }
       html += '</div>';
       
       html += '<div style="font-weight: bold; margin: 2px 0; font-size: ' + 
               (options.compactLayout ? '7px' : '8px') + ';">vs</div>';
       
-      html += `<div class="team team2">${team2Player1}<br>${team2Player2}`;
+      html += `<div class="team team2">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team2[0]);
         const skill2 = getPlayerSkill(game.team2[1]);
-        html += `<div class="skill-info">(${formatSkillLevel(skill1)}, ${formatSkillLevel(skill2)})</div>`;
+        html += `${team2Player1} (${formatSkillLevel(skill1)}) <br>${team2Player2} (${formatSkillLevel(skill2)})`;
+      } else {
+        html += `${team2Player1}<br>${team2Player2}`;
       }
       html += '</div>';
     }
 
-    if (options.showRatings) {
-      html += `<div class="skill-info">Diff: ${formatSkillLevel(game.skillDifference)}</div>`;
-    }
+    html += '</div>';
 
     return html;
   }
