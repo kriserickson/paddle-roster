@@ -20,70 +20,95 @@ body {
   min-height: 100vh;
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background: linear-gradient(135deg, #18181b 0%, #27272a 100%) !important;
-  }
-  .content-card,
-  .player-card,
-  .game-card,
-  .modal-content,
-  .UCard,
-  .u-card {
-    background: #18181b !important;
-    color: #f3f4f6 !important;
-    border-color: #27272a !important;
-  }
-  .tab-nav {
-    background: #23272f !important;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
-  }
-  .tab-button {
-    background: transparent !important;
-    color: #b6c2d1 !important;
-  }
-  .tab-button.active {
-    background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
-    color: #fff !important;
-    box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3) !important;
-  }
-  .tab-button:hover:not(.active) {
-    background: #2d3748 !important;
-    color: #4dd8de !important;
-  }
-  .tab-button.disabled {
-    opacity: 0.5 !important;
-    cursor: not-allowed !important;
-    pointer-events: none !important;
-  }
-  .content-card-header,
-  .game-generation-header,
-  .player-management-header,
-  .player-list-header {
-    background: linear-gradient(90deg, #4b5563 0%, #64748b 100%) !important;
-    color: #fff !important;
-    border-bottom: 2px solid #3ab6bb !important;
-    box-shadow: 0 2px 8px #18181b33 !important;
-  }
-  .player-stats {
-    background: #374151 !important;
-    color: #fff !important;
-    border-radius: 10px !important;
-    box-shadow: 0 2px 8px #18181b33 !important;
-  }
-  .player-stats .stat-label {
-    color: #4dd8de !important;
-  }
-  .search-bar {
-    background: #374151 !important;
-    color: #fff !important;
-    border: 1.5px solid #3ab6bb !important;
-    box-shadow: 0 2px 8px #18181b33 !important;
-  }
-  .search-bar input {
-    background: transparent !important;
-    color: #fff !important;
-  }
+.dark body {
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%) !important;
+}
+
+.dark .content-card,
+.dark .player-card,
+.dark .game-card,
+.dark .modal-content,
+.dark .UCard,
+.dark .u-card {
+  background: #18181b !important;
+  color: #f3f4f6 !important;
+  border-color: #27272a !important;
+}
+
+.dark .tab-nav {
+  background: #23272f !important;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
+}
+
+.dark .tab-button {
+  background: transparent !important;
+  color: #b6c2d1 !important;
+}
+
+.dark .tab-button.active {
+  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
+  color: #fff !important;
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3) !important;
+}
+
+.dark .tab-button:hover:not(.active) {
+  background: #2d3748 !important;
+  color: #4dd8de !important;
+}
+
+.dark .tab-button.disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+  pointer-events: none !important;
+}
+
+.dark .content-card-header,
+.dark .game-generation-header,
+.dark .player-management-header,
+.dark .player-list-header {
+  background: linear-gradient(90deg, #4b5563 0%, #64748b 100%) !important;
+  color: #fff !important;
+  border-bottom: 2px solid #3ab6bb !important;
+  box-shadow: 0 2px 8px #18181b33 !important;
+}
+
+.dark .player-stats {
+  background: #374151 !important;
+  color: #fff !important;
+  border-radius: 10px !important;
+  box-shadow: 0 2px 8px #18181b33 !important;
+}
+
+.dark .player-stats .stat-label {
+  color: #4dd8de !important;
+}
+
+.dark .search-bar {
+  background: #374151 !important;
+  color: #fff !important;
+  border: 1.5px solid #3ab6bb !important;
+  box-shadow: 0 2px 8px #18181b33 !important;
+}
+
+.dark .search-bar input {
+  background: transparent !important;
+  color: #fff !important;
+}
+
+.dark .form-input.u-select {
+  background-color: var(--ui-bg);
+}
+
+.dark #configuration-container {
+  background: var(--color-gray-600);    
+}
+
+.dark #configuration-container button[role=checkbox] {
+  --tw-ring-color: #fff;
+}
+
+.dark .bg-default {
+  background-color: var(--color-gray-600) !important;
 }
 
 /* Remove all !important from light mode selectors to allow dark mode to override */

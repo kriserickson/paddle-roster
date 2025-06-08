@@ -391,7 +391,7 @@ onMounted(() => {
 
       <div class="p-6">
         <!-- Filter Controls -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 rounded-lg">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-600 rounded-lg">
           <!-- Search -->
           <div class="md:col-span-3">
             <UFormField label="Search Players">
@@ -407,7 +407,7 @@ onMounted(() => {
           <!-- Skill Level Filter -->
           <div>
             <UFormField label="Skill Level">
-              <USelect v-model="skillLevelFilter" :items="skillLevelFilterOptions" class="form-input" />
+              <USelect v-model="skillLevelFilter" :items="skillLevelFilterOptions" class="form-input w-full u-select" />
             </UFormField>
           </div>
         </div>

@@ -261,7 +261,10 @@ watch(
             <h3 class="text-lg font-semibold text-gray-900">Print Options</h3>
 
             <UFormField label="Configuration">
-              <div class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+              <div
+                id="configuration-container"
+                class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl"
+              >
                 <!-- Layout and Display Options -->
                 <div class="space-y-3">
                   <UCheckbox v-model="localPrintOptions.compactLayout" label="Compact Layout" class="text-blue-800" />
