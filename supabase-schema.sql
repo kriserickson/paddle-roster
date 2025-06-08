@@ -12,6 +12,8 @@ CREATE TABLE IF NOT EXISTS public.players (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+ALTER TABLE public.players ENABLE ROW LEVEL SECURITY;
+
 -- Create indexes for better performance
 CREATE INDEX IF NOT EXISTS players_user_id_idx ON public.players(user_id);
 CREATE INDEX IF NOT EXISTS players_name_idx ON public.players(name);

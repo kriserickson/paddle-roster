@@ -34,7 +34,12 @@ SUPABASE_ANON_KEY=your-anon-public-key
 
 1. In Supabase dashboard, go to Authentication > Providers
 2. Enable Email provider (should be enabled by default)
-3. For Google OAuth (optional but recommended):
+3. Go to Authentication > URL Configuration and add redirect URLs:
+   - For development: `http://localhost:3000/auth/callback`
+   - For development (password reset): `http://localhost:3000/auth/reset-password`
+   - For production: `https://paddle-rocker.kriserickson.com/auth/callback`
+   - For production (password reset): `https://paddle-rocker.kriserickson.com/auth/reset-password`
+4. For Google OAuth (optional but recommended):
    - Enable Google provider
    - Add your site URL: `http://localhost:3000` for development
    - For production, add your actual domain
