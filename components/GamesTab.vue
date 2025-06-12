@@ -23,6 +23,9 @@ const skillLevelFilter = ref('all');
 // Flag to prevent saving when updating from store
 const isUpdatingFromStore = ref(false);
 
+// Maintain a separate copy of the options for comparison
+const previousOptions = ref<MatchingOptions | null>(null);
+
 // Debounced save function to avoid saving on every keystroke
 let saveTimeout: NodeJS.Timeout | null = null;
 
@@ -41,20 +44,25 @@ function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
 // Watch for changes and update the game generator
 watch(
   matchingOptions,
-  async (newOptions, oldOptions) => {
+  async newOptions => {
     // Don't save if the change came from the store
     if (isUpdatingFromStore.value) {
       //console.log('🔄 Skipping save - updating from store');
       return;
     }
 
+    // Create a deep copy of the new options
+    const newOptionsCopy = JSON.parse(JSON.stringify(newOptions));
+
     // Don't save if values haven't actually changed (deep comparison)
-    if (oldOptions && optionsAreEqual(newOptions, oldOptions)) {
-      //console.log('🔄 Skipping save - no actual changes detected');
+    if (previousOptions.value && optionsAreEqual(newOptionsCopy, previousOptions.value)) {
       return;
     }
 
-    //console.log('💾 User changed preferences, scheduling save...');
+    console.log('💾 User changed preferences, scheduling save...');
+
+    // Store the current options for next comparison
+    previousOptions.value = newOptionsCopy;
 
     // Clear existing timeout
     if (saveTimeout) {
@@ -188,7 +196,7 @@ function clearAllFilters(): void {
   skillLevelFilter.value = 'all';
 }
 
-async function generateGames(): Promise<void> {
+async function generateSchedule(): Promise<void> {
   try {
     const schedule = await gameStore.generateSchedule(eventLabel.value);
     if (schedule) {
@@ -255,7 +263,7 @@ onMounted(() => {
               size="lg"
               class="btn-primary"
               data-testid="generate-games-button"
-              @click="generateGames"
+              @click="generateSchedule"
             >
               <UIcon name="i-heroicons-play" class="mr-2" />
               Generate Schedule
@@ -269,7 +277,7 @@ onMounted(() => {
     <div v-if="validationErrors.length > 0" class="alert-error p-4 rounded-xl flex items-start gap-3">
       <Icon name="mdi:alert-circle" class="text-xl text-paddle-red mt-1" />
       <div>
-        <p class="font-semibold">Cannot Generate Games</p>
+        <p class="font-semibold">Cannot Generate Schedule</p>
         <p class="text-sm">{{ validationErrors.join(', ') }}</p>
       </div>
     </div>

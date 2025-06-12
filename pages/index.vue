@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { useAuthErrorHandler } from '~/composables/useAuthErrorHandler';
+
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
 const { isDemo, mockUser } = useMockAuth();
@@ -66,8 +68,9 @@ async function logout() {
   try {
     await supabase.auth.signOut();
     await navigateTo('/auth/login');
-  } catch (error) {
-    console.error('Error signing out:', error);
+  } catch (error: unknown) {
+    const { handleAuthError } = useAuthErrorHandler();
+    await handleAuthError(error);
   }
 }
 

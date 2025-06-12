@@ -9,10 +9,7 @@ import { useRuntimeConfig } from '#app';
 export function usePlayerApi() {
   const config = useRuntimeConfig();
   const isDemo =
-    !config.public.supabase?.url ||
-    !config.public.supabase?.key ||
-    config.public.supabase.url === 'https://your-project.supabase.co' ||
-    config.public.supabase.url.includes('placeholder');
+    !config.public.supabase?.url || !config.public.supabase?.key || config.public.supabase.url.includes('placeholder');
   if (isDemo) {
     return new PlayerApiIndexedDb();
   } else {

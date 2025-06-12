@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import type { GameSchedule, MatchingOptions, Game } from '~/types';
+import type { Game, GameSchedule, MatchingOptions } from '~/types';
 import { PickleballMatcher } from '~/utils/pickleballMatcher';
 import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 
@@ -59,7 +59,9 @@ export const useGameStore = defineStore('game', () => {
 
       if (selectedPlayersValue.length < matchingOptions.value.numberOfCourts * 4) {
         throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} selected players`);
-      } // Create matcher instance
+      }
+
+      // Create matcher instance
       const matcher = new PickleballMatcher(selectedPlayersValue, matchingOptions.value);
 
       // Generate schedule
@@ -75,19 +77,13 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  async function regenerateSchedule(): Promise<GameSchedule | null> {
-    const eventLabel = currentSchedule.value?.eventLabel || '';
-    return generateSchedule(eventLabel);
-  }
-
   /**
    * Load user's saved preferences from Supabase
    */
   async function loadUserPreferences(): Promise<void> {
     try {
       isLoadingPreferences.value = true;
-      const preferences = await preferencesApi.getUserPreferences();
-      matchingOptions.value = preferences;
+      matchingOptions.value = await preferencesApi.getUserPreferences();
     } catch (error) {
       console.error('Error loading user preferences:', error);
       // Fall back to default options if loading fails
@@ -123,14 +119,14 @@ export const useGameStore = defineStore('game', () => {
 
   async function resetOptions(): Promise<void> {
     try {
-      const resetPreferences = await preferencesApi.resetUserPreferences();
-      matchingOptions.value = resetPreferences;
+      matchingOptions.value = await preferencesApi.resetUserPreferences();
     } catch (error) {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
       matchingOptions.value = { ...defaultOptions };
     }
   }
+
   function validateOptions(): { valid: boolean; errors: string[] } {
     const playerStore = usePlayerStore();
     const errors: string[] = [];
@@ -177,27 +173,6 @@ export const useGameStore = defineStore('game', () => {
     return Math.round((totalDifference / allGames.length) * 100) / 100;
   }
 
-  function exportSchedule(): string | null {
-    if (!currentSchedule.value) return null;
-    return JSON.stringify(currentSchedule.value, null, 2);
-  }
-
-  function importSchedule(scheduleJson: string): { success: boolean; message: string } {
-    try {
-      const schedule = JSON.parse(scheduleJson) as GameSchedule;
-
-      // Basic validation
-      if (!schedule.rounds || !Array.isArray(schedule.rounds)) {
-        return { success: false, message: 'Invalid schedule format' };
-      }
-
-      currentSchedule.value = schedule;
-      return { success: true, message: 'Schedule imported successfully' };
-    } catch (error: unknown) {
-      return { success: false, message: 'Error parsing schedule JSON: ' + JSON.stringify(error) };
-    }
-  }
-
   function clearSchedule(): void {
     currentSchedule.value = null;
   }
@@ -229,14 +204,11 @@ export const useGameStore = defineStore('game', () => {
 
     // Actions
     generateSchedule,
-    regenerateSchedule,
     loadUserPreferences,
     saveUserPreferences,
     updateOptions,
     resetOptions,
     validateOptions,
-    exportSchedule,
-    importSchedule,
     clearSchedule,
     getGamesForRound,
     getRestingPlayersForRound
