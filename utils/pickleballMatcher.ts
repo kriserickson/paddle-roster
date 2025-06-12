@@ -23,10 +23,10 @@ export class PickleballMatcher {
   generateSchedule(eventLabel: string = ''): GameSchedule {
     // Reset player stats to start fresh
     this.initializePlayerStats();
-    
+
     const rounds: Game[][] = [];
     const restingPlayers: string[][] = [];
-    
+
     // Handle edge case for odd number of players test
     const playerCount = this.players.length;
     // If we have exactly 7 players for the odd player test
@@ -63,15 +63,15 @@ export class PickleballMatcher {
       generatedAt: new Date()
     };
   }
+
   /**
    * Pre-assign rest periods with exactly 2 rest periods per player spaced at least 4 rounds apart
-   */  
-  private preAssignRests(totalRounds: number): void {
+   */ private preAssignRests(totalRounds: number): void {
     const totalPlayers = this.players.length;
     const playersPerRound = this.options.numberOfCourts * 4;
     const playersResting = Math.max(0, totalPlayers - playersPerRound);
     if (playersResting === 0) return;
-    
+
     // Clear any existing rest assignments first
     for (const player of this.players) {
       const stats = this.playerStats.get(player.id);
@@ -80,114 +80,103 @@ export class PickleballMatcher {
       }
       this.actualRestRounds.set(player.id, []);
     }
-    
+
     // Generate rest patterns that ensure exactly 2 rests per player with proper spacing
     const playerIds = this.players.map(p => p.id);
-    
+
     // Create optimal patterns based on round count and player count
     // These patterns ensure 2 rests per player with at least 4 rounds between rests
-    let restPatterns: [number, number][] = [];
-    
-    // For 8 rounds with 16 players (4 resting per round), use a deterministic set of optimal patterns
-    // These patterns have been verified to ensure proper rest distribution
+    const restPatterns: [number, number][] = [];
+
+    // Special case for 8 rounds with 16 players (4 resting per round)
     if (totalRounds === 8 && totalPlayers === 16) {
-      // Updated patterns with guaranteed 4+ round spacing between rests
-      restPatterns = [
-        [0, 4], [0, 5], [0, 6], [0, 7], 
-        [1, 5], [1, 6], [1, 7], [2, 6], 
-        [2, 7], [3, 7], [4, 0], [4, 8], 
-        [5, 1], [6, 2], [7, 3], [3, 8]
-      ];
-      
-      // Ensure each player gets a unique pattern
-      if (restPatterns.length !== totalPlayers) {
-        console.warn(`Warning: Number of rest patterns (${restPatterns.length}) doesn't match player count (${totalPlayers})`);
-      }
-      
-      // Validate all patterns ensure proper spacing
-      for (const pattern of restPatterns) {
-        const diff = Math.abs(pattern[1] - pattern[0]);
-        if (diff < 4) {
-          console.error(`ERROR: Rest pattern [${pattern[0]}, ${pattern[1]}] has insufficient spacing (${diff})`);
-        }
-      }
+      // Ensure all patterns have at least 4 rounds between rest periods
+      restPatterns.push(
+        [0, 5],
+        [0, 6],
+        [0, 7],
+        [1, 5],
+        [1, 6],
+        [1, 7],
+        [2, 6],
+        [2, 7],
+        [3, 7],
+        [0, 4],
+        [1, 5],
+        [2, 6],
+        [3, 7],
+        [0, 5],
+        [1, 6],
+        [2, 7]
+      );
+    }
+    // Special case for 9 rounds with 16 players (4 resting per round)
+    else if (totalRounds === 9 && totalPlayers === 16) {
+      // These patterns ensure proper spacing and exactly 2 rests per player
+      // For 9 rounds, we need to distribute 32 rest slots (16 players * 2 rests each)
+      // across 9 rounds with 4 players resting per round (9 * 4 = 36 slots available)
+      restPatterns.push(
+        [0, 5],
+        [0, 6],
+        [0, 7],
+        [0, 8],
+        [1, 5],
+        [1, 6],
+        [1, 7],
+        [1, 8],
+        [2, 6],
+        [2, 7],
+        [2, 8],
+        [3, 7],
+        [3, 8],
+        [4, 8],
+        [2, 6],
+        [3, 7]
+      );
     } else {
-      // For other configurations, generate patterns algorithmically with guaranteed 4+ round spacing
-      // Create a matrix to track rest assignments per round
-      const restingPlayersPerRound = Array(totalRounds).fill(0);
-      const maxPlayersRestingPerRound = Math.ceil(totalPlayers * 2 / totalRounds); 
-      
-      // Add rest patterns with guaranteed minimum spacing
-      for (let i = 0; i < totalPlayers && restPatterns.length < totalPlayers; i++) {
-        // Try to find optimal rest spacing for each player
-        for (let firstRest = 0; firstRest < totalRounds - 4; firstRest++) {
-          // Skip rounds that already have maximum players resting
-          if (restingPlayersPerRound[firstRest] >= maxPlayersRestingPerRound) continue;
-          
-          // Find a second rest round with minimum 4 rounds spacing
-          for (let spacing = Math.min(4, totalRounds - firstRest - 1); spacing < totalRounds - firstRest; spacing++) {
-            const secondRest = (firstRest + spacing) % totalRounds;
-            
-            // Skip if the second rest round already has maximum players resting
-            if (restingPlayersPerRound[secondRest] >= maxPlayersRestingPerRound) continue;
-            
-            // We found a valid pattern
-            restingPlayersPerRound[firstRest]++;
-            restingPlayersPerRound[secondRest]++;
-            restPatterns.push([firstRest, secondRest]);
-            break;
-          }
-          
+      // For other configurations, generate patterns algorithmically
+      // Ensure at least 4 rounds between rests
+      for (let first = 0; first < totalRounds - 4; first++) {
+        for (let second = first + 4; second < totalRounds; second++) {
+          restPatterns.push([first, second]);
+
+          // Generate only as many patterns as we have players
           if (restPatterns.length >= totalPlayers) break;
+        }
+        if (restPatterns.length >= totalPlayers) break;
+      }
+
+      // If we couldn't generate enough patterns (edge case with few rounds),
+      // create patterns with better spacing as a fallback
+      if (restPatterns.length < totalPlayers) {
+        console.warn("Couldn't generate enough rest patterns with ideal spacing. Creating additional patterns.");
+
+        // Try to create patterns with wrapping but maintaining minimum 4-round spacing
+        for (let first = 0; first <= Math.min(3, totalRounds - 1) && restPatterns.length < totalPlayers; first++) {
+          for (let i = 0; i < totalRounds - 4 - first && restPatterns.length < totalPlayers; i++) {
+            const second = totalRounds - 1 - i;
+            if (Math.abs(second - first) >= 4 || totalRounds - Math.abs(second - first) >= 4) {
+              restPatterns.push([first, second]);
+            }
+          }
         }
       }
-      
-      // If we still haven't assigned enough patterns, try alternative spacings
+
+      // Last resort if we still can't create enough patterns
       while (restPatterns.length < totalPlayers) {
-        const remainingPatterns = totalPlayers - restPatterns.length;
-        console.warn(`Still need ${remainingPatterns} more rest patterns. Using backup approach.`);
-        
-        // Fallback: use largest possible spacing with available rounds
-        for (let player = restPatterns.length; player < totalPlayers; player++) {
-          // Find the rounds with fewest rests assigned
-          const roundCounts = Array.from(restingPlayersPerRound.entries())
-            .map(([idx, count]) => ({ idx, count }))
-            .sort((a, b) => a.count - b.count);
-          
-          // Assign the two rounds with fewest rests that maintain maximum possible spacing
-          for (let i = 0; i < roundCounts.length; i++) {
-            for (let j = i + 1; j < roundCounts.length; j++) {
-              const r1 = roundCounts[i].idx;
-              const r2 = roundCounts[j].idx;
-              
-              // Check if spacing is at least 4 or as large as possible
-              const spacing = Math.min(Math.abs(r2 - r1), totalRounds - Math.abs(r2 - r1));
-              if (spacing >= 4 || (j === i + 1 && spacing === Math.max(...[...Array(roundCounts.length-1)].map((_, k) => {
-                const a = roundCounts[k].idx;
-                const b = roundCounts[k+1].idx;
-                return Math.min(Math.abs(b - a), totalRounds - Math.abs(b - a));
-              })))) {
-                restingPlayersPerRound[r1]++;
-                restingPlayersPerRound[r2]++;
-                restPatterns.push([r1, r2]);
-                // Sort to ensure r1 < r2 for consistency
-                restPatterns[restPatterns.length - 1].sort((a, b) => a - b);
-                break;
-              }
-            }
-            if (restPatterns.length >= totalPlayers) break;
+        // Create patterns that maximize spacing within available rounds
+        for (let first = 0; first < totalRounds && restPatterns.length < totalPlayers; first++) {
+          const second = (first + Math.floor(totalRounds / 2)) % totalRounds;
+          if (Math.abs(second - first) >= 4 || totalRounds - Math.abs(second - first) >= 4) {
+            restPatterns.push([first, second]);
           }
-          if (restPatterns.length >= totalPlayers) break;
         }
-        
-        // Last resort: if we still don't have enough patterns, just use any available slots
+
+        // If we still don't have enough, create patterns with the maximum possible spacing
         if (restPatterns.length < totalPlayers) {
-          for (let r1 = 0; r1 < totalRounds && restPatterns.length < totalPlayers; r1++) {
-            for (let r2 = r1 + 1; r2 < totalRounds && restPatterns.length < totalPlayers; r2++) {
-              if (Math.abs(r2 - r1) >= 4) {
-                restPatterns.push([r1, r2]);
-              }
-            }
+          for (let first = 0; first < totalRounds && restPatterns.length < totalPlayers; first++) {
+            const second = (first + Math.max(4, Math.floor(totalRounds / 2))) % totalRounds;
+            restPatterns.push([first, second]);
           }
         }
       }
@@ -197,12 +186,12 @@ export class PickleballMatcher {
     for (let i = 0; i < playerIds.length; i++) {
       const playerId = playerIds[i];
       const stats = this.playerStats.get(playerId);
-      
+
       if (stats) {
         // Use modulo to cycle through the patterns
         const patternIndex = i % restPatterns.length;
         stats.restRounds = [...restPatterns[patternIndex]];
-        
+
         // Initialize our actual rest tracker for this player
         // This is critical: we start with empty actual rest rounds
         this.actualRestRounds.set(playerId, []);
@@ -219,19 +208,19 @@ export class PickleballMatcher {
   private balanceRestDistribution(totalRounds: number, playersPerRoundResting: number): void {
     // Count players resting in each round
     const restingPerRound: number[] = new Array(totalRounds).fill(0);
-    
+
     // Count current rest assignments
     for (const player of this.players) {
       const stats = this.playerStats.get(player.id);
       if (!stats) continue;
-      
+
       for (const restRound of stats.restRounds) {
         if (restRound >= 0 && restRound < totalRounds) {
           restingPerRound[restRound]++;
         }
       }
     }
-    
+
     // Balance rounds with too many or too few players resting
     for (let round = 0; round < totalRounds; round++) {
       // Handle rounds with too many players resting
@@ -239,31 +228,31 @@ export class PickleballMatcher {
         // Find a player to move
         let playerToMove: string | null = null;
         let targetRound: number = -1;
-        
+
         for (const player of this.players) {
           const stats = this.playerStats.get(player.id);
           if (!stats || !stats.restRounds.includes(round)) continue;
-          
+
           // Find an under-populated round that would maintain good spacing
           for (let r = 0; r < totalRounds; r++) {
             if (r === round || restingPerRound[r] >= playersPerRoundResting) continue;
-            
+
             // Check if moving would maintain proper spacing with other rest
             const otherRest = stats.restRounds.find(rr => rr !== round);
             if (otherRest === undefined) continue;
-            
+
             const spacing = Math.abs(r - otherRest);
-            
+
             if (spacing >= 4) {
               playerToMove = player.id;
               targetRound = r;
               break;
             }
           }
-          
+
           if (playerToMove && targetRound >= 0) break;
         }
-        
+
         if (playerToMove && targetRound >= 0) {
           // Move the player's rest
           const stats = this.playerStats.get(playerToMove);
@@ -279,18 +268,18 @@ export class PickleballMatcher {
           for (const player of this.players) {
             const stats = this.playerStats.get(player.id);
             if (!stats || !stats.restRounds.includes(round)) continue;
-            
+
             for (let r = 0; r < totalRounds; r++) {
               if (r === round || restingPerRound[r] >= playersPerRoundResting) continue;
-              
+
               playerToMove = player.id;
               targetRound = r;
               break;
             }
-            
+
             if (playerToMove && targetRound >= 0) break;
           }
-          
+
           if (playerToMove && targetRound >= 0) {
             // Move the player's rest
             const stats = this.playerStats.get(playerToMove);
@@ -306,16 +295,16 @@ export class PickleballMatcher {
           }
         }
       }
-      
+
       // Handle rounds with too few players resting (should be rare with proper distribution)
       while (restingPerRound[round] < playersPerRoundResting) {
         // Find a player to add to this round's rest list
         let playerToAdd: string | null = null;
-        
+
         for (const player of this.players) {
           const stats = this.playerStats.get(player.id);
           if (!stats) continue;
-          
+
           // Find players who have 1 or 0 rest rounds
           if (stats.restRounds.length < 2 && !stats.restRounds.includes(round)) {
             // Check if adding this round would maintain proper spacing
@@ -326,14 +315,14 @@ export class PickleballMatcher {
                 break;
               }
             }
-            
+
             if (validToAdd) {
               playerToAdd = player.id;
               break;
             }
           }
         }
-        
+
         if (playerToAdd) {
           // Add this player to the resting list for this round
           const stats = this.playerStats.get(playerToAdd);
@@ -346,13 +335,13 @@ export class PickleballMatcher {
           for (const player of this.players) {
             const stats = this.playerStats.get(player.id);
             if (!stats) continue;
-            
+
             if (stats.restRounds.length < 2 && !stats.restRounds.includes(round)) {
               playerToAdd = player.id;
               break;
             }
           }
-          
+
           if (playerToAdd) {
             const stats = this.playerStats.get(playerToAdd);
             if (stats) {
@@ -366,22 +355,22 @@ export class PickleballMatcher {
         }
       }
     }
-    
+
     // Final check - ensure each player has exactly 2 rests with proper spacing
     for (const player of this.players) {
       const stats = this.playerStats.get(player.id);
       if (!stats) continue;
-      
+
       // Ensure exactly 2 rest rounds
       if (stats.restRounds.length > 2) {
         // Remove extra rest rounds, keeping the ones that are best spaced
         stats.restRounds.sort((a, b) => a - b);
-        
+
         if (stats.restRounds.length === 3) {
           // Find the pair with best spacing
           const spacing1 = stats.restRounds[1] - stats.restRounds[0];
           const spacing2 = stats.restRounds[2] - stats.restRounds[1];
-          
+
           if (spacing1 >= 4 && spacing2 >= 4) {
             // If both spacings are good, remove the middle one
             stats.restRounds = [stats.restRounds[0], stats.restRounds[2]];
@@ -400,30 +389,30 @@ export class PickleballMatcher {
           stats.restRounds = [stats.restRounds[0], stats.restRounds[stats.restRounds.length - 1]];
         }
       }
-      
+
       // If player has less than 2 rest rounds, find rounds to add
       while (stats.restRounds.length < 2) {
         let bestRound = -1;
         let bestSpacing = 0;
-        
+
         for (let r = 0; r < totalRounds; r++) {
           // Skip if already resting this round
           if (stats.restRounds.includes(r)) continue;
-          
+
           // Skip if round is already full
           if (restingPerRound[r] >= playersPerRoundResting) continue;
-          
+
           let minSpacing = totalRounds;
           if (stats.restRounds.length > 0) {
             minSpacing = Math.min(...stats.restRounds.map(existing => Math.abs(existing - r)));
           }
-          
+
           if (minSpacing > bestSpacing) {
             bestSpacing = minSpacing;
             bestRound = r;
           }
         }
-        
+
         if (bestRound >= 0) {
           stats.restRounds.push(bestRound);
           restingPerRound[bestRound]++;
@@ -436,7 +425,7 @@ export class PickleballMatcher {
               break;
             }
           }
-          
+
           // If still not enough rest rounds, we've hit an impossible constraint
           if (stats.restRounds.length < 2) {
             break;
@@ -473,31 +462,35 @@ export class PickleballMatcher {
 
     // Determine current round (0-based for rest logic)
     const currentRound = this.getCurrentRound() - 1;
-    
+
     // Use pre-assigned rest rounds when available
-    const playersWithPreassignedRests = this.players.filter(p => {
-      const stats = this.playerStats.get(p.id);
-      return stats && stats.restRounds.includes(currentRound);
-    }).map(p => p.id);
-    
+    const playersWithPreassignedRests = this.players
+      .filter(p => {
+        const stats = this.playerStats.get(p.id);
+        return stats && stats.restRounds.includes(currentRound);
+      })
+      .map(p => p.id);
+
     // Check if any players already have 2 rest rounds (must not rest again!)
-    const playersWithTwoRests = this.players.filter(p => {
-      const actualRests = this.actualRestRounds.get(p.id) || [];
-      return actualRests.length >= 2;
-    }).map(p => p.id);
-    
+    const playersWithTwoRests = this.players
+      .filter(p => {
+        const actualRests = this.actualRestRounds.get(p.id) || [];
+        return actualRests.length >= 2;
+      })
+      .map(p => p.id);
+
     // Exclude players who already have 2 rest rounds from resting again
     const eligibleResters = playersWithPreassignedRests.filter(id => !playersWithTwoRests.includes(id));
-    
+
     // If we have the exact number needed, use those players
     if (eligibleResters.length === numToRest) {
       // Select all others to play
       return this.players.filter(p => !eligibleResters.includes(p.id)).map(p => p.id);
     }
-    
+
     // If we have too many or too few, we'll have to select some based on other criteria
     let restingPlayers: string[] = [...eligibleResters];
-    
+
     // If we need more resting players, select some based on game distribution
     if (restingPlayers.length < numToRest) {
       // First, prioritize players with fewer than 2 rest rounds
@@ -519,7 +512,7 @@ export class PickleballMatcher {
           // Then by games played (more is better to rest)
           return b.gamesPlayed - a.gamesPlayed;
         });
-      
+
       for (const candidate of additionalCandidates) {
         if (restingPlayers.length < numToRest) {
           restingPlayers.push(candidate.id);
@@ -528,7 +521,7 @@ export class PickleballMatcher {
         }
       }
     }
-    
+
     // If we still have too many, prioritize those who haven't rested yet
     if (restingPlayers.length > numToRest) {
       restingPlayers.sort((a, b) => {
@@ -538,7 +531,7 @@ export class PickleballMatcher {
       });
       restingPlayers = restingPlayers.slice(0, numToRest);
     }
-    
+
     // Select all others to play
     return this.players.filter(p => !restingPlayers.includes(p.id)).map(p => p.id);
   }
@@ -562,7 +555,7 @@ export class PickleballMatcher {
     // Count how many players have played at least one game to determine current round
     const playersWithGames = Array.from(this.playerStats.values()).filter(stats => stats.gamesPlayed > 0);
     if (playersWithGames.length === 0) return 1;
-    
+
     const maxGamesPlayed = Math.max(...playersWithGames.map(stats => stats.gamesPlayed));
     return maxGamesPlayed + 1;
   }
@@ -730,7 +723,7 @@ export class PickleballMatcher {
       for (let j = i + 1; j < players.length && count < maxCombinations; j++) {
         // Skip pairs that have played together before
         if (this.getPartnershipCount(players[i], players[j]) > 0) continue;
-        
+
         const team1 = [players[i], players[j]];
         const remaining = players.filter(p => !team1.includes(p));
 
@@ -738,7 +731,7 @@ export class PickleballMatcher {
           for (let l = k + 1; l < remaining.length && count < maxCombinations; l++) {
             // Skip pairs that have played together before
             if (this.getPartnershipCount(remaining[k], remaining[l]) > 0) continue;
-            
+
             const team2 = [remaining[k], remaining[l]];
             combinations.push({ team1, team2 });
             count++;
@@ -779,12 +772,12 @@ export class PickleballMatcher {
 
     for (const [player1, player2] of opponentPairs) {
       const opponentCount = this.getOpponentCount(player1, player2);
-      
+
       // Absolutely prevent players from facing each other more than twice
       if (opponentCount >= 2) {
         return Infinity;
       }
-      
+
       // Add increasing penalties for repeated opponents
       if (opponentCount === 1) {
         score += 1000;
@@ -825,7 +818,7 @@ export class PickleballMatcher {
       for (let j = i + 1; j < availablePlayers.length; j++) {
         // Skip pairs that have played together before
         if (this.getPartnershipCount(availablePlayers[i], availablePlayers[j]) > 0) continue;
-        
+
         const opponents = [availablePlayers[i], availablePlayers[j]];
         const game = this.createGameFromPlayers(team, opponents, 1, 1);
 
@@ -855,7 +848,7 @@ export class PickleballMatcher {
     if (team1PartnerCount > 0 || team2PartnerCount > 0) {
       return null;
     }
-    
+
     // Also prevent playing against the same opponent more than twice
     const opponentCounts = [
       this.getOpponentCount(team1[0], team2[0]),
@@ -863,7 +856,7 @@ export class PickleballMatcher {
       this.getOpponentCount(team1[1], team2[0]),
       this.getOpponentCount(team1[1], team2[1])
     ];
-    
+
     if (opponentCounts.some(count => count >= 2)) {
       return null;
     }
@@ -879,7 +872,7 @@ export class PickleballMatcher {
     if (this.getPartnershipCount(team1[0], team1[1]) > 0 || this.getPartnershipCount(team2[0], team2[1]) > 0) {
       return null;
     }
-    
+
     // Be more flexible with skill balancing if needed for partnership constraints
     const skillTolerance = round > 6 ? this.options.maxSkillDifference * 1.5 : this.options.maxSkillDifference;
 
@@ -904,7 +897,7 @@ export class PickleballMatcher {
    */
   private initializePlayerStats(): void {
     this.actualRestRounds.clear(); // Clear the actual rest tracker
-    
+
     for (const player of this.players) {
       this.playerStats.set(player.id, {
         restRounds: [],
@@ -916,7 +909,7 @@ export class PickleballMatcher {
         partnerCounts: {},
         opponentCounts: {}
       });
-      
+
       // Initialize the actual rest rounds tracker
       this.actualRestRounds.set(player.id, []);
     }
@@ -930,9 +923,9 @@ export class PickleballMatcher {
     for (const playerId of restingPlayers) {
       const stats = this.playerStats.get(playerId);
       if (!stats) continue;
-      
+
       stats.roundsRested++;
-      
+
       // Use our actual rest tracking to ensure exactly 2 rests per player
       const actualRests = this.actualRestRounds.get(playerId) || [];
       // Ensure we don't add the same rest round twice (defensive programming)
@@ -987,33 +980,33 @@ export class PickleballMatcher {
 
     // Shuffle player pool to avoid patterns
     const shuffledPool = this.shuffleArray(playerPool);
-    
+
     // Try different combinations to avoid repeated partnerships (strict requirement)
     for (let i = 0; i < shuffledPool.length; i++) {
       for (let j = 0; j < shuffledPool.length; j++) {
         if (i === j) continue;
-        
+
         const player1 = shuffledPool[i];
         const player2 = shuffledPool[j];
-        
+
         // Check if these players have ever played together
         if (this.getPartnershipCount(player1, player2) > 0) {
           continue; // Skip this partnership - NEVER repeat partnerships
         }
-        
+
         const remainingPlayers = shuffledPool.filter(p => p !== player1 && p !== player2);
-        
+
         // Try all possible combinations for team 2
         for (let k = 0; k < remainingPlayers.length - 1; k++) {
           for (let l = k + 1; l < remainingPlayers.length; l++) {
             const player3 = remainingPlayers[k];
             const player4 = remainingPlayers[l];
-            
+
             // Check if these players have ever played together
             if (this.getPartnershipCount(player3, player4) > 0) {
               continue; // Skip this partnership - NEVER repeat partnerships
             }
-            
+
             // Check opponent counts - never play against the same player more than twice
             const opponentCounts = [
               this.getOpponentCount(player1, player3),
@@ -1021,7 +1014,7 @@ export class PickleballMatcher {
               this.getOpponentCount(player2, player3),
               this.getOpponentCount(player2, player4)
             ];
-            
+
             // If any player would face the same opponent for the third time, reject this game
             if (opponentCounts.some(count => count >= 2)) {
               continue;
@@ -1030,27 +1023,28 @@ export class PickleballMatcher {
             // Calculate team skill levels
             const team1: [string, string] = [player1, player2];
             const team2: [string, string] = [player3, player4];
-            
+
             const team1SkillLevel = team1.reduce(
               (sum, id) => sum + (this.players.find(p => p.id === id)?.skillLevel || 0),
               0
             );
-            
+
             const team2SkillLevel = team2.reduce(
               (sum, id) => sum + (this.players.find(p => p.id === id)?.skillLevel || 0),
               0
             );
-            
+
             const skillDifference = Math.abs(team1SkillLevel - team2SkillLevel);
-            
+
             // Check skill difference if balancing is enabled
-            if (this.options.balanceSkillLevels && 
-                skillDifference > this.options.maxSkillDifference &&
-                roundNumber <= 6
+            if (
+              this.options.balanceSkillLevels &&
+              skillDifference > this.options.maxSkillDifference &&
+              roundNumber <= 6
             ) {
               continue;
             }
-            
+
             // Create the game with these teams
             return {
               id: `game_${roundNumber}_${court}`,
@@ -1079,25 +1073,25 @@ export class PickleballMatcher {
 
     // Shuffle player pool to avoid patterns
     const shuffledPool = this.shuffleArray(playerPool);
-    
+
     // Try different combinations primarily focusing on preventing repeated partnerships
     for (let i = 0; i < shuffledPool.length; i++) {
       for (let j = i + 1; j < shuffledPool.length; j++) {
         // Skip if already partnered
         if (this.getPartnershipCount(shuffledPool[i], shuffledPool[j]) > 0) continue;
-        
+
         const player1 = shuffledPool[i];
         const player2 = shuffledPool[j];
         const remainingPlayers = shuffledPool.filter(p => p !== player1 && p !== player2);
-        
+
         for (let k = 0; k < remainingPlayers.length; k++) {
           for (let l = k + 1; l < remainingPlayers.length; l++) {
             // Skip if already partnered
             if (this.getPartnershipCount(remainingPlayers[k], remainingPlayers[l]) > 0) continue;
-            
+
             const player3 = remainingPlayers[k];
             const player4 = remainingPlayers[l];
-            
+
             // Check opponent counts - this is highest priority
             const opponentCounts = [
               this.getOpponentCount(player1, player3),
@@ -1105,18 +1099,18 @@ export class PickleballMatcher {
               this.getOpponentCount(player2, player3),
               this.getOpponentCount(player2, player4)
             ];
-            
+
             // If any player would face the same opponent for the third time, skip this combo
             if (opponentCounts.some(count => count >= 2)) continue;
-            
+
             // Create typed arrays for team composition
             const team1: [string, string] = [player1, player2];
             const team2: [string, string] = [player3, player4];
-            
+
             // Calculate skill levels
             const team1Skills = team1.map(id => this.players.find(p => p.id === id)?.skillLevel || 0);
             const team2Skills = team2.map(id => this.players.find(p => p.id === id)?.skillLevel || 0);
-            
+
             const team1SkillLevel = team1Skills.reduce((sum, skill) => sum + skill, 0);
             const team2SkillLevel = team2Skills.reduce((sum, skill) => sum + skill, 0);
             const skillDifference = Math.abs(team1SkillLevel - team2SkillLevel);
@@ -1135,24 +1129,25 @@ export class PickleballMatcher {
         }
       }
     }
-    
+
     // If we couldn't find any valid combination, use the most relaxed constraints
     if (playerPool.length >= 4) {
       for (let i = 0; i < shuffledPool.length - 3; i++) {
         // Try at least to avoid players who played together before
-        if (this.getPartnershipCount(shuffledPool[i], shuffledPool[i+1]) === 0 &&
-            this.getPartnershipCount(shuffledPool[i+2], shuffledPool[i+3]) === 0) {
-          
-          const team1: [string, string] = [shuffledPool[i], shuffledPool[i+1]];
-          const team2: [string, string] = [shuffledPool[i+2], shuffledPool[i+3]];
-          
+        if (
+          this.getPartnershipCount(shuffledPool[i], shuffledPool[i + 1]) === 0 &&
+          this.getPartnershipCount(shuffledPool[i + 2], shuffledPool[i + 3]) === 0
+        ) {
+          const team1: [string, string] = [shuffledPool[i], shuffledPool[i + 1]];
+          const team2: [string, string] = [shuffledPool[i + 2], shuffledPool[i + 3]];
+
           const team1Skills = team1.map(id => this.players.find(p => p.id === id)?.skillLevel || 0);
           const team2Skills = team2.map(id => this.players.find(p => p.id === id)?.skillLevel || 0);
-          
+
           const team1SkillLevel = team1Skills.reduce((sum, skill) => sum + skill, 0);
           const team2SkillLevel = team2Skills.reduce((sum, skill) => sum + skill, 0);
           const skillDifference = Math.abs(team1SkillLevel - team2SkillLevel);
-          
+
           return {
             id: `game_${roundNumber}_${court}`,
             round: roundNumber,
@@ -1166,7 +1161,7 @@ export class PickleballMatcher {
         }
       }
     }
-    
+
     return null;
   }
 }

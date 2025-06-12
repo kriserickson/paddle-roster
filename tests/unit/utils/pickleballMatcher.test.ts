@@ -693,5 +693,43 @@ describe('PickleballMatcher', () => {
         });
       });
     });
+
+    it('should have exactly 4 resting players per round with 16 players, 3 courts, and 9 rounds', () => {
+      // Create test configuration with 16 players, 3 courts, and 9 rounds
+      const nineRoundsOptions = {
+        ...defaultOptions,
+        numberOfRounds: 9
+      };
+
+      const matcher = new PickleballMatcher(players, nineRoundsOptions);
+      const schedule = matcher.generateSchedule();
+
+      // Verify we have 9 rounds
+      expect(schedule.rounds).toHaveLength(9);
+
+      // Check each round's resting player count
+      schedule.restingPlayers.forEach((restingPlayersInRound, roundIndex) => {
+        expect(
+          restingPlayersInRound.length,
+          `Round ${roundIndex + 1} should have exactly 4 resting players, but has ${restingPlayersInRound.length}`
+        ).toBe(4);
+      });
+
+      // Verify the actual number of players playing in each round
+      schedule.rounds.forEach((round, roundIndex) => {
+        let playingPlayerCount = 0;
+
+        round.forEach(_game => {
+          // Each game has 4 players (2 per team)
+          playingPlayerCount += 4;
+        });
+
+        const expectedPlaying = players.length - 4; // 16 - 4 = 12 players should be playing
+        expect(
+          playingPlayerCount,
+          `Round ${roundIndex + 1} has ${playingPlayerCount} playing players, expected ${expectedPlaying}`
+        ).toBe(expectedPlaying);
+      });
+    });
   });
 });
