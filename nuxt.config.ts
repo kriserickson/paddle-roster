@@ -5,8 +5,8 @@ export default defineNuxtConfig({
 
   devServer: {
     https: {
-      key: './localhost+2-key.pem',
-      cert: './localhost+2.pem'
+      key: './localhost-key.pem',
+      cert: './localhost.pem'
     }
   },
 
