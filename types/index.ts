@@ -72,6 +72,8 @@ export interface GameSchedule {
   options: MatchingOptions;
   /** Timestamp when schedule was generated */
   generatedAt: Date;
+  // Used to build schedule
+  score?: number;
 }
 
 /**

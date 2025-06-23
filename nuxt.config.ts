@@ -3,12 +3,12 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
-  devServer: {
-    https: {
-      key: './localhost-key.pem',
-      cert: './localhost.pem'
-    }
-  },
+  // devServer: {
+  //   https: {
+  //     key: './localhost-key.pem',
+  //     cert: './localhost.pem'
+  //   }
+  // },
 
   modules: [
     '@nuxt/eslint',
