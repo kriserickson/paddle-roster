@@ -52,7 +52,19 @@ export default defineNuxtConfig({
     head: {
       htmlAttrs: {
         lang: 'en'
-      }
+      },
+      link: [
+        {
+          rel: 'icon',
+          type: 'image/x-icon',
+          href: '/32x32.png'
+        },
+        {
+          rel: 'apple-touch-icon',
+          sizes: '180x180',
+          href: '/apple-touch-icon.png'
+        }
+      ]
     }
   },
 
