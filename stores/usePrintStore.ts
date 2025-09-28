@@ -238,12 +238,17 @@ export const usePrintStore = defineStore('print', () => {
     // Generate schedule grid
     html += '<table class="schedule-grid">';
 
+    // Check if there are any resting players in the entire schedule
+    const hasRestingPlayers = schedule.restingPlayers.some(round => round.length > 0);
+
     // Header row
     html += '<thead><tr><th>Round</th>';
     for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
       html += `<th>Court ${court}</th>`;
     }
-    html += '<th>Resting</th>';
+    if (hasRestingPlayers) {
+      html += '<th>Resting</th>';
+    }
     html += '</tr></thead><tbody>';
 
     // Data rows
@@ -265,14 +270,16 @@ export const usePrintStore = defineStore('print', () => {
       }
 
       // Resting players
-      html += '<td class="game-cell">';
-      if (restingPlayers.length > 0) {
-        const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
-        html += `<div class="rest-players">${restingNames}</div>`;
-      } else {
-        html += '-';
+      if (hasRestingPlayers) {
+        html += '<td class="game-cell">';
+        if (restingPlayers.length > 0) {
+          const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
+          html += `<div class="rest-players">${restingNames}</div>`;
+        } else {
+          html += '-';
+        }
+        html += '</td>';
       }
-      html += '</td>';
 
       html += '</tr>';
     }
