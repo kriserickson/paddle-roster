@@ -53,13 +53,6 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
       throw new Error('Failed to access iframe document');
     }
 
-    console.log(
-      'Simple PDF Generator - Iframe body dimensions:',
-      iframeDoc.body.scrollWidth,
-      'x',
-      iframeDoc.body.scrollHeight
-    );
-
     // Convert iframe content to canvas
     const canvas = await html2canvas(iframeDoc.body, {
       scale: 2,
@@ -74,16 +67,12 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
     // Clean up iframe
     document.body.removeChild(iframe);
 
-    console.log('Simple PDF Generator - Canvas dimensions:', canvas.width, 'x', canvas.height);
-
     // Create PDF
     const imgData = canvas.toDataURL('image/png', 1.0);
 
     if (!imgData || imgData === 'data:,' || imgData.length < 100) {
       throw new Error('Failed to generate image data from canvas');
     }
-
-    console.log('Simple PDF Generator - Image data length:', imgData.length);
 
     const pdf = new jsPDF({
       orientation: orientation,
@@ -117,7 +106,6 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
 
     // Save the PDF
     pdf.save(filename);
-    console.log('Simple PDF Generator - PDF saved successfully');
   } catch (error) {
     console.error('Error generating PDF from HTML:', error);
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);

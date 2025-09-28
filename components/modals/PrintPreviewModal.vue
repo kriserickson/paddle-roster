@@ -32,18 +32,15 @@ const generatedPreviewHTML = ref<string>('');
 // Computed
 const isOpen = computed({
   get: () => {
-    console.log('PrintPreviewModal isOpen getter:', props.open);
     return props.open;
   },
   set: (value: boolean) => {
-    console.log('PrintPreviewModal isOpen setter:', value);
     emit('update:open', value);
   }
 });
 
 const localPrintOptions = computed({
   get: () => {
-    console.log('PrintPreviewModal printOptions getter:', props.printOptions);
     return props.printOptions;
   },
   set: (value: PrintOptions) => emit('update:print-options', value)
@@ -62,9 +59,6 @@ async function generatePreview(): Promise<void> {
       localPrintOptions.value,
       playerStore
     );
-
-    console.log('Generated HTML length:', generatedPreviewHTML.value.length);
-    console.log('Generated HTML preview:', generatedPreviewHTML.value.substring(0, 500));
 
     previewGenerated.value = true;
 
@@ -139,8 +133,6 @@ async function downloadPdf(): Promise<void> {
     if (rect.width === 0 || rect.height === 0) {
       throw new Error('Print preview element has no dimensions');
     }
-    console.log('PDF Generation - Element dimensions:', rect.width, 'x', rect.height);
-    console.log('PDF Generation - Element content length:', previewElement.innerHTML.length);
 
     // Generate filename based on event details
     const eventTitle = localPrintOptions.value.eventTitle || 'pickleball-schedule';
@@ -149,7 +141,6 @@ async function downloadPdf(): Promise<void> {
 
     // Try the new simple PDF generator first
     try {
-      console.log('Trying simple PDF generator...');
       await generatePDFFromHTML(generatedPreviewHTML.value, {
         orientation: localPrintOptions.value.orientation,
         filename: filename
@@ -195,9 +186,7 @@ async function downloadPdf(): Promise<void> {
 
 // Auto-generate preview when modal opens
 watch(isOpen, async newValue => {
-  console.log('Modal open state changed:', newValue);
   if (newValue && props.schedule && !previewGenerated.value) {
-    console.log('Auto-generating preview...');
     await generatePreview();
   }
 });
@@ -206,7 +195,6 @@ watch(isOpen, async newValue => {
 watch(
   localPrintOptions,
   async () => {
-    console.log('Print options changed, regenerating preview...');
     if (isOpen.value && props.schedule && previewGenerated.value) {
       await generatePreview();
     }
@@ -309,6 +297,7 @@ watch(
           </div>
           <!-- Preview Container with Paper-like appearance -->
           <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
+            <!-- eslint-disable vue/no-v-html -->
             <div
               v-if="previewGenerated && schedule && generatedPreviewHTML"
               id="print-preview-element"
@@ -316,6 +305,7 @@ watch(
               class="bg-white shadow-lg print-preview-container min-w-[8.5in] min-h-[11in] w-full max-w-[11in]"
               v-html="generatedPreviewHTML"
             ></div>
+            <!-- eslint-enable vue/no-v-html -->
 
             <div v-else class="flex items-center justify-center h-full min-h-[400px]">
               <div class="text-center text-gray-500">

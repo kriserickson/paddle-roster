@@ -57,12 +57,14 @@ export const useGameStore = defineStore('game', () => {
 
       const selectedPlayersValue = playerStore.selectedPlayers;
 
-      if (selectedPlayersValue.length < matchingOptions.value.numberOfCourts * 4) {
-        throw new Error(`Need at least ${matchingOptions.value.numberOfCourts * 4} selected players`);
-      }
+      const maxCourts = Math.floor(selectedPlayersValue.length / 4);
+      const actualCourts = Math.min(matchingOptions.value.numberOfCourts, maxCourts);
+
+      // Adjust options for generation
+      const generationOptions = { ...matchingOptions.value, numberOfCourts: actualCourts };
 
       // Create matcher instance
-      const matcher = new PickleballMatcher(selectedPlayersValue, matchingOptions.value);
+      const matcher = new PickleballMatcher(selectedPlayersValue, generationOptions);
 
       // Generate schedule
       const schedule = matcher.generateSchedule(eventLabel);
@@ -127,15 +129,23 @@ export const useGameStore = defineStore('game', () => {
     }
   }
 
-  function validateOptions(): { valid: boolean; errors: string[] } {
+  function validateOptions(): { valid: boolean; errors: string[]; warnings: string[] } {
     const playerStore = usePlayerStore();
     const errors: string[] = [];
+    const warnings: string[] = [];
     const selectedPlayersValue = playerStore.selectedPlayers;
 
-    // Check minimum players
-    const minPlayers = matchingOptions.value.numberOfCourts * 4;
-    if (selectedPlayersValue.length < minPlayers) {
-      errors.push(`Need at least ${minPlayers} selected players for ${matchingOptions.value.numberOfCourts} courts`);
+    // Check minimum players for at least one court
+    if (selectedPlayersValue.length < 4) {
+      errors.push('Need at least 4 selected players');
+    } else {
+      const maxCourts = Math.floor(selectedPlayersValue.length / 4);
+      if (maxCourts < matchingOptions.value.numberOfCourts) {
+        warnings.push(
+          `Not enough players for ${matchingOptions.value.numberOfCourts} courts. ` +
+            `Will use ${maxCourts} court${maxCourts > 1 ? 's' : ''} instead.`
+        );
+      }
     }
 
     // Check maximum players (allowing up to 4 to sit out per round)
@@ -161,7 +171,8 @@ export const useGameStore = defineStore('game', () => {
 
     return {
       valid: errors.length === 0,
-      errors
+      errors,
+      warnings
     };
   }
 

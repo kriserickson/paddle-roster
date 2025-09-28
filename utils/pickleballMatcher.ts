@@ -1,398 +1,313 @@
-import type { Player, Game, MatchingOptions, GameSchedule } from '~/types';
-/*
- * PickleballMatcher – final trimmed version
- * --------------------------------------------------------------
- *  • Interfaces have been removed from this file to shrink size.
- *    Import them from your own `types.ts` (or wherever you keep
- *    the declarations) so the class remains strongly‑typed.
- *  • Logic, style rules (braces/newlines), infinite‑loop fixes,
- *    and score optimisation are unchanged.
- * --------------------------------------------------------------
- */
+import type { Player, Game, MatchingOptions, GameSchedule } from '../types';
 
 export class PickleballMatcher {
-  constructor(
-    private players: Player[],
-    private opts: MatchingOptions
-  ) {
-    // no‑op
+  private players: Player[];
+  private options: MatchingOptions;
+
+  constructor(players: Player[], options: MatchingOptions) {
+    this.players = players;
+    this.options = options;
   }
 
   /**
-   * Generate the best schedule found across `trials` random attempts.
+   * Generate a complete game schedule based on the provided players and options.
    */
-  public generateSchedule(eventLabel = 'Pickleball Tournament', trials = 1000): GameSchedule {
-    let best: GameSchedule | null = null;
-    let bestScore = Number.POSITIVE_INFINITY;
+  generateSchedule(eventLabel: string = 'Pickleball Tournament'): GameSchedule {
+    const { numberOfCourts, numberOfRounds, balanceSkillLevels, respectPartnerPreferences } = this.options;
 
-    for (let i = 0; i < trials; i++) {
-      const candidate = this.buildSingleSchedule(eventLabel);
-      const score = this.evaluateScore(candidate);
-      candidate.score = score;
-      console.log(`Try #${i + 1} – score: ${score} best: ${bestScore}`);
-      if (score < bestScore) {
-        best = candidate;
-        bestScore = score;
+    // Filter out inactive players (only schedule active/available players)
+    const activePlayers = this.players.filter(p => p.active !== false);
+    const totalPlayers = activePlayers.length;
+
+    // Sanity check: ensure player count is within allowed range (4*courts to 4*courts+4)
+    const minPlayers = 4 * numberOfCourts;
+    const maxPlayers = 4 * numberOfCourts + 4;
+    if (totalPlayers < minPlayers || totalPlayers > maxPlayers) {
+      throw new Error(`Player count must be between ${minPlayers} and ${maxPlayers} for ${numberOfCourts} courts.`);
+    }
+
+    ////  Determine how many players rest each round (X = extra players beyond courts capacity)
+    const playersPerRound = 4 * numberOfCourts; // players that can play each round
+    const extraPlayers = totalPlayers - playersPerRound; // number of players resting each round
+    const restEachRound = extraPlayers > 0 ? extraPlayers : 0; // if 0, no rests needed
+
+    // Calculate how many times each player should rest (distribute as evenly as possible)
+    const totalRestSpots = restEachRound * numberOfRounds; // total rest opportunities across all rounds
+    const baseRestsPerPlayer = Math.floor(totalRestSpots / totalPlayers);
+    let playersNeedingExtraRest = totalRestSpots % totalPlayers; // number of players that will rest one additional time
+    // Map playerId -> rest count needed
+    const restNeeded: { [playerId: string]: number } = {};
+    for (const player of activePlayers) {
+      // Each player gets base rests, and a few players get one extra rest until remainder is consumed
+      restNeeded[player.id] = baseRestsPerPlayer + (playersNeedingExtraRest > 0 ? 1 : 0);
+      if (playersNeedingExtraRest > 0) {
+        playersNeedingExtraRest--;
       }
     }
 
-    return best!;
-  }
-
-  // ---------------------------------------------------------------------
-  // 1. Build a single random schedule
-  // ---------------------------------------------------------------------
-  private buildSingleSchedule(eventLabel: string): GameSchedule {
-    const players = this.players.filter(p => {
-      return p.active !== false;
-    });
-
-    const courts = this.opts.numberOfCourts;
-    const perRound = courts * 4;
-
-    if (players.length < perRound || players.length > perRound + 4) {
-      throw new Error(`Player count ${players.length} invalid for ${courts} courts.`);
+    // Partner pairing preferences: determine which players want to partner and assign a round for each pair
+    const partnerPairs: [string, string][] = [];
+    if (respectPartnerPreferences) {
+      const seen = new Set<string>();
+      for (const player of activePlayers) {
+        if (player.partnerId && !seen.has(player.id)) {
+          const partnerId = player.partnerId;
+          // Find the partner player object to ensure they exist and are active
+          const partner = activePlayers.find(p => p.id === partnerId);
+          if (partner && !seen.has(partnerId)) {
+            // We have a mutual pair (or at least a valid partner)
+            partnerPairs.push([player.id, partnerId]);
+            seen.add(player.id);
+            seen.add(partnerId);
+          }
+        }
+      }
+    }
+    // Assign each partner pair to at least one round (not necessarily round 1, choose randomly)
+    const partnerRoundsMap: { [round: number]: [string, string][] } = {};
+    if (partnerPairs.length > 0) {
+      // Shuffle the list of partner pairs for randomness
+      const shuffledPairs = partnerPairs.slice();
+      for (let i = shuffledPairs.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffledPairs[i], shuffledPairs[j]] = [shuffledPairs[j], shuffledPairs[i]];
+      }
+      // Distribute pairs across rounds as evenly as possible
+      const basePairsPerRound = Math.floor(shuffledPairs.length / numberOfRounds);
+      let extraPairsRounds = shuffledPairs.length % numberOfRounds;
+      // Initially give each round basePairsPerRound pairs
+      let pairIndex = 0;
+      for (let r = 1; r <= numberOfRounds; r++) {
+        partnerRoundsMap[r] = [];
+        for (let k = 0; k < basePairsPerRound; k++) {
+          partnerRoundsMap[r].push(shuffledPairs[pairIndex++]);
+        }
+        // Assign extra pairs to some rounds (one extra pair in 'extraPairsRounds' rounds)
+        if (extraPairsRounds > 0) {
+          partnerRoundsMap[r].push(shuffledPairs[pairIndex++]);
+          extraPairsRounds--;
+        }
+      }
     }
 
-    const partnerRounds = this.assignPartnerRounds(players, this.opts.numberOfRounds);
-
-    const rests = this.buildRestMatrix(players, partnerRounds);
-
+    // Prepare the schedule structure
     const rounds: Game[][] = [];
-    const usedPartners = new Set<string>();
+    const restingPlayers: string[][] = [];
 
-    for (let r = 0; r < this.opts.numberOfRounds; r++) {
-      const resting = new Set<string>(rests[r]);
+    // Keep track of past partner combinations to minimize repeats
+    const pastPartners = new Set<string>(); // store as "A|B" string for pair (order-insensitive)
+    // Keep track of past opponent combinations to minimize repeats (optional improvement)
+    const pastOpponents = new Set<string>(); // store as "A|B" for any two players who faced each other
 
-      let playing = players
-        .filter(p => {
-          return !resting.has(p.id);
-        })
-        .map(p => {
-          return p.id;
-        });
+    // Simulate rounds 1 through numberOfRounds
+    let lastRoundRested: Set<string> = new Set(); // players who rested in the previous round
+    for (let round = 1; round <= numberOfRounds; round++) {
+      const restingThisRound: string[] = [];
+      let playingThisRound: string[] = [];
 
-      this.shuffle(playing);
-
-      const teams: [string, string][] = [];
-
-      // Mandatory partner teams
-      if (partnerRounds.has(r)) {
-        for (const [p1, p2] of partnerRounds.get(r)!) {
-          if (!playing.includes(p1)) {
-            playing.push(p1);
+      // Determine who rests this round
+      if (restEachRound > 0) {
+        // List of players eligible to rest (need rest > 0)
+        let candidates = activePlayers.filter(p => restNeeded[p.id] > 0).map(p => p.id);
+        // Exclude players who *must* play due to partner requirement this round
+        if (partnerRoundsMap[round]) {
+          for (const [p1, p2] of partnerRoundsMap[round]) {
+            // Ensure neither partner is selected to rest this round
+            candidates = candidates.filter(pid => pid !== p1 && pid !== p2);
           }
-          if (!playing.includes(p2)) {
-            playing.push(p2);
-          }
-          playing = playing.filter(id => {
-            return id !== p1 && id !== p2;
-          });
-          teams.push([p1, p2]);
-          usedPartners.add(this.pairKey(p1, p2));
         }
-      }
+        // Also try to avoid picking someone who rested last round (space out rests)
+        let preferredCandidates = candidates.filter(pid => !lastRoundRested.has(pid));
+        if (preferredCandidates.length < restEachRound) {
+          // If not enough preferred candidates (maybe many had also rested last round), allow last-round resters
+          preferredCandidates = candidates;
+        }
 
-      // Form remaining teams
-      if (this.opts.balanceSkillLevels) {
-        const objs = playing.map(id => {
-          return this.player(id);
-        });
-        objs.sort((a, b) => {
-          return b.skillLevel - a.skillLevel;
-        });
-        while (objs.length > 0) {
-          const hi = objs.shift()!;
-          const lo = objs.pop()!;
-          teams.push([hi.id, lo.id]);
+        // Randomly select the required number of rest players from the preferred candidates
+        // Note: We'll shuffle the candidate list and take the first N
+        for (let i = preferredCandidates.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [preferredCandidates[i], preferredCandidates[j]] = [preferredCandidates[j], preferredCandidates[i]];
         }
+        const selectedToRest = preferredCandidates.slice(0, restEachRound);
+        // If for some reason we didn't get enough (perhaps not enough candidates), fill from remaining candidates
+        if (selectedToRest.length < restEachRound) {
+          const remaining = candidates.filter(pid => !selectedToRest.includes(pid));
+          for (let i = remaining.length - 1; i > 0 && selectedToRest.length < restEachRound; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [remaining[i], remaining[j]] = [remaining[j], remaining[i]];
+          }
+          selectedToRest.push(...remaining.slice(0, restEachRound - selectedToRest.length));
+        }
+
+        // Mark these players as resting this round
+        for (const pid of selectedToRest) {
+          restingThisRound.push(pid);
+          restNeeded[pid]--; // decrement their remaining rest quota
+        }
+        lastRoundRested = new Set(selectedToRest); // update last-round rest set for next iteration
       } else {
-        for (let i = 0; i < playing.length; i += 2) {
-          teams.push([playing[i], playing[i + 1]]);
+        // No rests needed at all (players exactly fill the courts)
+        lastRoundRested = new Set();
+      }
+
+      // Determine players playing this round = all active minus resting players
+      for (const player of activePlayers) {
+        if (!restingThisRound.includes(player.id)) {
+          playingThisRound.push(player.id);
         }
       }
 
-      // Pair teams into games & assign courts
-      this.shuffle(teams);
-      const games: Game[] = [];
-      for (let t = 0; t < teams.length; t += 2) {
-        const teamA = teams[t];
-        const teamB = teams[t + 1];
-        usedPartners.add(this.pairKey(...teamA));
-        usedPartners.add(this.pairKey(...teamB));
-        const skillA = this.player(teamA[0]).skillLevel + this.player(teamA[1]).skillLevel;
-        const skillB = this.player(teamB[0]).skillLevel + this.player(teamB[1]).skillLevel;
-        const flip = Math.random() < 0.5;
-        const courtNum = t / 2 + 1;
-        games.push({
-          id: `g-${r + 1}-${courtNum}`,
-          round: r + 1,
-          court: courtNum,
-          team1: flip ? teamB : teamA,
-          team2: flip ? teamA : teamB,
-          team1SkillLevel: flip ? skillB : skillA,
-          team2SkillLevel: flip ? skillA : skillB,
-          skillDifference: Math.abs(skillA - skillB)
-        });
+      // Shuffle the playing players list for random grouping
+      for (let i = playingThisRound.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [playingThisRound[i], playingThisRound[j]] = [playingThisRound[j], playingThisRound[i]];
       }
-      rounds.push(games);
+
+      // If there are any pre-set partner teams for this round, handle them first
+      const preformedTeams: [string, string][] = [];
+      if (partnerRoundsMap[round]) {
+        for (const [p1, p2] of partnerRoundsMap[round]) {
+          // Ensure p1 and p2 are in playing list (neither rested)
+          // They should be, due to rest selection above, but double-check:
+          if (!playingThisRound.includes(p1)) playingThisRound.push(p1);
+          if (!playingThisRound.includes(p2)) playingThisRound.push(p2);
+          // Remove the two from the playing pool (they will form their own team)
+          playingThisRound = playingThisRound.filter(pid => pid !== p1 && pid !== p2);
+          preformedTeams.push([p1, p2]);
+          // Track this partnership to avoid repeating it later
+          const key = p1 < p2 ? `${p1}|${p2}` : `${p2}|${p1}`;
+          pastPartners.add(key);
+        }
+      }
+
+      const teamsThisRound: [string, string][] = [];
+
+      // Include the preformed partner teams directly
+      for (const team of preformedTeams) {
+        teamsThisRound.push(team);
+      }
+
+      // Form teams from the remaining players for this round
+      if (balanceSkillLevels) {
+        // Skill balancing: sort remaining players by skill
+        const playingPlayersObjects = playingThisRound.map(pid => activePlayers.find(p => p.id === pid)!);
+        playingPlayersObjects.sort((a, b) => b.skillLevel - a.skillLevel); // descending by skill
+        // Pair highest with lowest to balance teams
+        while (playingPlayersObjects.length >= 2) {
+          const highest = playingPlayersObjects.shift()!; // remove first (highest)
+          const lowest = playingPlayersObjects.pop()!; // remove last (lowest)
+          let team1: Player, team2: Player;
+          if (highest && lowest) {
+            team1 = highest;
+            team2 = lowest;
+          } else if (highest) {
+            // If only one left (edge case), pair with next highest (though this shouldn't happen because count is even)
+            team1 = highest;
+            team2 = playingPlayersObjects.pop()!;
+          } else {
+            break;
+          }
+          teamsThisRound.push([team1.id, team2.id]);
+        }
+        // If an odd player remains (shouldn't happen with even count), just put them with someone (not expected given even players per round).
+      } else {
+        // No skill balancing: pair players randomly in the order of the shuffled list
+        for (let i = 0; i < playingThisRound.length; i += 2) {
+          const p1 = playingThisRound[i];
+          const p2 = playingThisRound[i + 1];
+          teamsThisRound.push([p1, p2]);
+        }
+      }
+
+      // Now we have a list of teams (each is 2 players). Next, pair up teams into games on courts.
+      const gamesThisRound: Game[] = [];
+      // Shuffle teams list so that assignment to courts is random (for court variety)
+      for (let i = teamsThisRound.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [teamsThisRound[i], teamsThisRound[j]] = [teamsThisRound[j], teamsThisRound[i]];
+      }
+      // Pair consecutive teams as opponents on a court
+      for (let t = 0; t < teamsThisRound.length; t += 2) {
+        const team1 = teamsThisRound[t];
+        const team2 = teamsThisRound[t + 1];
+        // Avoid repeating a partnership within this group if possible by re-pairing (minimize partner repeats)
+        const key1 = team1[0] < team1[1] ? `${team1[0]}|${team1[1]}` : `${team1[1]}|${team1[0]}`;
+        const key2 = team2[0] < team2[1] ? `${team2[0]}|${team2[1]}` : `${team2[1]}|${team2[0]}`;
+        if (pastPartners.has(key1) || pastPartners.has(key2)) {
+          // If this round produced a team that's been seen before (should be rare due to our checks),
+          // we could attempt to swap team members between teams1 and team2 to find a new pairing.
+          // Try an alternate pairing of these four players:
+          const [a, b] = team1;
+          const [c, d] = team2;
+          // Try pairing a with c, and b with d instead (one possible alternate)
+          const altTeam1: [string, string] = [a, c];
+          const altTeam2: [string, string] = [b, d];
+          const altKey1 = a < c ? `${a}|${c}` : `${c}|${a}`;
+          const altKey2 = b < d ? `${b}|${d}` : `${d}|${b}`;
+          if (!pastPartners.has(altKey1) && !pastPartners.has(altKey2)) {
+            // Use the alternate pairing
+            team1[0] = a;
+            team1[1] = c;
+            team2[0] = b;
+            team2[1] = d;
+          }
+          // (If that also repeats, other pairing could be tried, e.g., a with d and b with c.
+          // We omit exhaustive checks for brevity in random approach.)
+        }
+        // Update partner history with these new teams
+        const newKey1 = team1[0] < team1[1] ? `${team1[0]}|${team1[1]}` : `${team1[1]}|${team1[0]}`;
+        const newKey2 = team2[0] < team2[1] ? `${team2[0]}|${team2[1]}` : `${team2[1]}|${team2[0]}`;
+        pastPartners.add(newKey1);
+        pastPartners.add(newKey2);
+
+        // Now create the Game object
+        const team1Players = team1.map(pid => activePlayers.find(p => p.id === pid)!);
+        const team2Players = team2.map(pid => activePlayers.find(p => p.id === pid)!);
+        const team1Skill = team1Players[0].skillLevel + team1Players[1].skillLevel;
+        const team2Skill = team2Players[0].skillLevel + team2Players[1].skillLevel;
+        const skillDiff = Math.abs(team1Skill - team2Skill);
+
+        // Optionally, ensure skill difference is within maxSkillDifference by swapping across teams (advanced, not implemented fully for random approach)
+        // For now, we'll assume the pairing strategy kept it within bounds or accept the result.
+
+        // Determine court number for this game (t/2 gives 0-based index of game, +1 for 1-based court number)
+        const courtNumber = Math.floor(t / 2) + 1;
+        // Randomize which team is "team1" vs "team2" to vary sides of the court
+        let finalTeam1 = team1;
+        let finalTeam2 = team2;
+        if (Math.random() < 0.5) {
+          finalTeam1 = team2;
+          finalTeam2 = team1;
+        }
+        gamesThisRound.push({
+          id: `game-${round}-${courtNumber}`,
+          round: round,
+          court: courtNumber,
+          team1: [finalTeam1[0], finalTeam1[1]],
+          team2: [finalTeam2[0], finalTeam2[1]],
+          team1SkillLevel: finalTeam1 === team1 ? team1Skill : team2Skill,
+          team2SkillLevel: finalTeam2 === team2 ? team2Skill : team1Skill,
+          skillDifference: Math.abs(team1Skill - team2Skill)
+        });
+        // Track opponents for each pair of players in this game to minimize future repeats (optional)
+        pastOpponents.add(`${team1[0]}|${team2[0]}`);
+        pastOpponents.add(`${team1[0]}|${team2[1]}`);
+        pastOpponents.add(`${team1[1]}|${team2[0]}`);
+        pastOpponents.add(`${team1[1]}|${team2[1]}`);
+      }
+
+      rounds.push(gamesThisRound);
+      restingPlayers.push(restingThisRound);
     }
 
+    // Construct the final GameSchedule object
     return {
-      rounds,
-      restingPlayers: rests,
-      eventLabel,
-      options: this.opts,
+      rounds: rounds,
+      restingPlayers: restingPlayers,
+      eventLabel: eventLabel,
+      options: this.options,
       generatedAt: new Date()
     };
-  }
-
-  // ---------------------------------------------------------------------
-  // 2. Scoring
-  // ---------------------------------------------------------------------
-  private evaluateScore(schedule: GameSchedule): number {
-    const courtHits: Record<string, Record<number, number>> = {};
-    const partnerCounts: Record<string, number> = {};
-    const opponentCounts: Record<string, number> = {};
-    let score = 0;
-
-    for (const round of schedule.rounds) {
-      for (const game of round) {
-        const [a1, a2] = game.team1;
-        const [b1, b2] = game.team2;
-        for (const pid of [a1, a2, b1, b2]) {
-          if (!courtHits[pid]) {
-            courtHits[pid] = {};
-          }
-          if (!courtHits[pid][game.court]) {
-            courtHits[pid][game.court] = 0;
-          }
-          courtHits[pid][game.court] += 1;
-        }
-        this.bump(partnerCounts, a1, a2);
-        this.bump(partnerCounts, b1, b2);
-        for (const x of [a1, a2]) {
-          for (const y of [b1, b2]) {
-            this.bump(opponentCounts, x, y);
-          }
-        }
-      }
-    }
-
-    // Court concentration
-    for (const pid in courtHits) {
-      for (const court in courtHits[pid]) {
-        score += Math.pow(courtHits[pid][court], 1.5);
-      }
-    }
-
-    // Partner repeat penalties (doubling scheme)
-    for (const key in partnerCounts) {
-      const repeats = partnerCounts[key] - 1;
-      if (repeats > 0) {
-        score += 20 * Math.pow(2, repeats - 1);
-      }
-    }
-
-    // Opponent penalties (piecewise: 1→10, 2→25, 3→50, 4→100, 5→200, ...)
-    for (const key in opponentCounts) {
-      const count = opponentCounts[key];
-      if (count >= 1) {
-        if (count === 1) {
-          score += 10;
-        } else if (count === 2) {
-          score += 25;
-        } else {
-          score += 25 * Math.pow(2, count - 2);
-        }
-      }
-    }
-    return score;
-  }
-
-  // ---------------------------------------------------------------------
-  // 3. Rest matrix
-  // ---------------------------------------------------------------------
-  private buildRestMatrix(players: Player[], partnerRounds: Map<number, [string, string][]>): string[][] {
-    const rounds = this.opts.numberOfRounds;
-    const restEachRound = players.length - this.opts.numberOfCourts * 4;
-    const matrix: string[][] = Array.from({ length: rounds }, () => {
-      return [] as string[];
-    });
-
-    if (restEachRound === 0) {
-      return matrix;
-    }
-
-    const totalRestSpots = restEachRound * rounds;
-    const base = Math.floor(totalRestSpots / players.length);
-    let extra = totalRestSpots % players.length;
-
-    const need: Record<string, number> = Object.fromEntries(
-      players.map(p => {
-        return [p.id, base];
-      })
-    );
-
-    if (extra > 0) {
-      const order = players.map(p => {
-        return p.id;
-      });
-      this.shuffle(order);
-      for (const pid of order) {
-        if (extra === 0) {
-          break;
-        }
-        need[pid] += 1;
-        extra -= 1;
-      }
-    }
-
-    const lastRestRound: Record<string, number> = Object.fromEntries(
-      players.map(p => {
-        return [p.id, -Infinity];
-      })
-    );
-
-    for (let r = 0; r < rounds; r++) {
-      const blacklist = new Set<string>();
-      if (partnerRounds.has(r)) {
-        for (const [a, b] of partnerRounds.get(r)!) {
-          blacklist.add(a);
-          blacklist.add(b);
-        }
-      }
-
-      const want = restEachRound;
-      const roundRests: string[] = [];
-
-      const candidates = players.filter(p => {
-        return need[p.id] > 0 && !blacklist.has(p.id);
-      });
-
-      candidates.sort((a, b) => {
-        return lastRestRound[a.id] - lastRestRound[b.id] || Math.random() - 0.5;
-      });
-
-      // Pass 1 – avoid consecutive rests
-      for (const p of candidates) {
-        if (roundRests.length === want) {
-          break;
-        }
-        if (r > 0 && matrix[r - 1].includes(p.id)) {
-          continue;
-        }
-        roundRests.push(p.id);
-        need[p.id] -= 1;
-        lastRestRound[p.id] = r;
-      }
-
-      // Pass 2 – allow consecutive if still needed
-      if (roundRests.length < want) {
-        for (const p of candidates) {
-          if (roundRests.length === want) {
-            break;
-          }
-          if (roundRests.includes(p.id)) {
-            continue;
-          }
-          roundRests.push(p.id);
-          need[p.id] -= 1;
-          lastRestRound[p.id] = r;
-        }
-      }
-
-      // Pass 3 – fallback: any non‑blacklisted player
-      if (roundRests.length < want) {
-        const fallback = players.filter(p => {
-          return !blacklist.has(p.id) && !roundRests.includes(p.id);
-        });
-        this.shuffle(fallback);
-        for (const p of fallback) {
-          if (roundRests.length === want) {
-            break;
-          }
-          roundRests.push(p.id);
-          lastRestRound[p.id] = r;
-        }
-      }
-      matrix[r] = roundRests;
-    }
-    return matrix;
-  }
-
-  // ---------------------------------------------------------------------
-  // 4. Partner‑round assignment
-  // ---------------------------------------------------------------------
-  private assignPartnerRounds(players: Player[], rounds: number): Map<number, [string, string][]> {
-    const map = new Map<number, [string, string][]>();
-    if (!this.opts.respectPartnerPreferences) {
-      return map;
-    }
-
-    const seen = new Set<string>();
-    const pairs: [string, string][] = [];
-
-    for (const p of players) {
-      if (p.partnerId && !seen.has(p.id)) {
-        const partner = players.find(x => {
-          return x.id === p.partnerId;
-        });
-        if (partner) {
-          pairs.push([p.id, partner.id]);
-          seen.add(p.id);
-          seen.add(partner.id);
-        }
-      }
-    }
-
-    this.shuffle(pairs);
-
-    for (const pair of pairs) {
-      let tries = 0;
-      while (tries < 20) {
-        const rnd = Math.floor(Math.random() * rounds);
-        const arr = map.get(rnd) || [];
-        if (arr.length < this.opts.numberOfCourts) {
-          arr.push(pair);
-          map.set(rnd, arr);
-          break;
-        }
-        tries += 1;
-      }
-    }
-    return map;
-  }
-
-  // ---------------------------------------------------------------------
-  // 5. Helper utilities
-  // ---------------------------------------------------------------------
-  private player(id: string): Player {
-    const p = this.players.find(x => {
-      return x.id === id;
-    });
-    if (!p) {
-      throw new Error(`Unknown player id ${id}`);
-    }
-    return p;
-  }
-
-  private shuffle<T>(arr: T[]): void {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-  }
-
-  private pairKey(a: string, b: string): string {
-    return a < b ? `${a}|${b}` : `${b}|${a}`;
-  }
-
-  private bump(store: Record<string, number>, a: string, b: string): void {
-    const k = this.pairKey(a, b);
-    if (!store[k]) {
-      store[k] = 0;
-    }
-    store[k] += 1;
   }
 }

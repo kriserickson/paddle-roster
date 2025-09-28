@@ -53,6 +53,11 @@ const selectedRoundResting = computed(() => {
   return gameStore.getRestingPlayersForRound(selectedRound.value) || [];
 });
 
+const hasRestingPlayers = computed(() => {
+  if (!gameStore.currentSchedule) return false;
+  return gameStore.currentSchedule.restingPlayers.some(round => round.length > 0);
+});
+
 // Methods
 function getPlayerName(playerId: string): string {
   const player = playerStore.getPlayer(playerId);
@@ -77,9 +82,7 @@ function getGameForCourt(round: readonly Game[], courtNumber: number): Game | un
 
 // Print functionality
 function openPrintModal(): void {
-  console.log('Opening print modal, current value:', showPrintModal.value);
   showPrintModal.value = true;
-  console.log('Print modal value after setting:', showPrintModal.value);
 }
 
 function clearCurrentSchedule(): void {
@@ -227,7 +230,12 @@ watch(
                   >
                     Court {{ court }}
                   </th>
-                  <th class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">Resting</th>
+                  <th
+                    v-if="hasRestingPlayers"
+                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider"
+                  >
+                    Resting
+                  </th>
                 </tr>
               </thead>
               <tbody class="bg-white divide-y divide-gray-200">
@@ -260,7 +268,7 @@ watch(
                       </div>
                     </div>
                   </td>
-                  <td class="px-4 py-3 text-xs text-center">
+                  <td v-if="hasRestingPlayers" class="px-4 py-3 text-xs text-center">
                     <div class="flex flex-wrap gap-1 justify-center">
                       <span
                         v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]"

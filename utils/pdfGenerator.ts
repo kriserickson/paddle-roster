@@ -83,13 +83,12 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
           rules.forEach(rule => {
             combinedCSS += rule.cssText + '\n';
           });
-        } catch (e) {
+        } catch {
           // Skip stylesheets that can't be accessed (CORS)
-          console.log('Skipping stylesheet due to CORS:', e);
         }
       });
-    } catch (e) {
-      console.log('Error copying styles:', e);
+    } catch {
+      // Ignore errors copying styles
     }
 
     styleElement.textContent = combinedCSS;
@@ -107,8 +106,7 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
       throw new Error(`Element has no dimensions: ${rect.width}x${rect.height}`);
     }
 
-    console.log('PDF Generator - Element dimensions:', rect.width, 'x', rect.height);
-    console.log('PDF Generator - Element scroll dimensions:', elementClone.scrollWidth, 'x', elementClone.scrollHeight); // Convert HTML to canvas with high quality settings
+    // Convert HTML to canvas with high quality settings
     const canvas = await html2canvas(elementClone, {
       scale: scale,
       useCORS: true,
@@ -131,7 +129,6 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
     if (!canvas || canvas.width === 0 || canvas.height === 0) {
       throw new Error(`Failed to create canvas from element: ${canvas?.width || 0}x${canvas?.height || 0}`);
     }
-    console.log('PDF Generator - Canvas dimensions:', canvas.width, 'x', canvas.height);
 
     // Calculate PDF dimensions
     const imgData = canvas.toDataURL('image/png', quality);
@@ -140,17 +137,11 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
     if (!imgData || imgData === 'data:,' || imgData.length < 100) {
       throw new Error('Failed to generate image data from canvas');
     }
-    console.log('PDF Generator - Image data length:', imgData.length);
-    console.log('PDF Generator - Image data prefix:', imgData.substring(0, 50));
 
     // Debug: Create a temporary image to verify the canvas content
     const testImg = new Image();
-    testImg.onload = () => {
-      console.log('PDF Generator - Test image loaded successfully, dimensions:', testImg.width, 'x', testImg.height);
-    };
-    testImg.onerror = () => {
-      console.error('PDF Generator - Test image failed to load - canvas data may be empty');
-    };
+    testImg.onload = () => {};
+    testImg.onerror = () => {};
     testImg.src = imgData;
 
     // Wait a moment for the test image to load
@@ -167,19 +158,14 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
 
-    console.log('PDF Generator - PDF page dimensions:', pageWidth, 'x', pageHeight);
-
     // Calculate image dimensions to fit page
     const imgWidth = pageWidth - 20; // 10mm margin on each side
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    console.log('PDF Generator - Image dimensions for PDF:', imgWidth, 'x', imgHeight);
 
     let heightLeft = imgHeight;
     let position = 10; // 10mm top margin
 
     // Add first page
-    console.log('PDF Generator - Adding image to PDF...');
     pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
     heightLeft -= pageHeight - 20; // Account for top and bottom margins
 
@@ -190,12 +176,9 @@ export async function generatePDFFromElement(elementId: string, options: PDFGene
       pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
       heightLeft -= pageHeight - 20;
     }
-
-    console.log('PDF Generator - Saving PDF with filename:', filename);
     // Save the PDF
     pdf.save(filename);
   } catch (error) {
-    console.error('Error generating PDF:', error);
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
@@ -282,7 +265,6 @@ export async function generateMultiPagePDF(elementId: string, options: PDFGenera
     // Save the PDF
     pdf.save(filename);
   } catch (error) {
-    console.error('Error generating multi-page PDF:', error);
     throw new Error(`Failed to generate PDF: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

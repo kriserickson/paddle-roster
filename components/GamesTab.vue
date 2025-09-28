@@ -59,7 +59,7 @@ watch(
       return;
     }
 
-    console.log('💾 User changed preferences, scheduling save...');
+    // console.log('💾 User changed preferences, scheduling save...');
 
     // Store the current options for next comparison
     previousOptions.value = newOptionsCopy;
@@ -174,6 +174,8 @@ const canGenerate = computed(() => validationResult.value.valid);
 
 const validationErrors = computed(() => validationResult.value.errors);
 
+const validationWarnings = computed(() => validationResult.value.warnings || []);
+
 // Methods
 function selectFilteredPlayers(): void {
   filteredPlayers.value.forEach((player: Player) => {
@@ -279,6 +281,18 @@ onMounted(() => {
       <div>
         <p class="font-semibold">Cannot Generate Schedule</p>
         <p class="text-sm">{{ validationErrors.join(', ') }}</p>
+      </div>
+    </div>
+
+    <!-- Validation Warnings -->
+    <div
+      v-if="validationWarnings.length > 0"
+      class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex items-start gap-3"
+    >
+      <Icon name="mdi:alert" class="text-xl text-yellow-600 mt-1" />
+      <div>
+        <p class="font-semibold text-yellow-800">Warning</p>
+        <p class="text-sm text-yellow-700">{{ validationWarnings.join(', ') }}</p>
       </div>
     </div>
 
