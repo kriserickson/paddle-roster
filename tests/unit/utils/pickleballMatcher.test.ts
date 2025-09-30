@@ -325,7 +325,6 @@ describe('PickleballMatcher', () => {
               count,
               `Player ${playerId} played ${opponentId} more than 4 times in ${testName}`
             ).toBeLessThanOrEqual(4);
-            3;
           });
         });
       });
