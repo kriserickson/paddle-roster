@@ -6,9 +6,17 @@
 export function getSkillLevelColor(
   skillLevel: number
 ): 'primary' | 'secondary' | 'success' | 'info' | 'warning' | 'error' | 'neutral' {
-  if (skillLevel < 2) return 'error';
-  if (skillLevel < 3) return 'warning';
-  if (skillLevel < 4) return 'info';
-  if (skillLevel < 5) return 'success';
+  if (skillLevel < 2) {
+    return 'error';
+  }
+  if (skillLevel < 3) {
+    return 'warning';
+  }
+  if (skillLevel < 4) {
+    return 'info';
+  }
+  if (skillLevel < 5) {
+    return 'success';
+  }
   return 'primary';
 }

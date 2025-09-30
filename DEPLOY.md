@@ -1,7 +1,7 @@
 ### Updating
 
 ```bash
-git pull 
+git pull
 npm run build
-pm2 restart paddle-roster 
+pm2 restart paddle-roster
 ```

@@ -5,7 +5,7 @@
 1. Go to [https://supabase.com](https://supabase.com)
 2. Click "Start your project" or "Sign up"
 3. Sign in with GitHub (recommended) or create an account
-4. Click "New Project" 
+4. Click "New Project"
 5. Choose your organization (or create one)
 6. Fill in project details:
    - Name: `paddleroster` or `pickleball-roster`

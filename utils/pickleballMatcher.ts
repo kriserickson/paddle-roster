@@ -21,7 +21,7 @@ export class PickleballMatcher {
   /**
    * Generate the best schedule found across `trials` random attempts.
    */
-  public generateSchedule(eventLabel = 'Pickleball Tournament', trials = 1000): GameSchedule {
+  public generateSchedule(eventLabel = 'Pickleball Tournament', trials = 2000): GameSchedule {
     let best: GameSchedule | null = null;
     let bestScore = Number.POSITIVE_INFINITY;
 
@@ -194,43 +194,66 @@ export class PickleballMatcher {
     const courtHits: Record<string, Record<number, number>> = {};
     const partnerCounts: Record<string, number> = {};
     const opponentCounts: Record<string, number> = {};
+    const lastPartnerRound: Record<string, number> = {};
+    const lastOpponentRound: Record<string, number> = {};
     let score = 0;
 
-    // Build counts: court assignments, partner pair frequencies, opponent pair frequencies
+    // Count and consecutive-row penalties
     for (const round of schedule.rounds) {
       for (const game of round) {
         const [a1, a2] = game.team1;
         const [b1, b2] = game.team2;
-        // Track which court each player was on for concentration penalties
+        const r = game.round;
+        // Court hits
         for (const pid of [a1, a2, b1, b2]) {
-          if (!courtHits[pid]) {
-            courtHits[pid] = {};
-          }
-          if (!courtHits[pid][game.court]) {
-            courtHits[pid][game.court] = 0;
-          }
-          courtHits[pid][game.court] += 1;
+          courtHits[pid] = courtHits[pid] || {};
+          courtHits[pid][game.court] = (courtHits[pid][game.court] || 0) + 1;
         }
-        // Partner counts: each same-team pair increments partnerCounts
+
+        // Partner counts & consecutive partner penalty
         this.bump(partnerCounts, a1, a2);
+        const pk1 = this.pairKey(a1, a2);
+        if (lastPartnerRound[pk1] === r - 1) {
+          score += 10;
+        }
+        lastPartnerRound[pk1] = r;
+
         this.bump(partnerCounts, b1, b2);
-        // Opponent counts: every cross-team pairing increments opponentCounts
+        const pk2 = this.pairKey(b1, b2);
+        if (lastPartnerRound[pk2] === r - 1) {
+          score += 10;
+        }
+        lastPartnerRound[pk2] = r;
+
+        // Opponent counts & consecutive opponent penalty
         for (const x of [a1, a2]) {
           for (const y of [b1, b2]) {
             this.bump(opponentCounts, x, y);
+            const ok = this.pairKey(x, y);
+            if (lastOpponentRound[ok] === r - 1) {
+              score += 5;
+            }
+            lastOpponentRound[ok] = r;
           }
         }
       }
     }
 
-    // Apply court concentration penalty: sum over players & courts of count^1.5
+    // Court concentration penalties
     for (const pid in courtHits) {
       for (const court in courtHits[pid]) {
-        score += Math.pow(courtHits[pid][court], 1.5);
+        const cnt = courtHits[pid][Number(court)];
+        // Original concentration penalty
+        score += Math.pow(cnt, 1.5);
+        if (cnt > 1) {
+          score += 10 * (cnt - 1);
+        }
+        // Additional user-requested court hit penalty
+        score += 10 * cnt;
       }
     }
 
-    // Apply partner repeat penalties (doubling scheme)
+    // Partner repeat penalties
     for (const key in partnerCounts) {
       const repeats = partnerCounts[key] - 1;
       if (repeats > 0) {
@@ -238,19 +261,18 @@ export class PickleballMatcher {
       }
     }
 
-    // Apply opponent repeat penalties (piecewise exponential after 2)
+    // Opponent repeat penalties
     for (const key in opponentCounts) {
-      const count = opponentCounts[key];
-      if (count >= 1) {
-        if (count === 1) {
-          score += 10;
-        } else if (count === 2) {
-          score += 25;
-        } else {
-          score += 25 * Math.pow(2, count - 2);
-        }
+      const c = opponentCounts[key];
+      if (c === 1) {
+        score += 10;
+      } else if (c === 2) {
+        score += 25;
+      } else if (c > 2) {
+        score += 25 * Math.pow(2, c - 2);
       }
     }
+
     return score;
   }
 

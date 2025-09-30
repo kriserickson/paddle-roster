@@ -83,7 +83,9 @@ useHead({
 // User display name
 const userDisplayName = computed(() => {
   const currentUserValue = currentUser.value;
-  if (!currentUserValue) return '';
+  if (!currentUserValue) {
+    return '';
+  }
 
   if (isDemo.value) {
     return 'Demo User';

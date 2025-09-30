@@ -11,7 +11,9 @@ export default withNuxt(
       semi: ['error', 'always'],
       // Ensure semicolon spacing
       'semi-spacing': ['error', { before: false, after: true }],
-      'func-style': ['error', 'declaration', { allowArrowFunctions: false }]
+      'func-style': ['error', 'declaration', { allowArrowFunctions: false }],
+      // Enforce braces for all control structures
+      curly: ['error', 'all']
     }
   },
   // Allow arrow functions for composables

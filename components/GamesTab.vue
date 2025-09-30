@@ -163,8 +163,12 @@ const restingPerRound = computed(() => {
 });
 
 const averageSkillLevel = computed(() => {
-  if (selectedPlayers.value.length === 0) return '0.0';
-  const total = selectedPlayers.value.reduce((sum: number, player: Player) => sum + player.skillLevel, 0);
+  if (selectedPlayers.value.length === 0) {
+    return '0.0';
+  }
+  const total = selectedPlayers.value.reduce((sum: number, player: Player) => {
+    return sum + player.skillLevel;
+  }, 0);
   return (total / selectedPlayers.value.length).toFixed(1);
 });
 

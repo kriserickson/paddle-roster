@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-This is a **Pickleball Player Matching System** built with Nuxt.js and TypeScript. The application helps organize recreational 
+This is a **Pickleball Player Matching System** built with Nuxt.js and TypeScript. The application helps organize recreational
 pickleball leagues by intelligently matching players across multiple game rounds.
 
 ## Key Features
@@ -39,10 +39,10 @@ pickleball leagues by intelligently matching players across multiple game rounds
 - In Vue files have the script first, then the template, and finally the style section.
 - The functions should use function declarations rather than constants with lambdas.
 
-
 ## Data Models
 
 Key interfaces to maintain:
+
 - `Player`: name, skillLevel (1-5, decimals allowed), partner reference
 - `Game`: court assignment, player assignments, round number
 - `MatchingOptions`: skill balancing, partner preferences, rest distribution
@@ -50,6 +50,7 @@ Key interfaces to maintain:
 ## Algorithm Requirements
 
 The matching algorithm should:
+
 1. Avoid extreme skill mismatches between teams
 2. Respect partner preferences when enabled
 3. Distribute rest periods equally (1-4 players per round)

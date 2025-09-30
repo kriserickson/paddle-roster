@@ -30,7 +30,9 @@ export const useGameStore = defineStore('game', () => {
    * Getters
    */
   const scheduleStats = computed(() => {
-    if (!currentSchedule.value) return null;
+    if (!currentSchedule.value) {
+      return null;
+    }
 
     const schedule = currentSchedule.value;
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
@@ -178,7 +180,9 @@ export const useGameStore = defineStore('game', () => {
 
   function calculateAverageSkillDifference(schedule: GameSchedule): number {
     const allGames = schedule.rounds.flat();
-    if (allGames.length === 0) return 0;
+    if (allGames.length === 0) {
+      return 0;
+    }
 
     const totalDifference = allGames.reduce((sum, game) => sum + game.skillDifference, 0);
     return Math.round((totalDifference / allGames.length) * 100) / 100;

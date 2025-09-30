@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 /* Brand Colors and Custom Styles */
 :root {
@@ -10,8 +10,8 @@
   --paddle-red-light: #ff4c50;
   --paddle-red-dark: #e01f23;
 
-    /* Override @nuxt/ui primary color */
-  --ui-primary: var(--paddle-teal);  
+  /* Override @nuxt/ui primary color */
+  --ui-primary: var(--paddle-teal);
 }
 
 /* Global Background and Layout */
@@ -37,7 +37,7 @@ body {
 
 .dark .tab-nav {
   background: #23272f !important;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.18) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.18) !important;
 }
 
 .dark .tab-button {
@@ -100,10 +100,10 @@ body {
 }
 
 .dark #configuration-container {
-  background: var(--color-gray-600);    
+  background: var(--color-gray-600);
 }
 
-.dark #configuration-container button[role=checkbox] {
+.dark #configuration-container button[role='checkbox'] {
   --tw-ring-color: #fff;
 }
 
@@ -410,24 +410,32 @@ body {
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 /* Animations */
-.fade-enter-active, .fade-leave-active {
+.fade-enter-active,
+.fade-leave-active {
   transition: opacity 0.3s ease;
 }
 
-.fade-enter-from, .fade-leave-to {
+.fade-enter-from,
+.fade-leave-to {
   opacity: 0;
 }
 
-.slide-enter-active, .slide-leave-active {
+.slide-enter-active,
+.slide-leave-active {
   transition: transform 0.3s ease;
 }
 
-.slide-enter-from, .slide-leave-to {
+.slide-enter-from,
+.slide-leave-to {
   transform: translateY(-10px);
 }
 
@@ -436,7 +444,7 @@ body {
   body {
     background: white !important;
   }
-  
+
   .app-header,
   .tab-nav,
   .btn-primary,
@@ -451,7 +459,7 @@ body {
     box-shadow: none !important;
     border: 1px solid #000 !important;
   }
-  
+
   .content-card,
   .player-card,
   .game-card {
@@ -459,7 +467,7 @@ body {
     border: 1px solid #ccc !important;
     box-shadow: none !important;
   }
-  
+
   .modal-overlay,
   .tab-nav {
     display: none !important;
@@ -472,11 +480,11 @@ body {
     border-radius: 12px;
     margin: 0.5rem;
   }
-  
+
   .content-card-header {
     padding: 1rem;
   }
-  
+
   .btn-primary,
   .btn-danger,
   .btn-secondary {
