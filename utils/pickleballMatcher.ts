@@ -507,8 +507,25 @@ export class PickleballMatcher {
 
         // Count how many times these players have played on this court
         for (const pid of [...team1, ...team2]) {
-          const courtCount = courtHistory[pid].filter(c => c === court).length;
+          const history = courtHistory[pid];
+          const courtCount = history.filter(c => c === court).length;
           score -= courtCount * 10;
+
+          // Add extra penalty for playing on the same court in the last round (consecutive rounds)
+          if (history.length > 0) {
+            const lastCourt = history[history.length - 1];
+            if (lastCourt === court) {
+              score -= 50; // Heavy penalty for consecutive rounds on same court
+            }
+          }
+
+          // Add moderate penalty for playing on the same court in the last 2 rounds
+          if (history.length > 1) {
+            const secondLastCourt = history[history.length - 2];
+            if (secondLastCourt === court) {
+              score -= 20; // Moderate penalty for recent play on same court
+            }
+          }
         }
 
         // Add randomness for tie-breaking
