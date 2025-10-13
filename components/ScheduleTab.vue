@@ -245,16 +245,16 @@ watch(
                   </th>
                 </tr>
               </thead>
-              <tbody class="bg-white divide-y divide-gray-200">
+              <tbody class="bg-white dark:bg-slate-800 divide-y divide-gray-200 dark:divide-gray-700">
                 <tr
                   v-for="(round, roundIndex) in gameStore.currentSchedule.rounds"
                   :key="roundIndex"
-                  class="hover:bg-paddle-teal/5 transition-colors duration-200"
-                  :class="{ 'bg-gray-50': roundIndex % 2 === 1 }"
+                  class="hover:bg-paddle-teal/5 dark:hover:bg-paddle-teal/10 transition-colors duration-200"
+                  :class="{ 'bg-gray-50 dark:bg-slate-700/50': roundIndex % 2 === 1 }"
                 >
-                  <td class="px-4 py-3 text-sm font-bold text-gray-900 bg-gray-50">
+                  <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-700">
                     <div class="flex items-center gap-2">
-                      <Icon name="mdi:numeric" class="text-paddle-teal" />
+                      <Icon name="mdi:numeric" class="text-paddle-teal dark:text-paddle-teal-light" />
                       Round {{ roundIndex + 1 }}
                     </div>
                   </td>
@@ -264,12 +264,16 @@ watch(
                     class="px-4 py-3 text-xs text-center"
                   >
                     <div v-if="getGameForCourt(round as Game[], court)" class="space-y-2">
-                      <div class="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs font-medium">
+                      <div
+                        class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium border border-blue-200 dark:border-blue-700"
+                      >
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[0]) }},
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[1]) }}
                       </div>
-                      <div class="text-paddle-teal font-bold text-xs">vs</div>
-                      <div class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs font-medium">
+                      <div class="text-paddle-teal dark:text-paddle-teal-light font-bold text-xs">vs</div>
+                      <div
+                        class="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 px-2 py-1 rounded text-xs font-medium border border-red-200 dark:border-red-700"
+                      >
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[0]) }},
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[1]) }}
                       </div>
@@ -280,7 +284,7 @@ watch(
                       <span
                         v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]"
                         :key="playerId"
-                        class="inline-block px-2 py-1 bg-amber-100 text-amber-800 rounded-full text-xs font-medium"
+                        class="inline-block px-2 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-700"
                       >
                         {{ getPlayerName(playerId) }}
                       </span>

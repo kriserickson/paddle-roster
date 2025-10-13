@@ -533,7 +533,9 @@ onMounted(() => {
 
       <div class="p-6">
         <!-- Filter Controls -->
-        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-gray-600 rounded-lg">
+        <div
+          class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600"
+        >
           <!-- Search -->
           <div class="md:col-span-3">
             <UFormField label="Search Players">
@@ -556,8 +558,8 @@ onMounted(() => {
 
         <!-- Filter Actions -->
         <div class="flex justify-between items-center mb-4">
-          <div class="flex items-center gap-2 text-sm text-gray-600">
-            <Icon name="mdi:information" class="text-paddle-teal" />
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+            <Icon name="mdi:information" class="text-paddle-teal dark:text-paddle-teal-light" />
             <span>
               Showing {{ filteredPlayers.length }} of {{ playerStore.players.length }} players. You need at least
               {{ matchingOptions.numberOfCourts * 4 }} players for {{ matchingOptions.numberOfCourts }} court(s).

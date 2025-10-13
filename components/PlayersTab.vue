@@ -412,16 +412,22 @@ function handleExportPlayers(): void {
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
-          <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-            <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-blue-700" data-testid="total-players-count">{{ totalPlayers }}</div>
-            <div class="text-sm font-medium text-blue-600">Total Players</div>
+          <div
+            class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
+          >
+            <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="total-players-count">
+              {{ totalPlayers }}
+            </div>
+            <div class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Players</div>
           </div>
           <template #placeholder>
-            <div class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100">
-              <Icon name="mdi:account-group" class="text-4xl text-blue-600 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-blue-700">0</div>
-              <div class="text-sm font-medium text-blue-600">Total Players</div>
+            <div
+              class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
+            >
+              <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">0</div>
+              <div class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Players</div>
             </div>
           </template>
         </ClientOnly>
@@ -429,16 +435,20 @@ function handleExportPlayers(): void {
 
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
-          <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
-            <Icon name="mdi:star" class="text-4xl text-amber-600 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-amber-700">{{ averageSkillLevel }}</div>
-            <div class="text-sm font-medium text-amber-600">Avg Skill Level</div>
+          <div
+            class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
+          >
+            <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">{{ averageSkillLevel }}</div>
+            <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
           </div>
           <template #placeholder>
-            <div class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100">
-              <Icon name="mdi:star" class="text-4xl text-amber-600 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-amber-700">0.0</div>
-              <div class="text-sm font-medium text-amber-600">Avg Skill Level</div>
+            <div
+              class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
+            >
+              <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">0.0</div>
+              <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
             </div>
           </template>
         </ClientOnly>
@@ -446,16 +456,20 @@ function handleExportPlayers(): void {
 
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
-          <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
-            <Icon name="mdi:account-heart" class="text-4xl text-purple-600 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-purple-700">{{ playersWithPartners }}</div>
-            <div class="text-sm font-medium text-purple-600">With Partners</div>
+          <div
+            class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
+          >
+            <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
+            <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">{{ playersWithPartners }}</div>
+            <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
           </div>
           <template #placeholder>
-            <div class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100">
-              <Icon name="mdi:account-heart" class="text-4xl text-purple-600 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-purple-700">0</div>
-              <div class="text-sm font-medium text-purple-600">With Partners</div>
+            <div
+              class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
+            >
+              <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
+              <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">0</div>
+              <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
             </div>
           </template>
         </ClientOnly>
