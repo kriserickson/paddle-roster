@@ -161,7 +161,8 @@ async function downloadPdf(): Promise<void> {
         filename: filename
       });
 
-      // Show success toast
+      // Close loading toast and show success toast
+      toast.clear();
       toast.add({
         title: 'PDF Generated Successfully',
         description: `Your schedule has been downloaded as ${filename}`,
@@ -181,7 +182,8 @@ async function downloadPdf(): Promise<void> {
       backgroundColor: '#ffffff'
     });
 
-    // Show success toast
+    // Close loading toast and show success toast
+    toast.clear();
     toast.add({
       title: 'PDF Generated Successfully',
       description: `Your schedule has been downloaded as ${filename}`,
@@ -190,7 +192,8 @@ async function downloadPdf(): Promise<void> {
   } catch (error) {
     console.error('Error generating PDF:', error);
 
-    // Show error toast
+    // Close loading toast and show error toast
+    toast.clear();
     toast.add({
       title: 'PDF Generation Failed',
       description: `There was an error creating your PDF: ${error instanceof Error ? error.message : 'Unknown error'}`,
@@ -511,5 +514,15 @@ watch(
 .print-preview-container.compact :deep(.section h2) {
   font-size: 14pt;
   margin: 10pt 0 6pt 0;
+}
+
+/* Improve placeholder visibility in dark mode */
+:deep(.dark input::placeholder) {
+  color: rgb(156 163 175 / 0.8); /* lighter gray in dark mode */
+  opacity: 1;
+}
+
+:deep(.dark input:not(:placeholder-shown)) {
+  color: rgb(255 255 255 / 0.9); /* slightly lighter text when filled */
 }
 </style>
