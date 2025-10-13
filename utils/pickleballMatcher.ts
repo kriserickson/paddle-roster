@@ -17,7 +17,7 @@ export class PickleballMatcher {
    */
   public generateSchedule(eventLabel: string = ''): GameSchedule {
     const activePlayers = this.players.filter(p => p.active !== false);
-    const iterations = 1000;
+    const iterations = 1500;
 
     let bestSchedule: GameSchedule | null = null;
     let bestScore = Number.POSITIVE_INFINITY;
@@ -98,20 +98,26 @@ export class PickleballMatcher {
       }
     }
 
-    return {
+    const schedule = {
       rounds,
       restingPlayers: restMatrix,
       eventLabel,
       options: this.opts,
       generatedAt: new Date()
     };
+
+    return schedule;
   }
 
   /**
    * Build rest schedule ensuring even distribution and spacing.
    * Priority: Even distribution > Max spacing between rests
    */
-  private buildRestSchedule(playerIds: string[], sittersPerRound: number, firstRoundSitters?: string[]): string[][] {
+  private buildRestSchedule(
+    playerIds: string[],
+    sittersPerRound: number,
+    firstRoundSitters?: readonly string[]
+  ): string[][] {
     if (sittersPerRound <= 0) {
       return Array.from({ length: this.opts.numberOfRounds }, () => []);
     }
@@ -127,19 +133,40 @@ export class PickleballMatcher {
       lastRestRound[pid] = -100; // Far in the past
     }
 
-    // Calculate target rests per player
+    // Calculate target rests per player (used when distributeRestEqually is enabled)
     const totalRestSlots = rounds * sittersPerRound;
     const avgRestsPerPlayer = totalRestSlots / playerIds.length;
 
     for (let r = 0; r < rounds; r++) {
       let sitters: string[];
 
-      if (r === 0 && firstRoundSitters && firstRoundSitters.length === sittersPerRound) {
-        // Use specified first round sitters
-        sitters = [...firstRoundSitters];
-        for (const pid of sitters) {
+      if (r === 0 && firstRoundSitters && firstRoundSitters.length > 0) {
+        // Use specified first round sitters (if any), and fill remaining slots
+        const specifiedSitters = [...firstRoundSitters];
+
+        // Update rest counts for specified sitters
+        for (const pid of specifiedSitters) {
           restCounts[pid]++;
           lastRestRound[pid] = r;
+        }
+
+        if (specifiedSitters.length < sittersPerRound) {
+          // Need to select additional sitters
+          const remainingSlots = sittersPerRound - specifiedSitters.length;
+          const availablePlayers = playerIds.filter(pid => !specifiedSitters.includes(pid));
+
+          const additionalSitters = this.selectSittersForRound(
+            availablePlayers,
+            remainingSlots,
+            r,
+            restCounts,
+            lastRestRound,
+            avgRestsPerPlayer
+          );
+
+          sitters = [...specifiedSitters, ...additionalSitters];
+        } else {
+          sitters = specifiedSitters;
         }
       } else {
         // Select sitters greedily
@@ -174,9 +201,11 @@ export class PickleballMatcher {
     const scores: Array<{ id: string; score: number }> = playerIds.map(pid => {
       let score = 0;
 
-      // Priority 1: Players who need more rest (below average)
-      const restDeficit = avgRestsPerPlayer - restCounts[pid];
-      score += restDeficit * 1000;
+      // Priority 1: Even distribution - players who need more rest (below average)
+      if (this.opts.distributeRestEqually) {
+        const restDeficit = avgRestsPerPlayer - restCounts[pid];
+        score += restDeficit * 1000;
+      }
 
       // Priority 2: Players who haven't rested recently (spacing)
       const roundsSinceRest = currentRound - lastRestRound[pid];
@@ -213,11 +242,37 @@ export class PickleballMatcher {
   ): Game[] {
     const games: Game[] = [];
 
+    // Validate we have the right number of players
+    const expectedPlayers = this.opts.numberOfCourts * 4;
+    if (playingPlayers.length !== expectedPlayers) {
+      throw new Error(`Round ${roundNum}: Expected ${expectedPlayers} players but got ${playingPlayers.length}`);
+    }
+
     // Create pairs (teams)
     const pairs = this.createPairsGreedy(playingPlayers, partnerHistory);
 
+    // Validate we have the right number of pairs
+    const expectedPairs = this.opts.numberOfCourts * 2;
+    if (pairs.length !== expectedPairs) {
+      console.error(
+        `Round ${roundNum}: Expected ${expectedPairs} pairs but got ${pairs.length}. Players: ${playingPlayers.length}`
+      );
+      // This is a critical error - we can't proceed
+      throw new Error(`Failed to create correct number of pairs for round ${roundNum}`);
+    }
+
     // Match pairs against each other
     const matchings = this.matchPairsGreedy(pairs, opponentHistory);
+
+    // Validate we have the right number of matchings
+    const expectedMatchings = this.opts.numberOfCourts;
+    if (matchings.length !== expectedMatchings) {
+      console.error(
+        `Round ${roundNum}: Expected ${expectedMatchings} matchings but got ${matchings.length}. Pairs: ${pairs.length}`
+      );
+      // This is a critical error - we can't proceed
+      throw new Error(`Failed to create correct number of matchings for round ${roundNum}`);
+    }
 
     // Assign to courts
     const courtAssignments = this.assignCourtsGreedy(matchings, courtHistory, roundNum);
@@ -225,6 +280,13 @@ export class PickleballMatcher {
     // Create game objects
     for (let i = 0; i < courtAssignments.length; i++) {
       const { team1, team2, court } = courtAssignments[i];
+
+      // Validate teams have players
+      if (!team1[0] || !team1[1] || !team2[0] || !team2[1]) {
+        console.error(`Round ${roundNum}, Court ${court}: Invalid team composition`, { team1, team2 });
+        throw new Error(`Invalid team composition in round ${roundNum}`);
+      }
+
       const skillLevel1 = this.player(team1[0]).skillLevel + this.player(team1[1]).skillLevel;
       const skillLevel2 = this.player(team2[0]).skillLevel + this.player(team2[1]).skillLevel;
 
@@ -296,6 +358,10 @@ export class PickleballMatcher {
       if (bestPartner) {
         pairs.push([p1, bestPartner]);
         shuffled.splice(shuffled.indexOf(bestPartner), 1);
+      } else if (shuffled.length > 0) {
+        // Force pairing with first available if no best partner found
+        const forcedPartner = shuffled.shift()!;
+        pairs.push([p1, forcedPartner]);
       }
     }
 
@@ -318,10 +384,25 @@ export class PickleballMatcher {
       // Find best opponent team
       let bestOpponent: string[] | null = null;
       let bestScore = -Infinity;
+      let hasValidOpponent = false;
 
+      // First pass: try to find opponent that meets all constraints
       for (let i = 0; i < available.length; i++) {
         const team2 = available[i];
         let score = 0;
+
+        // Calculate skill difference
+        const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+        const skill2 = team2.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+        const skillDiff = Math.abs(skill1 - skill2);
+
+        // Enforce maxSkillDifference constraint if balancing is enabled
+        if (this.opts.balanceSkillLevels && skillDiff > this.opts.maxSkillDifference) {
+          // Skip this pairing - it violates the max skill difference constraint
+          continue;
+        }
+
+        hasValidOpponent = true;
 
         // Count how many times these players have faced each other
         let opponentCount = 0;
@@ -336,15 +417,47 @@ export class PickleballMatcher {
 
         // Consider skill balance
         if (this.opts.balanceSkillLevels) {
-          const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
-          const skill2 = team2.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
-          const diff = Math.abs(skill1 - skill2);
-          score -= diff * 20;
+          score -= skillDiff * 20;
         }
 
         if (score > bestScore) {
           bestScore = score;
           bestOpponent = team2;
+        }
+      }
+
+      // If no valid opponent found (all violate maxSkillDifference), relax constraint
+      if (!hasValidOpponent && available.length > 0) {
+        bestOpponent = null;
+        bestScore = -Infinity;
+
+        // Second pass: ignore maxSkillDifference constraint to ensure all teams get matched
+        for (let i = 0; i < available.length; i++) {
+          const team2 = available[i];
+          let score = 0;
+
+          const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+          const skill2 = team2.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+          const skillDiff = Math.abs(skill1 - skill2);
+
+          // Count how many times these players have faced each other
+          let opponentCount = 0;
+          for (const p1 of team1) {
+            for (const p2 of team2) {
+              opponentCount += opponentHistory[p1][p2] || 0;
+            }
+          }
+
+          // Prefer new opponents
+          score -= opponentCount * 200;
+
+          // Prefer smaller skill differences even if over the limit
+          score -= skillDiff * 20;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestOpponent = team2;
+          }
         }
       }
 
@@ -354,6 +467,13 @@ export class PickleballMatcher {
           team2: [bestOpponent[0], bestOpponent[1]]
         });
         available.splice(available.indexOf(bestOpponent), 1);
+      } else if (available.length > 0) {
+        // This should never happen, but if it does, force a match with the first available team
+        const forcedOpponent = available.shift()!;
+        matchings.push({
+          team1: [team1[0], team1[1]],
+          team2: [forcedOpponent[0], forcedOpponent[1]]
+        });
       }
     }
 
@@ -362,6 +482,7 @@ export class PickleballMatcher {
 
   /**
    * Assign games to courts, balancing court usage.
+   * Ensures each court is used exactly once per round.
    */
   private assignCourtsGreedy(
     matchings: Array<{ team1: [string, string]; team2: [string, string] }>,
@@ -369,6 +490,7 @@ export class PickleballMatcher {
     _roundNum: number
   ): Array<{ team1: [string, string]; team2: [string, string]; court: number }> {
     const assignments: Array<{ team1: [string, string]; team2: [string, string]; court: number }> = [];
+    const usedCourts = new Set<number>();
 
     for (let i = 0; i < matchings.length; i++) {
       const { team1, team2 } = matchings[i];
@@ -376,6 +498,11 @@ export class PickleballMatcher {
       let bestScore = -Infinity;
 
       for (let court = 1; court <= this.opts.numberOfCourts; court++) {
+        // Skip courts already used in this round
+        if (usedCourts.has(court)) {
+          continue;
+        }
+
         let score = 0;
 
         // Count how many times these players have played on this court
@@ -393,6 +520,8 @@ export class PickleballMatcher {
         }
       }
 
+      // Mark this court as used in this round
+      usedCourts.add(bestCourt);
       assignments.push({ team1, team2, court: bestCourt });
     }
 
@@ -408,8 +537,10 @@ export class PickleballMatcher {
     // PRIORITY 0: First round sitters must be respected (if specified)
     // This is enforced during construction, so we don't penalize here
 
-    // PRIORITY 1: Even rest distribution (max difference of 1)
-    score += this.scoreRestDistribution(schedule) * 10000;
+    // PRIORITY 1: Even rest distribution (max difference of 1) - if enabled
+    if (this.opts.distributeRestEqually) {
+      score += this.scoreRestDistribution(schedule) * 10000;
+    }
 
     // PRIORITY 2: Rest spacing (maximize distance between rests)
     score += this.scoreRestSpacing(schedule) * 1000;
@@ -426,6 +557,8 @@ export class PickleballMatcher {
     // PRIORITY 6: Skill level balance (if enabled)
     if (this.opts.balanceSkillLevels) {
       score += this.scoreSkillBalance(schedule) * 5;
+      // Add penalty for games exceeding maxSkillDifference
+      score += this.scoreMaxSkillDifferenceViolations(schedule) * 100;
     }
 
     // PRIORITY 7: Couples play together (if enabled)
@@ -567,6 +700,22 @@ export class PickleballMatcher {
     }
 
     return totalImbalance;
+  }
+
+  private scoreMaxSkillDifferenceViolations(schedule: GameSchedule): number {
+    let violations = 0;
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        if (game.skillDifference > this.opts.maxSkillDifference) {
+          // Exponential penalty for violations
+          const excess = game.skillDifference - this.opts.maxSkillDifference;
+          violations += Math.pow(2, excess);
+        }
+      }
+    }
+
+    return violations;
   }
 
   private scoreCouplesPreference(schedule: GameSchedule): number {

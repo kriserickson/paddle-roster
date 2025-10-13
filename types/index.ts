@@ -57,7 +57,7 @@ export interface MatchingOptions {
   /** Whether to ensure equal distribution of rest periods */
   distributeRestEqually: boolean;
   /**  */
-  firstRoundSitters?: string[];
+  firstRoundSitters?: readonly string[];
 }
 
 /**

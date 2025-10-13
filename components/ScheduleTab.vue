@@ -77,7 +77,14 @@ function formatDateTime(date: Date): string {
 }
 
 function getGameForCourt(round: readonly Game[], courtNumber: number): Game | undefined {
-  return round.find(game => game.court === courtNumber) as Game | undefined;
+  const game = round.find(game => game.court === courtNumber) as Game | undefined;
+  if (!game) {
+    console.log(
+      `⚠️ No game found for court ${courtNumber}. Available courts in round:`,
+      round.map(g => g.court)
+    );
+  }
+  return game;
 }
 
 // Print functionality
