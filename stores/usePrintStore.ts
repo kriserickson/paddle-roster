@@ -72,9 +72,11 @@ export const usePrintStore = defineStore('print', () => {
             background-color: #f8f8f8;
         }
         
-        .schedule-grid th {
+        .schedule-grid thead th {
             background-color: #f0f0f0;
+            color: #333 !important;
         }
+            
     `
       : `
         .team2 {
@@ -89,9 +91,10 @@ export const usePrintStore = defineStore('print', () => {
         
         .schedule-grid th {
             background: transparent;
+            color: #333;
         }
         
-        .rest-players {
+        .resting-players {
             background: transparent;
             border: none !important;
             padding: 5px 0;
@@ -163,11 +166,11 @@ export const usePrintStore = defineStore('print', () => {
         
         .round-header {
             font-weight: bold;
-            font-size: ${options.compactLayout ? '10px' : '13px'};
+            font-size: ${options.compactLayout ? '10px' : '12px'};
         }
         
         .game-cell {
-            font-size: ${options.compactLayout ? '10px' : '13px'};
+            font-size: ${options.compactLayout ? '10px' : '12px'};
             line-height: 1.1;
             min-height: ${options.compactLayout ? '30px' : '40px'};
         }
@@ -182,7 +185,7 @@ export const usePrintStore = defineStore('print', () => {
             margin: 1px 0;
             padding: 1px 2px;
             border-radius: 2px;
-            font-size: ${options.compactLayout ? '11px' : '13px'};            
+            font-size: ${options.compactLayout ? '10px' : '12px'};            
             flex: 1; 
             align-content: center;
         }
@@ -194,11 +197,10 @@ export const usePrintStore = defineStore('print', () => {
             margin: 2px 0;
         }
         
-        .rest-players {
+        .resting-players {
             padding: 5px;
-            border: 1px solid #ddd;
             border-radius: 3px;
-            font-size: ${options.compactLayout ? '11px' : '13px'};            
+            font-size: ${options.compactLayout ? '10px' : '12px'};            
         }
         
         @media print {
@@ -212,9 +214,7 @@ export const usePrintStore = defineStore('print', () => {
 
     // Header
     html += '<div class="header">';
-    if (options.eventTitle) {
-      html += `<h1>${options.eventTitle}</h1>`;
-    }
+    html += `<h1>${options.eventTitle || 'Pickleball Schedule'}</h1>`;
 
     // Event info - compact layout puts everything on one line
     if (options.eventDate || options.location || options.organizer) {
@@ -281,7 +281,7 @@ export const usePrintStore = defineStore('print', () => {
         html += '<td class="game-cell">';
         if (restingPlayers.length > 0) {
           const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
-          html += `<div class="rest-players">${restingNames}</div>`;
+          html += `<div class="resting-players">${restingNames}</div>`;
         } else {
           html += '-';
         }

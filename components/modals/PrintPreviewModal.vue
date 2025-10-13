@@ -518,11 +518,13 @@ watch(
 
 /* Improve placeholder visibility in dark mode */
 :deep(.dark input::placeholder) {
-  color: rgb(156 163 175 / 0.8); /* lighter gray in dark mode */
+  color: rgb(156 163 175 / 0.8);
+  /* lighter gray in dark mode */
   opacity: 1;
 }
 
 :deep(.dark input:not(:placeholder-shown)) {
-  color: rgb(255 255 255 / 0.9); /* slightly lighter text when filled */
+  color: rgb(255 255 255 / 0.9);
+  /* slightly lighter text when filled */
 }
 </style>
