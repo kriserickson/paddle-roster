@@ -409,7 +409,7 @@ watch(
                     'bg-red-100 text-red-800': game.skillDifference > 2
                   }"
                 >
-                  <Icon name="mdi:balance-scale" />
+                  <Icon name="mdi:scale-balance" />
                   Diff: {{ game.skillDifference.toFixed(1) }}
                 </div>
               </div>

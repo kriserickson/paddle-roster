@@ -87,7 +87,8 @@ export const useGameStore = defineStore('game', () => {
   async function loadUserPreferences(): Promise<void> {
     try {
       isLoadingPreferences.value = true;
-      matchingOptions.value = await preferencesApi.getUserPreferences();
+      const userPrefs = await preferencesApi.getUserPreferences();
+      matchingOptions.value = { ...userPrefs };
     } catch (error) {
       console.error('Error loading user preferences:', error);
       // Fall back to default options if loading fails
@@ -123,7 +124,8 @@ export const useGameStore = defineStore('game', () => {
 
   async function resetOptions(): Promise<void> {
     try {
-      matchingOptions.value = await preferencesApi.resetUserPreferences();
+      const resetPrefs = await preferencesApi.resetUserPreferences();
+      matchingOptions.value = { ...resetPrefs };
     } catch (error) {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
@@ -208,10 +210,10 @@ export const useGameStore = defineStore('game', () => {
 
   return {
     // State
-    currentSchedule: readonly(currentSchedule),
-    matchingOptions: readonly(matchingOptions),
-    isGenerating: readonly(isGenerating),
-    isLoadingPreferences: readonly(isLoadingPreferences),
+    currentSchedule,
+    matchingOptions,
+    isGenerating,
+    isLoadingPreferences,
     defaultOptions,
 
     // Getters
