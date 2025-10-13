@@ -20,6 +20,9 @@ const isSavingPreferences = ref(false);
 const playerSearchQuery = ref('');
 const skillLevelFilter = ref('all');
 
+// First round sitters selection
+const firstRoundSitters = ref<string[]>([...(gameStore.matchingOptions.firstRoundSitters || [])]);
+
 // Flag to prevent saving when updating from store
 const isUpdatingFromStore = ref(false);
 
@@ -31,13 +34,21 @@ let saveTimeout: NodeJS.Timeout | null = null;
 
 // Helper function to compare MatchingOptions
 function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
+  // Compare arrays properly
+  const aFirstRoundSitters = a.firstRoundSitters || [];
+  const bFirstRoundSitters = b.firstRoundSitters || [];
+  const firstRoundSittersEqual =
+    aFirstRoundSitters.length === bFirstRoundSitters.length &&
+    aFirstRoundSitters.every((id, index) => id === bFirstRoundSitters[index]);
+
   return (
     a.numberOfCourts === b.numberOfCourts &&
     a.numberOfRounds === b.numberOfRounds &&
     a.balanceSkillLevels === b.balanceSkillLevels &&
     a.respectPartnerPreferences === b.respectPartnerPreferences &&
     a.maxSkillDifference === b.maxSkillDifference &&
-    a.distributeRestEqually === b.distributeRestEqually
+    a.distributeRestEqually === b.distributeRestEqually &&
+    firstRoundSittersEqual
   );
 }
 
@@ -97,6 +108,19 @@ watch(
         isSavingPreferences.value = false;
       }
     }, 1500); // 1.5 second debounce
+  },
+  { deep: true }
+);
+
+// Watch for changes to firstRoundSitters and update matchingOptions
+watch(
+  firstRoundSitters,
+  newSitters => {
+    // Create a new options object to ensure reactivity triggers
+    matchingOptions.value = {
+      ...matchingOptions.value,
+      firstRoundSitters: newSitters.length > 0 ? [...newSitters] : undefined
+    };
   },
   { deep: true }
 );
@@ -162,6 +186,32 @@ const restingPerRound = computed(() => {
   return Math.max(0, selectedPlayers.value.length - playersPerRound.value);
 });
 
+const maxFirstRoundSitters = computed(() => {
+  return Math.min(4, restingPerRound.value);
+});
+
+// Format ALL selected players for USelectMenu (needs specific format)
+const allPlayersForSittingOptions = computed(() => {
+  // Include ALL selected players so v-model can find both selected and unselected
+  const options = selectedPlayers.value.map(player => ({
+    label: player.name,
+    value: player.id,
+    ...player // Include all player properties
+  }));
+  return options;
+});
+
+// Convert between player IDs and player objects for v-model
+const selectedFirstRoundSitterObjects = computed({
+  get: () => {
+    // Return the selected objects from all options
+    return allPlayersForSittingOptions.value.filter(opt => firstRoundSitters.value.includes(opt.value));
+  },
+  set: (selectedOptions: Array<{ label: string; value: string }>) => {
+    firstRoundSitters.value = selectedOptions.map(opt => opt.value);
+  }
+});
+
 const averageSkillLevel = computed(() => {
   if (selectedPlayers.value.length === 0) {
     return '0.0';
@@ -202,6 +252,27 @@ function clearAllFilters(): void {
   skillLevelFilter.value = 'all';
 }
 
+function toggleFirstRoundSitter(playerId: string): void {
+  const index = firstRoundSitters.value.indexOf(playerId);
+  if (index > -1) {
+    firstRoundSitters.value.splice(index, 1);
+  } else {
+    if (firstRoundSitters.value.length < maxFirstRoundSitters.value) {
+      firstRoundSitters.value.push(playerId);
+    } else {
+      toast.add({
+        title: 'Maximum Reached',
+        description: `You can only select up to ${maxFirstRoundSitters.value} players to sit out in the first round.`,
+        color: 'warning'
+      });
+    }
+  }
+}
+
+function clearFirstRoundSitters(): void {
+  firstRoundSitters.value = [];
+}
+
 async function generateSchedule(): Promise<void> {
   try {
     const schedule = await gameStore.generateSchedule(eventLabel.value);
@@ -229,6 +300,7 @@ function resetToDefaults(): void {
   isUpdatingFromStore.value = true;
   gameStore.resetOptions();
   matchingOptions.value = { ...gameStore.matchingOptions };
+  firstRoundSitters.value = [];
   nextTick(() => {
     isUpdatingFromStore.value = false;
   });
@@ -243,6 +315,7 @@ function resetToDefaults(): void {
 onMounted(() => {
   isUpdatingFromStore.value = true;
   matchingOptions.value = { ...gameStore.matchingOptions };
+  firstRoundSitters.value = [...(gameStore.matchingOptions.firstRoundSitters || [])];
   nextTick(() => {
     isUpdatingFromStore.value = false;
   });
@@ -344,6 +417,49 @@ onMounted(() => {
               <span class="player-skill-badge">
                 {{ matchingOptions.maxSkillDifference }}
               </span>
+            </div>
+          </UFormField>
+
+          <!-- First Round Sitters -->
+          <UFormField
+            v-if="restingPerRound > 0"
+            label="First Round Sitters (Optional)"
+            :help="`Select up to ${maxFirstRoundSitters} players to sit out in the first round`"
+          >
+            <div class="space-y-3">
+              <div v-if="firstRoundSitters.length > 0" class="flex flex-wrap gap-2">
+                <UBadge
+                  v-for="playerId in firstRoundSitters"
+                  :key="playerId"
+                  color="warning"
+                  variant="soft"
+                  class="cursor-pointer"
+                  @click="toggleFirstRoundSitter(playerId)"
+                >
+                  {{ playerStore.getPlayer(playerId)?.name }}
+                  <UIcon name="i-heroicons-x-mark" class="ml-1" />
+                </UBadge>
+              </div>
+              <div v-else class="text-sm text-gray-500 italic">No players selected to sit out first round</div>
+              <div v-if="firstRoundSitters.length < maxFirstRoundSitters" class="space-y-2">
+                <USelectMenu
+                  v-model="selectedFirstRoundSitterObjects"
+                  :items="allPlayersForSittingOptions"
+                  multiple
+                  placeholder="Select players to sit out first round..."
+                  class="w-full"
+                />
+              </div>
+              <UButton
+                v-if="firstRoundSitters.length > 0"
+                size="xs"
+                color="neutral"
+                variant="ghost"
+                @click="clearFirstRoundSitters"
+              >
+                <UIcon name="i-heroicons-x-mark" />
+                Clear All
+              </UButton>
             </div>
           </UFormField>
         </div>

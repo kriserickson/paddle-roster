@@ -1,438 +1,788 @@
 import type { Player, Game, MatchingOptions, GameSchedule } from '~/types';
-/*
- * PickleballMatcher – final trimmed version
- * --------------------------------------------------------------
- *  • Interfaces have been removed from this file to shrink size.
- *    Import them from your own `types.ts` (or wherever you keep
- *    the declarations) so the class remains strongly‑typed.
- *  • Logic, style rules (braces/newlines), infinite‑loop fixes,
- *    and score optimisation are unchanged.
- * --------------------------------------------------------------
- */
 
+/**
+ * PickleballMatcher - Greedy constructive algorithm with local optimization
+ * Builds schedules round-by-round using heuristics, then improves with local search
+ */
 export class PickleballMatcher {
   constructor(
     private players: Player[],
     private opts: MatchingOptions
   ) {
-    // no‑op
+    // no-op
   }
 
   /**
-   * Generate the best schedule found across `trials` random attempts.
+   * Generate the best schedule using greedy construction + local optimization.
    */
-  public generateSchedule(eventLabel = 'Pickleball Tournament', trials = 2000): GameSchedule {
-    let best: GameSchedule | null = null;
+  public generateSchedule(eventLabel: string = ''): GameSchedule {
+    const activePlayers = this.players.filter(p => p.active !== false);
+    const iterations = 1500;
+
+    let bestSchedule: GameSchedule | null = null;
     let bestScore = Number.POSITIVE_INFINITY;
 
-    for (let i = 0; i < trials; i++) {
-      const candidate = this.buildSingleSchedule(eventLabel);
-      const score = this.evaluateScore(candidate);
-      candidate.score = score;
+    // Try multiple random starting points
+    for (let i = 0; i < iterations; i++) {
+      const schedule = this.buildScheduleGreedy(eventLabel, activePlayers);
+      const score = this.evaluateScore(schedule);
+      schedule.score = score;
+
       if (score < bestScore) {
-        console.log(`Try #${i + 1} – score: ${score} best: ${bestScore}`);
-        best = candidate;
         bestScore = score;
+        bestSchedule = schedule;
       }
     }
 
-    return best!;
+    if (!bestSchedule) {
+      throw new Error('Failed to generate schedule');
+    }
+
+    return bestSchedule;
   }
 
-  // ---------------------------------------------------------------------
-  // 1. Build a single random schedule
-  // ---------------------------------------------------------------------
-  private buildSingleSchedule(eventLabel: string): GameSchedule {
-    const players = this.players.filter(p => {
-      return p.active !== false;
-    });
+  /**
+   * Build a schedule greedily, round by round.
+   */
+  private buildScheduleGreedy(eventLabel: string, players: Player[]): GameSchedule {
+    const playerIds = players.map(p => p.id);
+    const sittersPerRound = playerIds.length - this.opts.numberOfCourts * 4;
 
-    const courts = this.opts.numberOfCourts;
-    const perRound = courts * 4;
+    // Build rest schedule first (who sits out each round)
+    const restMatrix = this.buildRestSchedule(playerIds, sittersPerRound, this.opts.firstRoundSitters);
 
-    if (players.length < perRound || players.length > perRound + 4) {
-      throw new Error(`Player count ${players.length} invalid for ${courts} courts.`);
-    }
-
-    const partnerRounds = this.assignPartnerRounds(players, this.opts.numberOfRounds);
-
-    const rests = this.buildRestMatrix(players, partnerRounds);
-
+    // Build games for each round
     const rounds: Game[][] = [];
-    const usedPartners = new Set<string>();
+    const partnerHistory: Record<string, Set<string>> = {};
+    const opponentHistory: Record<string, Record<string, number>> = {};
+    const courtHistory: Record<string, number[]> = {};
 
-    for (let r = 0; r < this.opts.numberOfRounds; r++) {
-      const resting = new Set<string>(rests[r]);
-
-      let playing = players
-        .filter(p => {
-          return !resting.has(p.id);
-        })
-        .map(p => {
-          return p.id;
-        });
-
-      this.shuffle(playing);
-
-      const teams: [string, string][] = [];
-
-      // Mandatory partner teams
-      if (partnerRounds.has(r)) {
-        for (const [p1, p2] of partnerRounds.get(r)!) {
-          if (!playing.includes(p1)) {
-            playing.push(p1);
-          }
-          if (!playing.includes(p2)) {
-            playing.push(p2);
-          }
-          playing = playing.filter(id => {
-            return id !== p1 && id !== p2;
-          });
-          teams.push([p1, p2]);
-          usedPartners.add(this.pairKey(p1, p2));
-        }
-      }
-
-      // Form remaining teams
-      if (this.opts.balanceSkillLevels) {
-        const objs = playing.map(id => {
-          return this.player(id);
-        });
-        objs.sort((a, b) => {
-          return b.skillLevel - a.skillLevel;
-        });
-        while (objs.length > 0) {
-          const hi = objs.shift()!;
-          const lo = objs.pop()!;
-          teams.push([hi.id, lo.id]);
-        }
-      } else {
-        for (let i = 0; i < playing.length; i += 2) {
-          teams.push([playing[i], playing[i + 1]]);
-        }
-      }
-
-      // Pair teams into games & assign courts
-      this.shuffle(teams);
-      const games: Game[] = [];
-      for (let t = 0; t < teams.length; t += 2) {
-        const teamA = teams[t];
-        const teamB = teams[t + 1];
-        usedPartners.add(this.pairKey(...teamA));
-        usedPartners.add(this.pairKey(...teamB));
-        const skillA = this.player(teamA[0]).skillLevel + this.player(teamA[1]).skillLevel;
-        const skillB = this.player(teamB[0]).skillLevel + this.player(teamB[1]).skillLevel;
-        const flip = Math.random() < 0.5;
-        const courtNum = t / 2 + 1;
-        games.push({
-          id: `g-${r + 1}-${courtNum}`,
-          round: r + 1,
-          court: courtNum,
-          team1: flip ? teamB : teamA,
-          team2: flip ? teamA : teamB,
-          team1SkillLevel: flip ? skillB : skillA,
-          team2SkillLevel: flip ? skillA : skillB,
-          skillDifference: Math.abs(skillA - skillB)
-        });
-      }
-      rounds.push(games);
+    // Initialize history
+    for (const pid of playerIds) {
+      partnerHistory[pid] = new Set();
+      opponentHistory[pid] = {};
+      courtHistory[pid] = [];
     }
 
-    return {
+    for (let roundNum = 0; roundNum < this.opts.numberOfRounds; roundNum++) {
+      const restingPlayers = new Set(restMatrix[roundNum]);
+      const playingPlayers = playerIds.filter(id => !restingPlayers.has(id));
+
+      const games = this.buildRoundGames(roundNum + 1, playingPlayers, partnerHistory, opponentHistory, courtHistory);
+
+      rounds.push(games);
+
+      // Update history
+      for (const game of games) {
+        const [a1, a2] = game.team1;
+        const [b1, b2] = game.team2;
+
+        // Partners
+        partnerHistory[a1].add(a2);
+        partnerHistory[a2].add(a1);
+        partnerHistory[b1].add(b2);
+        partnerHistory[b2].add(b1);
+
+        // Opponents
+        for (const p1 of [a1, a2]) {
+          for (const p2 of [b1, b2]) {
+            opponentHistory[p1][p2] = (opponentHistory[p1][p2] || 0) + 1;
+            opponentHistory[p2][p1] = (opponentHistory[p2][p1] || 0) + 1;
+          }
+        }
+
+        // Courts
+        for (const pid of [a1, a2, b1, b2]) {
+          courtHistory[pid].push(game.court);
+        }
+      }
+    }
+
+    const schedule = {
       rounds,
-      restingPlayers: rests,
+      restingPlayers: restMatrix,
       eventLabel,
       options: this.opts,
       generatedAt: new Date()
     };
+
+    return schedule;
   }
 
   /**
-   * Evaluate a candidate schedule and return a numeric penalty score (lower = better).
-   *
-   * Detailed rules and implementation notes:
-   *
-   * 1) Court concentration penalty
-   *    - For each player and court we count how many times the player appears on that court
-   *      across the whole schedule (courtHits[playerId][court]).
-   *    - Penalty contribution for a single player/court is: Math.pow(count, 1.5).
-   *      This penalises players who are overly concentrated on a single court; the
-   *      exponent (1.5) makes the cost grow faster than linearly but less than quadratic.
-   *
-   * 2) Partner repeat penalties
-   *    - partnerCounts[key] is incremented each time the unordered pair (a,b) are
-   *      partners on the same team.
-   *    - Let C = partnerCounts[key]. The number of repeats is repeats = C - 1.
-   *      Only repeats > 0 produce a penalty.
-   *    - Penalty formula: 20 * 2^(repeats - 1)
-   *      Examples: C=1 -> 0 (no penalty), C=2 -> 20 (one repeat), C=3 -> 40, C=4 -> 80, ...
-   *      This is a doubling scheme that heavily discourages the same partnership reoccurring.
-   *
-   * 3) Opponent repeat penalties
-   *    - opponentCounts[key] is incremented each time an unordered pair of players have
-   *      been on opposite teams in a game (i.e., one on team1 and the other on team2).
-   *    - Penalty scheme (piecewise):
-   *        C = 1 -> +10
-   *        C = 2 -> +25
-   *        C >= 3 -> 25 * 2^(C - 2)
-   *      Examples: 1→10, 2→25, 3→50, 4→100, 5→200, ...
-   *      This rewards variety in opponents and penalises repeated opponent matchups progressively.
-   *
-   * Implementation summary:
-   *  - First pass over every round/game builds three maps: courtHits, partnerCounts, opponentCounts.
-   *  - Next we add court concentration penalties (sum of count^1.5).
-   *  - Then we apply partner repeat penalties (doubling scheme starting at 20 for the first repeat).
-   *  - Finally we apply opponent repeat penalties (piecewise as above).
-   *
-   * Notes:
-   *  - pairKey(a,b) creates an unordered key so pairs are order-insensitive.
-   *  - bump(store,a,b) increments store[pairKey(a,b)] by 1 and creates the key if missing.
-   *  - The returned numeric score has no fixed upper bound; it's used to compare schedules
-   *    (lower score indicates a better schedule according to these heuristics).
+   * Build rest schedule ensuring even distribution and spacing.
+   * Priority: Even distribution > Max spacing between rests
    */
-  private evaluateScore(schedule: GameSchedule): number {
-    const courtHits: Record<string, Record<number, number>> = {};
-    const partnerCounts: Record<string, number> = {};
-    const opponentCounts: Record<string, number> = {};
-    const lastPartnerRound: Record<string, number> = {};
-    const lastOpponentRound: Record<string, number> = {};
-    let score = 0;
+  private buildRestSchedule(
+    playerIds: string[],
+    sittersPerRound: number,
+    firstRoundSitters?: readonly string[]
+  ): string[][] {
+    if (sittersPerRound <= 0) {
+      return Array.from({ length: this.opts.numberOfRounds }, () => []);
+    }
 
-    // Count and consecutive-row penalties
-    for (const round of schedule.rounds) {
-      for (const game of round) {
-        const [a1, a2] = game.team1;
-        const [b1, b2] = game.team2;
-        const r = game.round;
-        // Court hits
-        for (const pid of [a1, a2, b1, b2]) {
-          courtHits[pid] = courtHits[pid] || {};
-          courtHits[pid][game.court] = (courtHits[pid][game.court] || 0) + 1;
+    const rounds = this.opts.numberOfRounds;
+    const restMatrix: string[][] = [];
+    const restCounts: Record<string, number> = {};
+    const lastRestRound: Record<string, number> = {};
+
+    // Initialize
+    for (const pid of playerIds) {
+      restCounts[pid] = 0;
+      lastRestRound[pid] = -100; // Far in the past
+    }
+
+    // Calculate target rests per player (used when distributeRestEqually is enabled)
+    const totalRestSlots = rounds * sittersPerRound;
+    const avgRestsPerPlayer = totalRestSlots / playerIds.length;
+
+    for (let r = 0; r < rounds; r++) {
+      let sitters: string[];
+
+      if (r === 0 && firstRoundSitters && firstRoundSitters.length > 0) {
+        // Use specified first round sitters (if any), and fill remaining slots
+        const specifiedSitters = [...firstRoundSitters];
+
+        // Update rest counts for specified sitters
+        for (const pid of specifiedSitters) {
+          restCounts[pid]++;
+          lastRestRound[pid] = r;
         }
 
-        // Partner counts & consecutive partner penalty
-        this.bump(partnerCounts, a1, a2);
-        const pk1 = this.pairKey(a1, a2);
-        if (lastPartnerRound[pk1] === r - 1) {
-          score += 10;
-        }
-        lastPartnerRound[pk1] = r;
+        if (specifiedSitters.length < sittersPerRound) {
+          // Need to select additional sitters
+          const remainingSlots = sittersPerRound - specifiedSitters.length;
+          const availablePlayers = playerIds.filter(pid => !specifiedSitters.includes(pid));
 
-        this.bump(partnerCounts, b1, b2);
-        const pk2 = this.pairKey(b1, b2);
-        if (lastPartnerRound[pk2] === r - 1) {
-          score += 10;
-        }
-        lastPartnerRound[pk2] = r;
+          const additionalSitters = this.selectSittersForRound(
+            availablePlayers,
+            remainingSlots,
+            r,
+            restCounts,
+            lastRestRound,
+            avgRestsPerPlayer
+          );
 
-        // Opponent counts & consecutive opponent penalty
-        for (const x of [a1, a2]) {
-          for (const y of [b1, b2]) {
-            this.bump(opponentCounts, x, y);
-            const ok = this.pairKey(x, y);
-            if (lastOpponentRound[ok] === r - 1) {
-              score += 5;
+          sitters = [...specifiedSitters, ...additionalSitters];
+        } else {
+          sitters = specifiedSitters;
+        }
+      } else {
+        // Select sitters greedily
+        sitters = this.selectSittersForRound(
+          playerIds,
+          sittersPerRound,
+          r,
+          restCounts,
+          lastRestRound,
+          avgRestsPerPlayer
+        );
+      }
+
+      restMatrix.push(sitters);
+    }
+
+    return restMatrix;
+  }
+
+  /**
+   * Select sitters for a round using greedy heuristic.
+   */
+  private selectSittersForRound(
+    playerIds: string[],
+    sittersPerRound: number,
+    currentRound: number,
+    restCounts: Record<string, number>,
+    lastRestRound: Record<string, number>,
+    avgRestsPerPlayer: number
+  ): string[] {
+    // Score each player for sitting (higher = better to sit)
+    const scores: Array<{ id: string; score: number }> = playerIds.map(pid => {
+      let score = 0;
+
+      // Priority 1: Even distribution - players who need more rest (below average)
+      if (this.opts.distributeRestEqually) {
+        const restDeficit = avgRestsPerPlayer - restCounts[pid];
+        score += restDeficit * 1000;
+      }
+
+      // Priority 2: Players who haven't rested recently (spacing)
+      const roundsSinceRest = currentRound - lastRestRound[pid];
+      score += roundsSinceRest * 10;
+
+      // Add small random component for tie-breaking
+      score += Math.random() * 0.1;
+
+      return { id: pid, score };
+    });
+
+    // Sort by score and take top N
+    scores.sort((a, b) => b.score - a.score);
+    const selected = scores.slice(0, sittersPerRound).map(s => s.id);
+
+    // Update counts
+    for (const pid of selected) {
+      restCounts[pid]++;
+      lastRestRound[pid] = currentRound;
+    }
+
+    return selected;
+  }
+
+  /**
+   * Build games for a single round.
+   */
+  private buildRoundGames(
+    roundNum: number,
+    playingPlayers: string[],
+    partnerHistory: Record<string, Set<string>>,
+    opponentHistory: Record<string, Record<string, number>>,
+    courtHistory: Record<string, number[]>
+  ): Game[] {
+    const games: Game[] = [];
+
+    // Validate we have the right number of players
+    const expectedPlayers = this.opts.numberOfCourts * 4;
+    if (playingPlayers.length !== expectedPlayers) {
+      throw new Error(`Round ${roundNum}: Expected ${expectedPlayers} players but got ${playingPlayers.length}`);
+    }
+
+    // Create pairs (teams)
+    const pairs = this.createPairsGreedy(playingPlayers, partnerHistory);
+
+    // Validate we have the right number of pairs
+    const expectedPairs = this.opts.numberOfCourts * 2;
+    if (pairs.length !== expectedPairs) {
+      console.error(
+        `Round ${roundNum}: Expected ${expectedPairs} pairs but got ${pairs.length}. Players: ${playingPlayers.length}`
+      );
+      // This is a critical error - we can't proceed
+      throw new Error(`Failed to create correct number of pairs for round ${roundNum}`);
+    }
+
+    // Match pairs against each other
+    const matchings = this.matchPairsGreedy(pairs, opponentHistory);
+
+    // Validate we have the right number of matchings
+    const expectedMatchings = this.opts.numberOfCourts;
+    if (matchings.length !== expectedMatchings) {
+      console.error(
+        `Round ${roundNum}: Expected ${expectedMatchings} matchings but got ${matchings.length}. Pairs: ${pairs.length}`
+      );
+      // This is a critical error - we can't proceed
+      throw new Error(`Failed to create correct number of matchings for round ${roundNum}`);
+    }
+
+    // Assign to courts
+    const courtAssignments = this.assignCourtsGreedy(matchings, courtHistory, roundNum);
+
+    // Create game objects
+    for (let i = 0; i < courtAssignments.length; i++) {
+      const { team1, team2, court } = courtAssignments[i];
+
+      // Validate teams have players
+      if (!team1[0] || !team1[1] || !team2[0] || !team2[1]) {
+        console.error(`Round ${roundNum}, Court ${court}: Invalid team composition`, { team1, team2 });
+        throw new Error(`Invalid team composition in round ${roundNum}`);
+      }
+
+      const skillLevel1 = this.player(team1[0]).skillLevel + this.player(team1[1]).skillLevel;
+      const skillLevel2 = this.player(team2[0]).skillLevel + this.player(team2[1]).skillLevel;
+
+      games.push({
+        id: `g-${roundNum}-${court}`,
+        round: roundNum,
+        court,
+        team1,
+        team2,
+        team1SkillLevel: skillLevel1,
+        team2SkillLevel: skillLevel2,
+        skillDifference: Math.abs(skillLevel1 - skillLevel2)
+      });
+    }
+
+    return games;
+  }
+
+  /**
+   * Create pairs greedily, avoiding recent partners.
+   */
+  private createPairsGreedy(players: string[], partnerHistory: Record<string, Set<string>>): string[][] {
+    const pairs: string[][] = [];
+    const available = [...players];
+    const shuffled = this.shuffleArray(available);
+
+    while (shuffled.length >= 2) {
+      const p1 = shuffled.shift()!;
+
+      // Find best partner for p1 (prefer someone they haven't played with)
+      let bestPartner: string | null = null;
+      let bestScore = -Infinity;
+
+      for (let i = 0; i < shuffled.length; i++) {
+        const p2 = shuffled[i];
+        let score = 0;
+
+        // Prefer new partners
+        if (!partnerHistory[p1].has(p2)) {
+          score += 1000; // Much higher weight for new partners
+        } else {
+          score -= 500; // Heavy penalty for repeats
+        }
+
+        // Consider skill balance if enabled
+        if (this.opts.balanceSkillLevels) {
+          const skill1 = this.player(p1).skillLevel;
+          const skill2 = this.player(p2).skillLevel;
+          const avgSkill = (skill1 + skill2) / 2;
+          // Prefer pairs with mid-range combined skill
+          score += (3.5 - Math.abs(avgSkill - 3.5)) * 10;
+        }
+
+        // Respect partner preferences if enabled
+        if (this.opts.respectPartnerPreferences) {
+          const player1 = this.player(p1);
+          const player2 = this.player(p2);
+          if (player1.partnerId === p2 || player2.partnerId === p1) {
+            score += 200;
+          }
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestPartner = p2;
+        }
+      }
+
+      if (bestPartner) {
+        pairs.push([p1, bestPartner]);
+        shuffled.splice(shuffled.indexOf(bestPartner), 1);
+      } else if (shuffled.length > 0) {
+        // Force pairing with first available if no best partner found
+        const forcedPartner = shuffled.shift()!;
+        pairs.push([p1, forcedPartner]);
+      }
+    }
+
+    return pairs;
+  }
+
+  /**
+   * Match pairs against each other, avoiding recent opponents.
+   */
+  private matchPairsGreedy(
+    pairs: string[][],
+    opponentHistory: Record<string, Record<string, number>>
+  ): Array<{ team1: [string, string]; team2: [string, string] }> {
+    const matchings: Array<{ team1: [string, string]; team2: [string, string] }> = [];
+    const available = [...pairs];
+
+    while (available.length >= 2) {
+      const team1 = available.shift()!;
+
+      // Find best opponent team
+      let bestOpponent: string[] | null = null;
+      let bestScore = -Infinity;
+      let hasValidOpponent = false;
+
+      // First pass: try to find opponent that meets all constraints
+      for (let i = 0; i < available.length; i++) {
+        const team2 = available[i];
+        let score = 0;
+
+        // Calculate skill difference
+        const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+        const skill2 = team2.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+        const skillDiff = Math.abs(skill1 - skill2);
+
+        // Enforce maxSkillDifference constraint if balancing is enabled
+        if (this.opts.balanceSkillLevels && skillDiff > this.opts.maxSkillDifference) {
+          // Skip this pairing - it violates the max skill difference constraint
+          continue;
+        }
+
+        hasValidOpponent = true;
+
+        // Count how many times these players have faced each other
+        let opponentCount = 0;
+        for (const p1 of team1) {
+          for (const p2 of team2) {
+            opponentCount += opponentHistory[p1][p2] || 0;
+          }
+        }
+
+        // Strongly prefer new opponents
+        score -= opponentCount * 200;
+
+        // Consider skill balance
+        if (this.opts.balanceSkillLevels) {
+          score -= skillDiff * 20;
+        }
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestOpponent = team2;
+        }
+      }
+
+      // If no valid opponent found (all violate maxSkillDifference), relax constraint
+      if (!hasValidOpponent && available.length > 0) {
+        bestOpponent = null;
+        bestScore = -Infinity;
+
+        // Second pass: ignore maxSkillDifference constraint to ensure all teams get matched
+        for (let i = 0; i < available.length; i++) {
+          const team2 = available[i];
+          let score = 0;
+
+          const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+          const skill2 = team2.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
+          const skillDiff = Math.abs(skill1 - skill2);
+
+          // Count how many times these players have faced each other
+          let opponentCount = 0;
+          for (const p1 of team1) {
+            for (const p2 of team2) {
+              opponentCount += opponentHistory[p1][p2] || 0;
             }
-            lastOpponentRound[ok] = r;
+          }
+
+          // Prefer new opponents
+          score -= opponentCount * 200;
+
+          // Prefer smaller skill differences even if over the limit
+          score -= skillDiff * 20;
+
+          if (score > bestScore) {
+            bestScore = score;
+            bestOpponent = team2;
           }
         }
       }
+
+      if (bestOpponent) {
+        matchings.push({
+          team1: [team1[0], team1[1]],
+          team2: [bestOpponent[0], bestOpponent[1]]
+        });
+        available.splice(available.indexOf(bestOpponent), 1);
+      } else if (available.length > 0) {
+        // This should never happen, but if it does, force a match with the first available team
+        const forcedOpponent = available.shift()!;
+        matchings.push({
+          team1: [team1[0], team1[1]],
+          team2: [forcedOpponent[0], forcedOpponent[1]]
+        });
+      }
     }
 
-    // Court concentration penalties
-    for (const pid in courtHits) {
-      for (const court in courtHits[pid]) {
-        const cnt = courtHits[pid][Number(court)];
-        // Original concentration penalty
-        score += Math.pow(cnt, 1.5);
-        if (cnt > 1) {
-          score += 10 * (cnt - 1);
+    return matchings;
+  }
+
+  /**
+   * Assign games to courts, balancing court usage.
+   * Ensures each court is used exactly once per round.
+   */
+  private assignCourtsGreedy(
+    matchings: Array<{ team1: [string, string]; team2: [string, string] }>,
+    courtHistory: Record<string, number[]>,
+    _roundNum: number
+  ): Array<{ team1: [string, string]; team2: [string, string]; court: number }> {
+    const assignments: Array<{ team1: [string, string]; team2: [string, string]; court: number }> = [];
+    const usedCourts = new Set<number>();
+
+    for (let i = 0; i < matchings.length; i++) {
+      const { team1, team2 } = matchings[i];
+      let bestCourt = 1;
+      let bestScore = -Infinity;
+
+      for (let court = 1; court <= this.opts.numberOfCourts; court++) {
+        // Skip courts already used in this round
+        if (usedCourts.has(court)) {
+          continue;
         }
-        // Additional user-requested court hit penalty
-        score += 10 * cnt;
+
+        let score = 0;
+
+        // Count how many times these players have played on this court
+        for (const pid of [...team1, ...team2]) {
+          const history = courtHistory[pid];
+          const courtCount = history.filter(c => c === court).length;
+          score -= courtCount * 10;
+
+          // Add extra penalty for playing on the same court in the last round (consecutive rounds)
+          if (history.length > 0) {
+            const lastCourt = history[history.length - 1];
+            if (lastCourt === court) {
+              score -= 50; // Heavy penalty for consecutive rounds on same court
+            }
+          }
+
+          // Add moderate penalty for playing on the same court in the last 2 rounds
+          if (history.length > 1) {
+            const secondLastCourt = history[history.length - 2];
+            if (secondLastCourt === court) {
+              score -= 20; // Moderate penalty for recent play on same court
+            }
+          }
+        }
+
+        // Add randomness for tie-breaking
+        score += Math.random();
+
+        if (score > bestScore) {
+          bestScore = score;
+          bestCourt = court;
+        }
       }
+
+      // Mark this court as used in this round
+      usedCourts.add(bestCourt);
+      assignments.push({ team1, team2, court: bestCourt });
     }
 
-    // Partner repeat penalties
-    for (const key in partnerCounts) {
-      const repeats = partnerCounts[key] - 1;
-      if (repeats > 0) {
-        score += 20 * Math.pow(2, repeats - 1);
-      }
+    return assignments;
+  }
+
+  /**
+   * Evaluate schedule with prioritized scoring.
+   */
+  private evaluateScore(schedule: GameSchedule): number {
+    let score = 0;
+
+    // PRIORITY 0: First round sitters must be respected (if specified)
+    // This is enforced during construction, so we don't penalize here
+
+    // PRIORITY 1: Even rest distribution (max difference of 1) - if enabled
+    if (this.opts.distributeRestEqually) {
+      score += this.scoreRestDistribution(schedule) * 10000;
     }
 
-    // Opponent repeat penalties
-    for (const key in opponentCounts) {
-      const c = opponentCounts[key];
-      if (c === 1) {
-        score += 10;
-      } else if (c === 2) {
-        score += 25;
-      } else if (c > 2) {
-        score += 25 * Math.pow(2, c - 2);
-      }
+    // PRIORITY 2: Rest spacing (maximize distance between rests)
+    score += this.scoreRestSpacing(schedule) * 1000;
+
+    // PRIORITY 3: Minimize partner repeats
+    score += this.scorePartnerRepeats(schedule) * 100;
+
+    // PRIORITY 4: Minimize opponent repeats
+    score += this.scoreOpponentRepeats(schedule) * 50;
+
+    // PRIORITY 5: Balance court usage
+    score += this.scoreCourtBalance(schedule) * 10;
+
+    // PRIORITY 6: Skill level balance (if enabled)
+    if (this.opts.balanceSkillLevels) {
+      score += this.scoreSkillBalance(schedule) * 5;
+      // Add penalty for games exceeding maxSkillDifference
+      score += this.scoreMaxSkillDifferenceViolations(schedule) * 100;
+    }
+
+    // PRIORITY 7: Couples play together (if enabled)
+    if (this.opts.respectPartnerPreferences) {
+      score += this.scoreCouplesPreference(schedule) * 1;
     }
 
     return score;
   }
 
-  // ---------------------------------------------------------------------
-  // 3. Rest matrix
-  // ---------------------------------------------------------------------
-  private buildRestMatrix(players: Player[], partnerRounds: Map<number, [string, string][]>): string[][] {
-    const rounds = this.opts.numberOfRounds;
-    const restEachRound = players.length - this.opts.numberOfCourts * 4;
-    const matrix: string[][] = Array.from({ length: rounds }, () => {
-      return [] as string[];
-    });
+  private scoreRestDistribution(schedule: GameSchedule): number {
+    const restCounts: Record<string, number> = {};
+    const players = this.players.filter(p => p.active !== false);
 
-    if (restEachRound === 0) {
-      return matrix;
+    for (const player of players) {
+      restCounts[player.id] = 0;
     }
 
-    const totalRestSpots = restEachRound * rounds;
-    const base = Math.floor(totalRestSpots / players.length);
-    let extra = totalRestSpots % players.length;
-
-    const need: Record<string, number> = Object.fromEntries(
-      players.map(p => {
-        return [p.id, base];
-      })
-    );
-
-    if (extra > 0) {
-      const order = players.map(p => {
-        return p.id;
-      });
-      this.shuffle(order);
-      for (const pid of order) {
-        if (extra === 0) {
-          break;
-        }
-        need[pid] += 1;
-        extra -= 1;
+    for (const roundRests of schedule.restingPlayers) {
+      for (const pid of roundRests) {
+        restCounts[pid]++;
       }
     }
 
-    const lastRestRound: Record<string, number> = Object.fromEntries(
-      players.map(p => {
-        return [p.id, -Infinity];
-      })
-    );
+    const counts = Object.values(restCounts);
+    const min = Math.min(...counts);
+    const max = Math.max(...counts);
 
-    for (let r = 0; r < rounds; r++) {
-      const blacklist = new Set<string>();
-      if (partnerRounds.has(r)) {
-        for (const [a, b] of partnerRounds.get(r)!) {
-          blacklist.add(a);
-          blacklist.add(b);
-        }
-      }
-
-      const want = restEachRound;
-      const roundRests: string[] = [];
-
-      const candidates = players.filter(p => {
-        return need[p.id] > 0 && !blacklist.has(p.id);
-      });
-
-      candidates.sort((a, b) => {
-        return lastRestRound[a.id] - lastRestRound[b.id] || Math.random() - 0.5;
-      });
-
-      // Pass 1 – avoid consecutive rests
-      for (const p of candidates) {
-        if (roundRests.length === want) {
-          break;
-        }
-        if (r > 0 && matrix[r - 1].includes(p.id)) {
-          continue;
-        }
-        roundRests.push(p.id);
-        need[p.id] -= 1;
-        lastRestRound[p.id] = r;
-      }
-
-      // Pass 2 – allow consecutive if still needed
-      if (roundRests.length < want) {
-        for (const p of candidates) {
-          if (roundRests.length === want) {
-            break;
-          }
-          if (roundRests.includes(p.id)) {
-            continue;
-          }
-          roundRests.push(p.id);
-          need[p.id] -= 1;
-          lastRestRound[p.id] = r;
-        }
-      }
-
-      // Pass 3 – fallback: any non‑blacklisted player
-      if (roundRests.length < want) {
-        const fallback = players.filter(p => {
-          return !blacklist.has(p.id) && !roundRests.includes(p.id);
-        });
-        this.shuffle(fallback);
-        for (const p of fallback) {
-          if (roundRests.length === want) {
-            break;
-          }
-          roundRests.push(p.id);
-          lastRestRound[p.id] = r;
-        }
-      }
-      matrix[r] = roundRests;
-    }
-    return matrix;
+    return max - min; // 0 = perfect, higher = worse
   }
 
-  // ---------------------------------------------------------------------
-  // 4. Partner‑round assignment
-  // ---------------------------------------------------------------------
-  private assignPartnerRounds(players: Player[], rounds: number): Map<number, [string, string][]> {
-    const map = new Map<number, [string, string][]>();
-    if (!this.opts.respectPartnerPreferences) {
-      return map;
-    }
+  private scoreRestSpacing(schedule: GameSchedule): number {
+    const players = this.players.filter(p => p.active !== false);
+    let totalBadness = 0;
 
-    const seen = new Set<string>();
-    const pairs: [string, string][] = [];
-
-    for (const p of players) {
-      if (p.partnerId && !seen.has(p.id)) {
-        const partner = players.find(x => {
-          return x.id === p.partnerId;
-        });
-        if (partner) {
-          pairs.push([p.id, partner.id]);
-          seen.add(p.id);
-          seen.add(partner.id);
+    for (const player of players) {
+      const restRounds: number[] = [];
+      schedule.restingPlayers.forEach((rests, roundIdx) => {
+        if (rests.includes(player.id)) {
+          restRounds.push(roundIdx);
         }
+      });
+
+      if (restRounds.length > 1) {
+        // Calculate spacing variance (prefer even spacing)
+        const gaps: number[] = [];
+        for (let i = 1; i < restRounds.length; i++) {
+          gaps.push(restRounds[i] - restRounds[i - 1]);
+        }
+
+        const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
+        const variance = gaps.reduce((sum, gap) => sum + Math.pow(gap - avgGap, 2), 0) / gaps.length;
+        totalBadness += variance;
       }
     }
 
-    this.shuffle(pairs);
-
-    for (const pair of pairs) {
-      let tries = 0;
-      while (tries < 20) {
-        const rnd = Math.floor(Math.random() * rounds);
-        const arr = map.get(rnd) || [];
-        if (arr.length < this.opts.numberOfCourts) {
-          arr.push(pair);
-          map.set(rnd, arr);
-          break;
-        }
-        tries += 1;
-      }
-    }
-    return map;
+    return totalBadness;
   }
 
-  // ---------------------------------------------------------------------
-  // 5. Helper utilities
-  // ---------------------------------------------------------------------
+  private scorePartnerRepeats(schedule: GameSchedule): number {
+    const partnerCounts: Record<string, number> = {};
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        this.bump(partnerCounts, game.team1[0], game.team1[1]);
+        this.bump(partnerCounts, game.team2[0], game.team2[1]);
+      }
+    }
+
+    let penalty = 0;
+    for (const count of Object.values(partnerCounts)) {
+      if (count > 1) {
+        penalty += Math.pow(2, count - 1);
+      }
+    }
+
+    return penalty;
+  }
+
+  private scoreOpponentRepeats(schedule: GameSchedule): number {
+    const opponentCounts: Record<string, number> = {};
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        for (const p1 of game.team1) {
+          for (const p2 of game.team2) {
+            this.bump(opponentCounts, p1, p2);
+          }
+        }
+      }
+    }
+
+    let penalty = 0;
+    for (const count of Object.values(opponentCounts)) {
+      if (count > 2) {
+        penalty += Math.pow(2, count - 2);
+      }
+    }
+
+    return penalty;
+  }
+
+  private scoreCourtBalance(schedule: GameSchedule): number {
+    const courtCounts: Record<string, Record<number, number>> = {};
+    const players = this.players.filter(p => p.active !== false);
+
+    for (const player of players) {
+      courtCounts[player.id] = {};
+    }
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        for (const pid of [...game.team1, ...game.team2]) {
+          courtCounts[pid][game.court] = (courtCounts[pid][game.court] || 0) + 1;
+        }
+      }
+    }
+
+    let penalty = 0;
+    for (const pid in courtCounts) {
+      const counts = Object.values(courtCounts[pid]);
+      if (counts.length > 0) {
+        const max = Math.max(...counts);
+        const min = Math.min(...counts, 0);
+        penalty += (max - min) * (max - min);
+      }
+    }
+
+    return penalty;
+  }
+
+  private scoreSkillBalance(schedule: GameSchedule): number {
+    let totalImbalance = 0;
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        totalImbalance += game.skillDifference;
+      }
+    }
+
+    return totalImbalance;
+  }
+
+  private scoreMaxSkillDifferenceViolations(schedule: GameSchedule): number {
+    let violations = 0;
+
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        if (game.skillDifference > this.opts.maxSkillDifference) {
+          // Exponential penalty for violations
+          const excess = game.skillDifference - this.opts.maxSkillDifference;
+          violations += Math.pow(2, excess);
+        }
+      }
+    }
+
+    return violations;
+  }
+
+  private scoreCouplesPreference(schedule: GameSchedule): number {
+    const couplesPlayed: Record<string, boolean> = {};
+    const players = this.players.filter(p => p.active !== false);
+
+    // Find all couples
+    for (const player of players) {
+      if (player.partnerId) {
+        const key = this.pairKey(player.id, player.partnerId);
+        couplesPlayed[key] = false;
+      }
+    }
+
+    // Check if couples played together
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        const key1 = this.pairKey(game.team1[0], game.team1[1]);
+        const key2 = this.pairKey(game.team2[0], game.team2[1]);
+
+        if (key1 in couplesPlayed) {
+          couplesPlayed[key1] = true;
+        }
+        if (key2 in couplesPlayed) {
+          couplesPlayed[key2] = true;
+        }
+      }
+    }
+
+    // Penalize couples who didn't play together
+    let penalty = 0;
+    for (const played of Object.values(couplesPlayed)) {
+      if (!played) {
+        penalty += 100;
+      }
+    }
+
+    return penalty;
+  }
+
+  private shuffleArray<T>(array: T[]): T[] {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  }
+
+  // Helper utilities
   private player(id: string): Player {
     const p = this.players.find(x => {
       return x.id === id;
@@ -441,13 +791,6 @@ export class PickleballMatcher {
       throw new Error(`Unknown player id ${id}`);
     }
     return p;
-  }
-
-  private shuffle<T>(arr: T[]): void {
-    for (let i = arr.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
   }
 
   private pairKey(a: string, b: string): string {

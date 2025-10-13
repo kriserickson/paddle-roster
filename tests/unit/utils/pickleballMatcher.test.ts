@@ -1,6 +1,22 @@
 import { describe, it, expect } from 'vitest';
 import { PickleballMatcher } from '~/utils/pickleballMatcher';
-import type { Player, MatchingOptions } from '~/types';
+import type { Player, MatchingOptions, GameSchedule } from '~/types';
+
+/**
+ * Helper function to validate all games have exactly 4 players
+ */
+function validateAllGamesHavePlayers(schedule: GameSchedule): void {
+  schedule.rounds.forEach((round, roundIndex) => {
+    round.forEach((game, gameIndex) => {
+      expect(game.team1, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1 should have 2 players`).toHaveLength(2);
+      expect(game.team2, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2 should have 2 players`).toHaveLength(2);
+      expect(game.team1[0], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1[0] should be defined`).toBeDefined();
+      expect(game.team1[1], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1[1] should be defined`).toBeDefined();
+      expect(game.team2[0], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2[0] should be defined`).toBeDefined();
+      expect(game.team2[1], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2[1] should be defined`).toBeDefined();
+    });
+  });
+}
 
 describe('PickleballMatcher', () => {
   // Create test players with various skill levels (16 players total)
@@ -51,6 +67,7 @@ describe('PickleballMatcher', () => {
         expect(schedule.eventLabel).toBe('Test Event');
         expect(schedule.options).toEqual(options);
         expect(schedule.generatedAt).toBeInstanceOf(Date);
+        validateAllGamesHavePlayers(schedule);
       });
 
       it('should generate valid schedule for 8 rounds', () => {
@@ -95,6 +112,15 @@ describe('PickleballMatcher', () => {
         schedule.rounds.forEach((round, index) => {
           expect(round.length).toBe(2);
           expect(schedule.restingPlayers[index]).toHaveLength(4);
+          // Ensure every game has 4 players
+          round.forEach(game => {
+            expect(game.team1).toHaveLength(2);
+            expect(game.team2).toHaveLength(2);
+            expect(game.team1[0]).toBeDefined();
+            expect(game.team1[1]).toBeDefined();
+            expect(game.team2[0]).toBeDefined();
+            expect(game.team2[1]).toBeDefined();
+          });
         });
       });
 
@@ -142,6 +168,15 @@ describe('PickleballMatcher', () => {
         schedule.rounds.forEach((round, index) => {
           expect(round.length).toBe(2);
           expect(schedule.restingPlayers[index]).toHaveLength(2);
+          // Ensure every game has 4 players
+          round.forEach(game => {
+            expect(game.team1).toHaveLength(2);
+            expect(game.team2).toHaveLength(2);
+            expect(game.team1[0]).toBeDefined();
+            expect(game.team1[1]).toBeDefined();
+            expect(game.team2[0]).toBeDefined();
+            expect(game.team2[1]).toBeDefined();
+          });
         });
       });
 
@@ -744,6 +779,80 @@ describe('PickleballMatcher', () => {
           `Round ${roundIndex + 1} has ${playingPlayerCount} playing players, expected ${expectedPlaying}`
         ).toBe(expectedPlaying);
       });
+    });
+  });
+
+  describe('first round sitters', () => {
+    it('should respect firstRoundSitters option when specified', () => {
+      const optionsWithSitters: MatchingOptions = {
+        ...defaultOptions,
+        numberOfRounds: 7,
+        firstRoundSitters: ['1', '2', '3', '4']
+      };
+
+      const matcher = new PickleballMatcher(players, optionsWithSitters);
+      const schedule = matcher.generateSchedule();
+
+      // Verify the specified players are sitting in round 1
+      const firstRoundSitters = schedule.restingPlayers[0];
+      expect(firstRoundSitters).toContain('1');
+      expect(firstRoundSitters).toContain('2');
+      expect(firstRoundSitters).toContain('3');
+      expect(firstRoundSitters).toContain('4');
+
+      // Verify these players are NOT playing in round 1
+      const firstRoundGames = schedule.rounds[0];
+      firstRoundGames.forEach(game => {
+        expect(game.team1).not.toContain('1');
+        expect(game.team1).not.toContain('2');
+        expect(game.team1).not.toContain('3');
+        expect(game.team1).not.toContain('4');
+        expect(game.team2).not.toContain('1');
+        expect(game.team2).not.toContain('2');
+        expect(game.team2).not.toContain('3');
+        expect(game.team2).not.toContain('4');
+      });
+    });
+
+    it('should work with fewer than 4 first round sitters', () => {
+      const optionsWithFewerSitters: MatchingOptions = {
+        ...defaultOptions,
+        numberOfRounds: 7,
+        firstRoundSitters: ['5', '6']
+      };
+
+      const matcher = new PickleballMatcher(players, optionsWithFewerSitters);
+      const schedule = matcher.generateSchedule();
+
+      // Verify the specified players are sitting in round 1
+      const firstRoundSitters = schedule.restingPlayers[0];
+      expect(firstRoundSitters).toContain('5');
+      expect(firstRoundSitters).toContain('6');
+
+      // Verify these players are NOT playing in round 1
+      const firstRoundGames = schedule.rounds[0];
+      firstRoundGames.forEach(game => {
+        expect(game.team1).not.toContain('5');
+        expect(game.team1).not.toContain('6');
+        expect(game.team2).not.toContain('5');
+        expect(game.team2).not.toContain('6');
+      });
+    });
+
+    it('should work when firstRoundSitters is not specified', () => {
+      const optionsWithoutSitters: MatchingOptions = {
+        ...defaultOptions,
+        numberOfRounds: 7
+        // firstRoundSitters is undefined
+      };
+
+      const matcher = new PickleballMatcher(players, optionsWithoutSitters);
+      const schedule = matcher.generateSchedule();
+
+      // Just verify it generates a valid schedule
+      expect(schedule.rounds).toHaveLength(7);
+      expect(schedule.rounds[0]).toHaveLength(3); // 3 courts
+      validateAllGamesHavePlayers(schedule);
     });
   });
 });
