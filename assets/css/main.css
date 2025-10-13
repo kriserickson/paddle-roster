@@ -167,7 +167,7 @@ body {
 }
 
 .dark .bg-gray-50 {
-  background: rgba(51, 65, 85, 0.5) !important;
+  background: rgba(71, 85, 105, 0.3) !important;
 }
 
 .dark .text-gray-900 {
@@ -175,7 +175,7 @@ body {
 }
 
 .dark .bg-gray-200 {
-  background: rgba(51, 65, 85, 0.6) !important;
+  background: rgba(71, 85, 105, 0.4) !important;
 }
 
 /* Game Cards - Enhanced depth */
@@ -317,7 +317,7 @@ body {
 
 .dark input::placeholder,
 .dark textarea::placeholder {
-  color: #94a3b8 !important;
+  color: #cbd5e1 !important;
 }
 
 .dark input:focus,

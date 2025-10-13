@@ -328,7 +328,7 @@ onMounted(() => {
     <div class="content-card">
       <div class="content-card-header">
         <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 flex items-center gap-3">
+          <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             Game Generation
             <div v-if="isSavingPreferences" class="flex items-center gap-2 text-sm text-gray-500">
               <UIcon name="i-heroicons-arrow-path" class="animate-spin" />
@@ -336,14 +336,8 @@ onMounted(() => {
             </div>
           </h2>
           <div class="flex gap-3">
-            <UButton
-              :disabled="!canGenerate || gameStore.isGenerating"
-              :loading="gameStore.isGenerating"
-              size="lg"
-              class="btn-primary"
-              data-testid="generate-games-button"
-              @click="generateSchedule"
-            >
+            <UButton :disabled="!canGenerate || gameStore.isGenerating" :loading="gameStore.isGenerating" size="lg"
+              class="btn-primary" data-testid="generate-games-button" @click="generateSchedule">
               <UIcon name="i-heroicons-play" class="mr-2" />
               Generate Schedule
             </UButton>
@@ -362,10 +356,8 @@ onMounted(() => {
     </div>
 
     <!-- Validation Warnings -->
-    <div
-      v-if="validationWarnings.length > 0"
-      class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex items-start gap-3"
-    >
+    <div v-if="validationWarnings.length > 0"
+      class="bg-yellow-50 border border-yellow-200 p-4 rounded-xl flex items-start gap-3">
       <Icon name="mdi:alert" class="text-xl text-yellow-600 mt-1" />
       <div>
         <p class="font-semibold text-yellow-800">Warning</p>
@@ -387,11 +379,8 @@ onMounted(() => {
         <div class="p-6 space-y-6">
           <!-- Event Label -->
           <UFormField label="Event Label" help="Optional label for the schedule (e.g., 'Tuesday May 28th')">
-            <UInput
-              v-model="eventLabel"
-              placeholder="e.g., John Henry Secondary School Tuesday May 9th"
-              class="form-input w-full"
-            />
+            <UInput v-model="eventLabel" placeholder="e.g., John Henry Secondary School Tuesday May 9th"
+              class="form-input w-full" />
           </UFormField>
 
           <!-- Number of Courts -->
@@ -421,42 +410,23 @@ onMounted(() => {
           </UFormField>
 
           <!-- First Round Sitters -->
-          <UFormField
-            v-if="restingPerRound > 0"
-            label="First Round Sitters (Optional)"
-            :help="`Select up to ${maxFirstRoundSitters} players to sit out in the first round`"
-          >
+          <UFormField v-if="restingPerRound > 0" label="First Round Sitters (Optional)"
+            :help="`Select up to ${maxFirstRoundSitters} players to sit out in the first round`">
             <div class="space-y-3">
               <div v-if="firstRoundSitters.length > 0" class="flex flex-wrap gap-2">
-                <UBadge
-                  v-for="playerId in firstRoundSitters"
-                  :key="playerId"
-                  color="warning"
-                  variant="soft"
-                  class="cursor-pointer"
-                  @click="toggleFirstRoundSitter(playerId)"
-                >
+                <UBadge v-for="playerId in firstRoundSitters" :key="playerId" color="warning" variant="soft"
+                  class="cursor-pointer" @click="toggleFirstRoundSitter(playerId)">
                   {{ playerStore.getPlayer(playerId)?.name }}
                   <UIcon name="i-heroicons-x-mark" class="ml-1" />
                 </UBadge>
               </div>
               <div v-else class="text-sm text-gray-500 italic">No players selected to sit out first round</div>
               <div v-if="firstRoundSitters.length < maxFirstRoundSitters" class="space-y-2">
-                <USelectMenu
-                  v-model="selectedFirstRoundSitterObjects"
-                  :items="allPlayersForSittingOptions"
-                  multiple
-                  placeholder="Select players to sit out first round..."
-                  class="w-full"
-                />
+                <USelectMenu v-model="selectedFirstRoundSitterObjects" :items="allPlayersForSittingOptions" multiple
+                  placeholder="Select players to sit out first round..." class="w-full" />
               </div>
-              <UButton
-                v-if="firstRoundSitters.length > 0"
-                size="xs"
-                color="neutral"
-                variant="ghost"
-                @click="clearFirstRoundSitters"
-              >
+              <UButton v-if="firstRoundSitters.length > 0" size="xs" color="neutral" variant="ghost"
+                @click="clearFirstRoundSitters">
                 <UIcon name="i-heroicons-x-mark" />
                 Clear All
               </UButton>
@@ -476,30 +446,19 @@ onMounted(() => {
 
         <div class="p-6 space-y-6">
           <UFormField label="Balance Skill Levels" help="Attempt to create balanced teams by skill level">
-            <USwitch
-              v-model="matchingOptions.balanceSkillLevels"
-              :label="matchingOptions.balanceSkillLevels ? 'Enabled' : 'Disabled'"
-              class="text-paddle-teal"
-            />
+            <USwitch v-model="matchingOptions.balanceSkillLevels"
+              :label="matchingOptions.balanceSkillLevels ? 'Enabled' : 'Disabled'" class="text-paddle-teal" />
           </UFormField>
 
-          <UFormField
-            label="Respect Partner Preferences"
-            help="Try to pair players with their preferred partners in at least one game"
-          >
-            <USwitch
-              v-model="matchingOptions.respectPartnerPreferences"
-              :label="matchingOptions.respectPartnerPreferences ? 'Enabled' : 'Disabled'"
-              class="text-paddle-teal"
-            />
+          <UFormField label="Respect Partner Preferences"
+            help="Try to pair players with their preferred partners in at least one game">
+            <USwitch v-model="matchingOptions.respectPartnerPreferences"
+              :label="matchingOptions.respectPartnerPreferences ? 'Enabled' : 'Disabled'" class="text-paddle-teal" />
           </UFormField>
 
           <UFormField label="Distribute Rest Equally" help="Ensure all players get equal rest periods">
-            <USwitch
-              v-model="matchingOptions.distributeRestEqually"
-              :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'"
-              class="text-paddle-teal"
-            />
+            <USwitch v-model="matchingOptions.distributeRestEqually"
+              :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'" class="text-paddle-teal" />
           </UFormField>
 
           <!-- Reset Options -->
@@ -534,17 +493,12 @@ onMounted(() => {
       <div class="p-6">
         <!-- Filter Controls -->
         <div
-          class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600"
-        >
+          class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
           <!-- Search -->
           <div class="md:col-span-3">
             <UFormField label="Search Players">
-              <UInput
-                v-model="playerSearchQuery"
-                icon="i-heroicons-magnifying-glass"
-                placeholder="Search by name..."
-                class="form-input w-full"
-              />
+              <UInput v-model="playerSearchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search by name..."
+                class="form-input w-full" />
             </UFormField>
           </div>
 
@@ -558,7 +512,7 @@ onMounted(() => {
 
         <!-- Filter Actions -->
         <div class="flex justify-between items-center mb-4">
-          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+          <div class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
             <Icon name="mdi:information" class="text-paddle-teal dark:text-paddle-teal-light" />
             <span>
               Showing {{ filteredPlayers.length }} of {{ playerStore.players.length }} players. You need at least
@@ -567,22 +521,12 @@ onMounted(() => {
           </div>
 
           <div class="flex gap-2">
-            <UButton
-              variant="ghost"
-              size="sm"
-              :disabled="filteredPlayers.length === 0"
-              class="btn-secondary"
-              @click="selectFilteredPlayers()"
-            >
+            <UButton variant="ghost" size="sm" :disabled="filteredPlayers.length === 0" class="btn-secondary"
+              @click="selectFilteredPlayers()">
               Add Filtered
             </UButton>
-            <UButton
-              variant="ghost"
-              size="sm"
-              :disabled="filteredPlayers.length === 0"
-              class="btn-secondary"
-              @click="deselectFilteredPlayers()"
-            >
+            <UButton variant="ghost" size="sm" :disabled="filteredPlayers.length === 0" class="btn-secondary"
+              @click="deselectFilteredPlayers()">
               Remove Filtered
             </UButton>
             <UButton variant="ghost" size="sm" class="btn-secondary" @click="clearAllFilters()">
@@ -604,22 +548,16 @@ onMounted(() => {
         </div>
 
         <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          <div
-            v-for="player in filteredPlayers"
-            :key="player.id"
-            :class="[
-              'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
-              playerStore.isPlayerSelected(player.id)
-                ? 'border-paddle-teal bg-paddle-teal/5'
-                : 'border-gray-200 hover:border-paddle-teal/50'
-            ]"
-            @click="playerStore.togglePlayerSelection(player.id)"
-          >
+          <div v-for="player in filteredPlayers" :key="player.id" :class="[
+            'player-selection-card p-3 rounded-lg border-2 transition-all cursor-pointer',
+            playerStore.isPlayerSelected(player.id)
+              ? 'border-paddle-teal bg-paddle-teal/5'
+              : 'border-gray-200 hover:border-paddle-teal/50'
+          ]" @click="playerStore.togglePlayerSelection(player.id)">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
-                >
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <div class="flex flex-row align-items-center">
@@ -684,8 +622,7 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs"
-                >
+                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <span class="text-sm font-medium">{{ player.name }}</span>
@@ -708,13 +645,11 @@ onMounted(() => {
     <div v-if="gameStore.isGenerating" class="content-card">
       <div class="p-12 text-center">
         <Icon name="mdi:cog" class="text-6xl text-paddle-teal animate-spin mb-6 mx-auto" />
-        <h3 class="text-2xl font-bold mb-3 text-gray-900">Generating Schedule...</h3>
+        <h3 class="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Generating Schedule...</h3>
         <p class="text-gray-600 text-lg">Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds</p>
         <div class="mt-6 max-w-md mx-auto bg-gray-200 rounded-full h-2">
-          <div
-            class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse"
-            style="width: 60%"
-          />
+          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse"
+            style="width: 60%" />
         </div>
       </div>
     </div>
