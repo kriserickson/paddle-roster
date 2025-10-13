@@ -56,6 +56,8 @@ export interface MatchingOptions {
   maxSkillDifference: number;
   /** Whether to ensure equal distribution of rest periods */
   distributeRestEqually: boolean;
+  /**  */
+  firstRoundSitters?: string[];
 }
 
 /**
