@@ -369,7 +369,7 @@ watch(
   border-bottom: 2px solid var(--paddle-teal);
 }
 
-.print-preview-modal :deep(.dark .modal-header) {
+.dark .print-preview-modal :deep(.modal-header) {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
   border-bottom: 2px solid rgba(58, 182, 187, 0.3) !important;
 }
@@ -379,7 +379,7 @@ watch(
   border: 1px solid #e5e7eb;
 }
 
-.print-preview-modal :deep(.dark .modal-content) {
+.dark .print-preview-modal :deep(.modal-content) {
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
   border: 2px solid rgba(58, 182, 187, 0.4) !important;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
@@ -389,14 +389,13 @@ watch(
   background: rgba(0, 0, 0, 0.6);
 }
 
-.print-preview-modal :deep(.dark .modal-overlay) {
+.dark .print-preview-modal :deep(.modal-overlay) {
   background: rgba(15, 23, 42, 0.9) !important;
   backdrop-filter: blur(12px) !important;
 }
 
-/* Override modal title color in dark mode */
-.print-preview-modal :deep(.dark h1) {
-  color: #f1f5f9 !important;
+.print-preview-modal h2 {
+  font-size: 1.5rem;
 }
 
 /* Ensure preview container uses app fonts */
@@ -453,7 +452,11 @@ watch(
 
 .print-preview-container :deep(.header h1) {
   font-size: 20pt;
-  margin-bottom: 12pt;
+  margin-bottom: 6pt;
+}
+
+.dark .print-preview-container :deep(.header h1) {
+  color: #333 !important;
 }
 
 .print-preview-container :deep(.section h2) {
@@ -514,17 +517,5 @@ watch(
 .print-preview-container.compact :deep(.section h2) {
   font-size: 14pt;
   margin: 10pt 0 6pt 0;
-}
-
-/* Improve placeholder visibility in dark mode */
-:deep(.dark input::placeholder) {
-  color: rgb(156 163 175 / 0.8);
-  /* lighter gray in dark mode */
-  opacity: 1;
-}
-
-:deep(.dark input:not(:placeholder-shown)) {
-  color: rgb(255 255 255 / 0.9);
-  /* slightly lighter text when filled */
 }
 </style>
