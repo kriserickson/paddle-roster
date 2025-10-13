@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { GameSchedule, PrintOptions } from '~/types';
-import { generatePDFFromElement } from '~/utils/pdfGenerator';
-import { generatePDFFromHTML } from '~/utils/simplePdfGenerator';
+import { generatePDFFromHTML } from '~/utils/pdfGenerator';
 
 // Props
 interface Props {
@@ -129,7 +128,6 @@ async function downloadPdf(): Promise<void> {
     }
 
     // Wait for preview to fully render and DOM to update
-    await nextTick();
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     // Check if the preview element exists and has content
@@ -155,31 +153,10 @@ async function downloadPdf(): Promise<void> {
     const filename = `${eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-')}-${eventDate}.pdf`;
 
     // Try the new simple PDF generator first
-    try {
-      await generatePDFFromHTML(generatedPreviewHTML.value, {
-        orientation: localPrintOptions.value.orientation,
-        filename: filename
-      });
 
-      // Close loading toast and show success toast
-      toast.clear();
-      toast.add({
-        title: 'PDF Generated Successfully',
-        description: `Your schedule has been downloaded as ${filename}`,
-        color: 'success'
-      });
-      return;
-    } catch (simpleError) {
-      console.error('Simple PDF generator failed, trying advanced method:', simpleError);
-    }
-
-    // Fallback to original method
-    await generatePDFFromElement('print-preview-element', {
+    await generatePDFFromHTML(generatedPreviewHTML.value, {
       orientation: localPrintOptions.value.orientation,
-      filename: filename,
-      quality: 1.0,
-      scale: 1.5,
-      backgroundColor: '#ffffff'
+      filename: filename
     });
 
     // Close loading toast and show success toast
