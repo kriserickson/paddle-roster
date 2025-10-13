@@ -2,8 +2,10 @@
 import type { Game, GameSchedule, PrintOptions } from '~/types';
 import PrintPreviewModal from '~/components/modals/PrintPreviewModal.vue';
 
+// Stores
 const playerStore = usePlayerStore();
 const gameStore = useGameStore();
+const printStore = usePrintStore();
 
 const toast = useToast();
 
@@ -13,17 +15,22 @@ const selectedRound = ref(1);
 // Print functionality
 const showPrintModal = ref(false);
 
-// Print configuration
-const printOptions = ref<PrintOptions>({
-  eventTitle: 'Pickleball League',
-  eventSubtitle: new Date().toLocaleDateString(),
-  eventDate: new Date().toISOString().split('T')[0], // Today's date in YYYY-MM-DD format
-  location: '',
-  organizer: '',
-  orientation: 'landscape',
-  compactLayout: false,
-  colorMode: true,
-  showRatings: true
+// Print configuration - now loaded from store
+const printOptions = computed({
+  get: () => printStore.printOptions,
+  set: (value: PrintOptions) => {
+    printStore.updatePrintOptions(value);
+    // Note: Auto-save removed to prevent reactive loops - save on modal close instead
+  }
+});
+
+// Save print options when modal closes
+watch(showPrintModal, isOpen => {
+  if (!isOpen) {
+    printStore.saveUserPrintPreferences().catch(error => {
+      console.warn('Failed to save print preferences on modal close:', error);
+    });
+  }
 });
 
 // Computed properties
@@ -111,6 +118,15 @@ watch(
     }
   }
 );
+
+// Load user preferences on mount
+onMounted(async () => {
+  try {
+    await printStore.loadUserPrintPreferences();
+  } catch (error) {
+    console.warn('Failed to load print preferences:', error);
+  }
+});
 </script>
 
 <template>

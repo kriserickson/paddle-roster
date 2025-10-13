@@ -15,7 +15,7 @@ export class PickleballMatcher {
   /**
    * Generate the best schedule using greedy construction + local optimization.
    */
-  public generateSchedule(eventLabel: string = ''): GameSchedule {
+  public async generateSchedule(eventLabel: string = ''): Promise<GameSchedule> {
     const activePlayers = this.players.filter(p => p.active !== false);
     const iterations = 1500;
 
@@ -31,6 +31,11 @@ export class PickleballMatcher {
       if (score < bestScore) {
         bestScore = score;
         bestSchedule = schedule;
+      }
+
+      // Yield control every 100 iterations to prevent blocking the UI
+      if (i % 100 === 0) {
+        await new Promise(resolve => setTimeout(resolve, 0));
       }
     }
 

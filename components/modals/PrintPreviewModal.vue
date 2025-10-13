@@ -29,6 +29,28 @@ const previewGenerated = ref(false);
 const printPreviewRef = ref<HTMLElement>();
 const generatedPreviewHTML = ref<string>('');
 
+// Local copy of print options that can be modified
+const localPrintOptions = ref<PrintOptions>({ ...props.printOptions });
+
+// Update local copy when modal opens
+watch(
+  () => props.open,
+  isOpen => {
+    if (isOpen) {
+      localPrintOptions.value = { ...props.printOptions };
+    }
+  }
+);
+
+// Emit changes when local options change
+watch(
+  localPrintOptions,
+  newOptions => {
+    emit('update:print-options', { ...newOptions });
+  },
+  { deep: true }
+);
+
 // Computed
 const isOpen = computed({
   get: () => {
@@ -37,13 +59,6 @@ const isOpen = computed({
   set: (value: boolean) => {
     emit('update:open', value);
   }
-});
-
-const localPrintOptions = computed({
-  get: () => {
-    return props.printOptions;
-  },
-  set: (value: PrintOptions) => emit('update:print-options', value)
 });
 
 // Methods
@@ -256,17 +271,39 @@ watch(
               >
                 <!-- Layout and Display Options -->
                 <div class="space-y-3">
-                  <UCheckbox v-model="localPrintOptions.compactLayout" label="Compact Layout" class="text-blue-800" />
-                  <UCheckbox
-                    v-model="localPrintOptions.colorMode"
-                    label="Color Mode (uncheck for black & white printers)"
-                    class="text-blue-800"
-                  />
-                  <UCheckbox
-                    v-model="localPrintOptions.showRatings"
-                    label="Show Player Skill Ratings"
-                    class="text-blue-800"
-                  />
+                  <div class="flex items-center space-x-3">
+                    <input
+                      id="compact-layout-checkbox"
+                      v-model="localPrintOptions.compactLayout"
+                      type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label for="compact-layout-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                      Compact Layout
+                    </label>
+                  </div>
+                  <div class="flex items-center space-x-3">
+                    <input
+                      id="color-mode-checkbox"
+                      v-model="localPrintOptions.colorMode"
+                      type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label for="color-mode-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                      Color Mode (uncheck for black & white printers)
+                    </label>
+                  </div>
+                  <div class="flex items-center space-x-3">
+                    <input
+                      id="show-ratings-checkbox"
+                      v-model="localPrintOptions.showRatings"
+                      type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label for="show-ratings-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                      Show Player Skill Ratings
+                    </label>
+                  </div>
                 </div>
               </div>
             </UFormField>

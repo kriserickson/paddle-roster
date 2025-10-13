@@ -230,6 +230,9 @@ const validationErrors = computed(() => validationResult.value.errors);
 
 const validationWarnings = computed(() => validationResult.value.warnings || []);
 
+// Computed for button text
+const generateButtonText = computed(() => (gameStore.isGenerating ? 'Generating Schedule...' : 'Generate Schedule'));
+
 // Methods
 function selectFilteredPlayers(): void {
   filteredPlayers.value.forEach((player: Player) => {
@@ -345,7 +348,7 @@ onMounted(() => {
               @click="generateSchedule"
             >
               <UIcon name="i-heroicons-play" class="mr-2" />
-              Generate Schedule
+              {{ generateButtonText }}
             </UButton>
           </div>
         </div>

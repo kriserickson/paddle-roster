@@ -69,7 +69,7 @@ export const useGameStore = defineStore('game', () => {
       const matcher = new PickleballMatcher(selectedPlayersValue, generationOptions);
 
       // Generate schedule
-      const schedule = matcher.generateSchedule(eventLabel);
+      const schedule = await matcher.generateSchedule(eventLabel);
 
       currentSchedule.value = schedule;
       return schedule;
@@ -88,7 +88,7 @@ export const useGameStore = defineStore('game', () => {
     try {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
-      matchingOptions.value = { ...userPrefs };
+      matchingOptions.value = { ...userPrefs.matchingOptions };
     } catch (error) {
       console.error('Error loading user preferences:', error);
       // Fall back to default options if loading fails
@@ -103,7 +103,12 @@ export const useGameStore = defineStore('game', () => {
    */
   async function saveUserPreferences(): Promise<void> {
     try {
-      await preferencesApi.saveUserPreferences(matchingOptions.value);
+      const userPrefs = await preferencesApi.getUserPreferences();
+      const updatedPrefs = {
+        ...userPrefs,
+        matchingOptions: { ...matchingOptions.value }
+      };
+      await preferencesApi.saveUserPreferences(updatedPrefs);
     } catch (error) {
       console.error('Error saving user preferences:', error);
       throw error;
@@ -125,7 +130,7 @@ export const useGameStore = defineStore('game', () => {
   async function resetOptions(): Promise<void> {
     try {
       const resetPrefs = await preferencesApi.resetUserPreferences();
-      matchingOptions.value = { ...resetPrefs };
+      matchingOptions.value = { ...resetPrefs.matchingOptions };
     } catch (error) {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails

@@ -44,6 +44,16 @@ export interface Database {
           respect_partner_preferences: boolean;
           max_skill_difference: number;
           distribute_rest_equally: boolean;
+          // Print options
+          print_event_title: string;
+          print_event_subtitle: string;
+          print_event_date: string;
+          print_location: string;
+          print_organizer: string;
+          print_orientation: 'portrait' | 'landscape';
+          print_compact_layout: boolean;
+          print_color_mode: boolean;
+          print_show_ratings: boolean;
           created_at: string;
           updated_at: string;
         };
@@ -56,6 +66,16 @@ export interface Database {
           respect_partner_preferences?: boolean;
           max_skill_difference?: number;
           distribute_rest_equally?: boolean;
+          // Print options
+          print_event_title?: string;
+          print_event_subtitle?: string;
+          print_event_date?: string;
+          print_location?: string;
+          print_organizer?: string;
+          print_orientation?: 'portrait' | 'landscape';
+          print_compact_layout?: boolean;
+          print_color_mode?: boolean;
+          print_show_ratings?: boolean;
           created_at?: string;
           updated_at?: string;
         };
@@ -68,6 +88,16 @@ export interface Database {
           respect_partner_preferences?: boolean;
           max_skill_difference?: number;
           distribute_rest_equally?: boolean;
+          // Print options
+          print_event_title?: string;
+          print_event_subtitle?: string;
+          print_event_date?: string;
+          print_location?: string;
+          print_organizer?: string;
+          print_orientation?: 'portrait' | 'landscape';
+          print_compact_layout?: boolean;
+          print_color_mode?: boolean;
+          print_show_ratings?: boolean;
           created_at?: string;
           updated_at?: string;
         };

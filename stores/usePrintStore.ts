@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia';
 import type { Game, GameSchedule, PrintOptions } from '~/types';
+import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 
 export const usePrintStore = defineStore('print', () => {
   /**
@@ -21,6 +22,12 @@ export const usePrintStore = defineStore('print', () => {
    * State
    */
   const printOptions = ref<PrintOptions>({ ...defaultPrintOptions });
+  const isLoadingPreferences = ref(false);
+
+  /**
+   * API
+   */
+  const preferencesApi = new UserPreferencesApiSupabase();
 
   /**
    * Actions
@@ -416,16 +423,53 @@ export const usePrintStore = defineStore('print', () => {
     printOptions.value = { ...defaultPrintOptions };
   }
 
+  /**
+   * Load user's saved print preferences from Supabase
+   */
+  async function loadUserPrintPreferences(): Promise<void> {
+    try {
+      isLoadingPreferences.value = true;
+      const userPrefs = await preferencesApi.getUserPreferences();
+      printOptions.value = { ...userPrefs.printOptions };
+    } catch (error) {
+      console.error('Error loading user print preferences:', error);
+      // Fall back to default options if loading fails
+      printOptions.value = { ...defaultPrintOptions };
+    } finally {
+      isLoadingPreferences.value = false;
+    }
+  }
+
+  /**
+   * Save user's print preferences to Supabase
+   */
+  async function saveUserPrintPreferences(): Promise<void> {
+    try {
+      const userPrefs = await preferencesApi.getUserPreferences();
+      const updatedPrefs = {
+        ...userPrefs,
+        printOptions: { ...printOptions.value }
+      };
+      await preferencesApi.saveUserPreferences(updatedPrefs);
+    } catch (error) {
+      console.error('Error saving user print preferences:', error);
+      throw error;
+    }
+  }
+
   return {
     // State
     printOptions: readonly(printOptions),
     defaultPrintOptions,
+    isLoadingPreferences,
 
     // Actions
     printSchedule,
     downloadScheduleHTML,
     updatePrintOptions,
     resetPrintOptions,
+    loadUserPrintPreferences,
+    saveUserPrintPreferences,
     generatePrintHTML
   };
 });

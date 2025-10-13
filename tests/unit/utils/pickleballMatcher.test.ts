@@ -49,7 +49,7 @@ describe('PickleballMatcher', () => {
   };
 
   describe('constructor', () => {
-    it('should initialize with players and options', () => {
+    it('should initialize with players and options', async () => {
       const matcher = new PickleballMatcher(players, defaultOptions);
       expect(matcher).toBeDefined();
     });
@@ -57,10 +57,10 @@ describe('PickleballMatcher', () => {
 
   describe('should generate a valid schedule', () => {
     describe('16 players on 3 courts', () => {
-      it('should generate valid schedule for 6 rounds', () => {
+      it('should generate valid schedule for 6 rounds', async () => {
         const options = { ...defaultOptions, numberOfRounds: 6 };
         const matcher = new PickleballMatcher(players, options);
-        const schedule = matcher.generateSchedule('Test Event');
+        const schedule = await matcher.generateSchedule('Test Event');
 
         expect(schedule.rounds).toHaveLength(6);
         expect(schedule.rounds[0]).toHaveLength(3);
@@ -70,9 +70,9 @@ describe('PickleballMatcher', () => {
         validateAllGamesHavePlayers(schedule);
       });
 
-      it('should generate valid schedule for 8 rounds', () => {
+      it('should generate valid schedule for 8 rounds', async () => {
         const matcher = new PickleballMatcher(players, defaultOptions);
-        const schedule = matcher.generateSchedule('Test Event');
+        const schedule = await matcher.generateSchedule('Test Event');
 
         expect(schedule.rounds).toHaveLength(8);
         expect(schedule.rounds[0]).toHaveLength(3);
@@ -81,30 +81,30 @@ describe('PickleballMatcher', () => {
         expect(schedule.generatedAt).toBeInstanceOf(Date);
       });
 
-      it('should generate valid schedule for 10 rounds', () => {
+      it('should generate valid schedule for 10 rounds', async () => {
         const options = { ...defaultOptions, numberOfRounds: 10 };
         const matcher = new PickleballMatcher(players, options);
-        const schedule = matcher.generateSchedule('Test Event');
+        const schedule = await matcher.generateSchedule('Test Event');
 
         expect(schedule.rounds).toHaveLength(10);
         expect(schedule.rounds[0]).toHaveLength(3);
       });
 
-      it('should generate valid schedule for 12 rounds', () => {
+      it('should generate valid schedule for 12 rounds', async () => {
         const options = { ...defaultOptions, numberOfRounds: 12 };
         const matcher = new PickleballMatcher(players, options);
-        const schedule = matcher.generateSchedule('Test Event');
+        const schedule = await matcher.generateSchedule('Test Event');
 
         expect(schedule.rounds).toHaveLength(12);
         expect(schedule.rounds[0]).toHaveLength(3);
       });
     });
     describe('12 players on 2 courts', () => {
-      it('should generate valid schedule for 6 rounds', () => {
+      it('should generate valid schedule for 6 rounds', async () => {
         const twelvePlayers = players.slice(0, 12);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 };
         const matcher = new PickleballMatcher(twelvePlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(6);
         expect(schedule.rounds[0]).toHaveLength(2);
@@ -124,31 +124,31 @@ describe('PickleballMatcher', () => {
         });
       });
 
-      it('should generate valid schedule for 8 rounds', () => {
+      it('should generate valid schedule for 8 rounds', async () => {
         const twelvePlayers = players.slice(0, 12);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 };
         const matcher = new PickleballMatcher(twelvePlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(8);
         expect(schedule.rounds[0]).toHaveLength(2);
       });
 
-      it('should generate valid schedule for 10 rounds', () => {
+      it('should generate valid schedule for 10 rounds', async () => {
         const twelvePlayers = players.slice(0, 12);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 };
         const matcher = new PickleballMatcher(twelvePlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(10);
         expect(schedule.rounds[0]).toHaveLength(2);
       });
 
-      it('should generate valid schedule for 12 rounds', () => {
+      it('should generate valid schedule for 12 rounds', async () => {
         const twelvePlayers = players.slice(0, 12);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 };
         const matcher = new PickleballMatcher(twelvePlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(12);
         expect(schedule.rounds[0]).toHaveLength(2);
@@ -156,11 +156,11 @@ describe('PickleballMatcher', () => {
     });
 
     describe('10 players on 2 courts', () => {
-      it('should generate valid schedule for 6 rounds', () => {
+      it('should generate valid schedule for 6 rounds', async () => {
         const tenPlayers = players.slice(0, 10);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 };
         const matcher = new PickleballMatcher(tenPlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(6);
         expect(schedule.rounds[0]).toHaveLength(2);
@@ -180,31 +180,31 @@ describe('PickleballMatcher', () => {
         });
       });
 
-      it('should generate valid schedule for 8 rounds', () => {
+      it('should generate valid schedule for 8 rounds', async () => {
         const tenPlayers = players.slice(0, 10);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 };
         const matcher = new PickleballMatcher(tenPlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(8);
         expect(schedule.rounds[0]).toHaveLength(2);
       });
 
-      it('should generate valid schedule for 10 rounds', () => {
+      it('should generate valid schedule for 10 rounds', async () => {
         const tenPlayers = players.slice(0, 10);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 };
         const matcher = new PickleballMatcher(tenPlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(10);
         expect(schedule.rounds[0]).toHaveLength(2);
       });
 
-      it('should generate valid schedule for 12 rounds', () => {
+      it('should generate valid schedule for 12 rounds', async () => {
         const tenPlayers = players.slice(0, 10);
         const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 };
         const matcher = new PickleballMatcher(tenPlayers, options);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         expect(schedule.rounds).toHaveLength(12);
         expect(schedule.rounds[0]).toHaveLength(2);
@@ -220,9 +220,9 @@ describe('PickleballMatcher', () => {
       maxNumber: number,
       testName: string
     ): void {
-      it(`should prevent repeated partnerships - ${testName}`, () => {
+      it(`should prevent repeated partnerships - ${testName}`, async () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         // Track partnerships across all rounds
         const partnerships = new Map<string, number>();
@@ -327,9 +327,9 @@ describe('PickleballMatcher', () => {
 
   describe('should ensure no player plays against the same player more than 2 times', () => {
     function testOpponentLimits(testPlayers: Player[], testOptions: MatchingOptions, testName: string): void {
-      it(`should limit opponent encounters - ${testName}`, () => {
+      it(`should limit opponent encounters - ${testName}`, async () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         // Track how many times each player plays against each other player
         const opponentCounts = new Map<string, Map<string, number>>();
@@ -423,9 +423,9 @@ describe('PickleballMatcher', () => {
 
   describe('should ensure proper rest distribution', () => {
     function testRestDistribution(testPlayers: Player[], testOptions: MatchingOptions, testName: string): void {
-      it(`should distribute rest periods properly - ${testName}`, () => {
+      it(`should distribute rest periods properly - ${testName}`, async () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         const totalPlayers = testPlayers.length;
         const playersPerRound = testOptions.numberOfCourts * 4;
@@ -537,9 +537,9 @@ describe('PickleballMatcher', () => {
 
   describe('should respect skill level differences when balancing is enabled', () => {
     function testSkillBalancing(testPlayers: Player[], testOptions: MatchingOptions, testName: string): void {
-      it(`should balance skill levels - ${testName}`, () => {
+      it(`should balance skill levels - ${testName}`, async () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);
-        const schedule = matcher.generateSchedule();
+        const schedule = await matcher.generateSchedule();
 
         schedule.rounds.forEach((round, roundIndex) => {
           round.forEach((game, gameIndex) => {
@@ -620,9 +620,9 @@ describe('PickleballMatcher', () => {
 
   // Keep the remaining tests from the original file
   describe('partner preferences', () => {
-    it('should respect partner preferences when enabled', () => {
+    it('should respect partner preferences when enabled', async () => {
       const matcher = new PickleballMatcher(players, { ...defaultOptions, respectPartnerPreferences: true });
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Track partner pairings
       const preferredPartnerPairings = new Map<string, number>();
@@ -660,31 +660,31 @@ describe('PickleballMatcher', () => {
   });
 
   describe('edge cases', () => {
-    it('should handle minimum number of players (4)', () => {
+    it('should handle minimum number of players (4)', async () => {
       const minPlayers = players.slice(0, 4);
       const minOptions = { ...defaultOptions, numberOfCourts: 1, numberOfRounds: 3 };
       const matcher = new PickleballMatcher(minPlayers, minOptions);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       expect(schedule.rounds).toHaveLength(3);
       expect(schedule.rounds[0]).toHaveLength(1); // Only 1 court for 4 players
     });
 
-    it('should handle odd number of players', () => {
+    it('should handle odd number of players', async () => {
       const oddPlayers = players.slice(0, 8); // 9 Players
       const opts = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 5 };
       const matcher = new PickleballMatcher(oddPlayers, opts);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       expect(schedule.rounds).toHaveLength(opts.numberOfRounds);
       // Should still generate valid schedule with some players resting
       expect(schedule.restingPlayers).toHaveLength(opts.numberOfRounds);
     });
 
-    it('should handle zero rounds request', () => {
+    it('should handle zero rounds request', async () => {
       const zeroRoundsOptions = { ...defaultOptions, numberOfRounds: 0 };
       const matcher = new PickleballMatcher(players, zeroRoundsOptions);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       expect(schedule.rounds).toHaveLength(0);
       expect(schedule.restingPlayers).toHaveLength(0);
@@ -692,13 +692,13 @@ describe('PickleballMatcher', () => {
   });
 
   describe('input validation and error handling', () => {
-    it('should handle invalid skill levels', () => {
+    it('should handle invalid skill levels', async () => {
       const invalidPlayers = [...players];
       invalidPlayers[0] = { ...invalidPlayers[0], skillLevel: -1 }; // Invalid negative skill
       invalidPlayers[1] = { ...invalidPlayers[1], skillLevel: 10 }; // Invalid high skill
 
       const matcher = new PickleballMatcher(invalidPlayers, defaultOptions);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Should still generate a schedule despite invalid skill levels
       expect(schedule.rounds).toHaveLength(8);
@@ -706,12 +706,12 @@ describe('PickleballMatcher', () => {
   });
 
   describe('schedule consistency', () => {
-    it('should generate consistent schedules with same inputs', () => {
+    it('should generate consistent schedules with same inputs', async () => {
       const matcher1 = new PickleballMatcher(players, defaultOptions);
       const matcher2 = new PickleballMatcher(players, defaultOptions);
 
-      const schedule1 = matcher1.generateSchedule('Test 1');
-      const schedule2 = matcher2.generateSchedule('Test 2');
+      const schedule1 = await matcher1.generateSchedule('Test 1');
+      const schedule2 = await matcher2.generateSchedule('Test 2');
 
       // Should have same structure
       expect(schedule1.rounds.length).toBe(schedule2.rounds.length);
@@ -722,9 +722,9 @@ describe('PickleballMatcher', () => {
       expect(schedule2.eventLabel).toBe('Test 2');
     });
 
-    it('should maintain round structure across all rounds', () => {
+    it('should maintain round structure across all rounds', async () => {
       const matcher = new PickleballMatcher(players, defaultOptions);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // All rounds should have same number of courts when player count allows
       const expectedCourts = Math.min(defaultOptions.numberOfCourts, Math.floor(players.length / 4));
@@ -743,7 +743,7 @@ describe('PickleballMatcher', () => {
       });
     });
 
-    it('should have exactly 4 resting players per round with 16 players, 3 courts, and 9 rounds', () => {
+    it('should have exactly 4 resting players per round with 16 players, 3 courts, and 9 rounds', async () => {
       // Create test configuration with 16 players, 3 courts, and 9 rounds
       const nineRoundsOptions = {
         ...defaultOptions,
@@ -751,7 +751,7 @@ describe('PickleballMatcher', () => {
       };
 
       const matcher = new PickleballMatcher(players, nineRoundsOptions);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Verify we have 9 rounds
       expect(schedule.rounds).toHaveLength(9);
@@ -783,7 +783,7 @@ describe('PickleballMatcher', () => {
   });
 
   describe('first round sitters', () => {
-    it('should respect firstRoundSitters option when specified', () => {
+    it('should respect firstRoundSitters option when specified', async () => {
       const optionsWithSitters: MatchingOptions = {
         ...defaultOptions,
         numberOfRounds: 7,
@@ -791,7 +791,7 @@ describe('PickleballMatcher', () => {
       };
 
       const matcher = new PickleballMatcher(players, optionsWithSitters);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Verify the specified players are sitting in round 1
       const firstRoundSitters = schedule.restingPlayers[0];
@@ -814,7 +814,7 @@ describe('PickleballMatcher', () => {
       });
     });
 
-    it('should work with fewer than 4 first round sitters', () => {
+    it('should work with fewer than 4 first round sitters', async () => {
       const optionsWithFewerSitters: MatchingOptions = {
         ...defaultOptions,
         numberOfRounds: 7,
@@ -822,7 +822,7 @@ describe('PickleballMatcher', () => {
       };
 
       const matcher = new PickleballMatcher(players, optionsWithFewerSitters);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Verify the specified players are sitting in round 1
       const firstRoundSitters = schedule.restingPlayers[0];
@@ -839,7 +839,7 @@ describe('PickleballMatcher', () => {
       });
     });
 
-    it('should work when firstRoundSitters is not specified', () => {
+    it('should work when firstRoundSitters is not specified', async () => {
       const optionsWithoutSitters: MatchingOptions = {
         ...defaultOptions,
         numberOfRounds: 7
@@ -847,7 +847,7 @@ describe('PickleballMatcher', () => {
       };
 
       const matcher = new PickleballMatcher(players, optionsWithoutSitters);
-      const schedule = matcher.generateSchedule();
+      const schedule = await matcher.generateSchedule();
 
       // Just verify it generates a valid schedule
       expect(schedule.rounds).toHaveLength(7);
