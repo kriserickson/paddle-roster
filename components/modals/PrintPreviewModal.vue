@@ -207,6 +207,7 @@ watch(
   <UModal
     v-model:open="isOpen"
     title="Print Configuration & Preview"
+    class="print-preview-modal"
     :ui="{
       wrapper: 'w-full max-w-[95vw] h-full max-h-[95vh]',
       content: 'w-full h-full max-w-none'
@@ -322,6 +323,47 @@ watch(
 </template>
 
 <style scoped>
+/* Modal isolation and dark mode styling */
+.print-preview-modal :deep(.modal-header) {
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border-bottom: 2px solid var(--paddle-teal);
+}
+
+.print-preview-modal :deep(.dark .modal-header) {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  border-bottom: 2px solid rgba(58, 182, 187, 0.3) !important;
+}
+
+.print-preview-modal :deep(.modal-content) {
+  background: white;
+  border: 1px solid #e5e7eb;
+}
+
+.print-preview-modal :deep(.dark .modal-content) {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+  border: 2px solid rgba(58, 182, 187, 0.4) !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+.print-preview-modal :deep(.modal-overlay) {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.print-preview-modal :deep(.dark .modal-overlay) {
+  background: rgba(15, 23, 42, 0.9) !important;
+  backdrop-filter: blur(12px) !important;
+}
+
+/* Override modal title color in dark mode */
+.print-preview-modal :deep(.dark h1) {
+  color: #f1f5f9 !important;
+}
+
+/* Ensure preview container uses app fonts */
+:deep(.print-preview-container) {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif !important;
+}
+
 /* Print Preview Styles */
 .print-page-portrait {
   width: 8.5in;
@@ -351,7 +393,7 @@ watch(
   padding: 0.75in;
   box-sizing: border-box;
   overflow: visible;
-  font-family: 'Times New Roman', serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.4;
   color: #000;
@@ -360,7 +402,7 @@ watch(
 
 /* Ensure the preview looks like actual print output */
 .print-preview-container :deep(.print-preview-safe) {
-  font-family: 'Times New Roman', serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   font-size: 12pt;
   line-height: 1.4;
   color: #000;
