@@ -60,12 +60,14 @@ export class PickleballMatcher {
     const rounds: Game[][] = [];
     const partnerHistory: Record<string, Set<string>> = {};
     const opponentHistory: Record<string, Record<string, number>> = {};
+    const recentOpponentHistory: Record<string, string[][]> = {}; // Track opponents from last 2 rounds
     const courtHistory: Record<string, number[]> = {};
 
     // Initialize history
     for (const pid of playerIds) {
       partnerHistory[pid] = new Set();
       opponentHistory[pid] = {};
+      recentOpponentHistory[pid] = [];
       courtHistory[pid] = [];
     }
 
@@ -73,7 +75,14 @@ export class PickleballMatcher {
       const restingPlayers = new Set(restMatrix[roundNum]);
       const playingPlayers = playerIds.filter(id => !restingPlayers.has(id));
 
-      const games = this.buildRoundGames(roundNum + 1, playingPlayers, partnerHistory, opponentHistory, courtHistory);
+      const games = this.buildRoundGames(
+        roundNum + 1,
+        playingPlayers,
+        partnerHistory,
+        opponentHistory,
+        recentOpponentHistory,
+        courtHistory
+      );
 
       rounds.push(games);
 
@@ -88,11 +97,29 @@ export class PickleballMatcher {
         partnerHistory[b1].add(b2);
         partnerHistory[b2].add(b1);
 
-        // Opponents
+        // Opponents (overall count)
         for (const p1 of [a1, a2]) {
           for (const p2 of [b1, b2]) {
             opponentHistory[p1][p2] = (opponentHistory[p1][p2] || 0) + 1;
             opponentHistory[p2][p1] = (opponentHistory[p2][p1] || 0) + 1;
+          }
+        }
+
+        // Recent opponents (for consecutive round tracking)
+        for (const p1 of [a1, a2]) {
+          const opponents = [b1, b2];
+          recentOpponentHistory[p1].push(opponents);
+          // Keep only last 2 rounds
+          if (recentOpponentHistory[p1].length > 2) {
+            recentOpponentHistory[p1].shift();
+          }
+        }
+        for (const p2 of [b1, b2]) {
+          const opponents = [a1, a2];
+          recentOpponentHistory[p2].push(opponents);
+          // Keep only last 2 rounds
+          if (recentOpponentHistory[p2].length > 2) {
+            recentOpponentHistory[p2].shift();
           }
         }
 
@@ -243,6 +270,7 @@ export class PickleballMatcher {
     playingPlayers: string[],
     partnerHistory: Record<string, Set<string>>,
     opponentHistory: Record<string, Record<string, number>>,
+    recentOpponentHistory: Record<string, string[][]>,
     courtHistory: Record<string, number[]>
   ): Game[] {
     const games: Game[] = [];
@@ -267,7 +295,7 @@ export class PickleballMatcher {
     }
 
     // Match pairs against each other
-    const matchings = this.matchPairsGreedy(pairs, opponentHistory);
+    const matchings = this.matchPairsGreedy(pairs, opponentHistory, recentOpponentHistory);
 
     // Validate we have the right number of matchings
     const expectedMatchings = this.opts.numberOfCourts;
@@ -329,11 +357,11 @@ export class PickleballMatcher {
         const p2 = shuffled[i];
         let score = 0;
 
-        // Prefer new partners
+        // Prefer new partners - HIGHEST PRIORITY
         if (!partnerHistory[p1].has(p2)) {
-          score += 1000; // Much higher weight for new partners
+          score += 2000; // Very high weight for new partners
         } else {
-          score -= 500; // Heavy penalty for repeats
+          score -= 1000; // Very heavy penalty for repeats - higher than consecutive opponent penalties
         }
 
         // Consider skill balance if enabled
@@ -378,7 +406,8 @@ export class PickleballMatcher {
    */
   private matchPairsGreedy(
     pairs: string[][],
-    opponentHistory: Record<string, Record<string, number>>
+    opponentHistory: Record<string, Record<string, number>>,
+    recentOpponentHistory: Record<string, string[][]>
   ): Array<{ team1: [string, string]; team2: [string, string] }> {
     const matchings: Array<{ team1: [string, string]; team2: [string, string] }> = [];
     const available = [...pairs];
@@ -417,8 +446,37 @@ export class PickleballMatcher {
           }
         }
 
+        // Check for consecutive round opponent penalties
+        let consecutiveOpponentPenalty = 0;
+        for (const p1 of team1) {
+          const recentHistory = recentOpponentHistory[p1];
+
+          // Check if played against any team2 player in the last round (most recent)
+          if (recentHistory.length > 0) {
+            const lastRoundOpponents = recentHistory[recentHistory.length - 1];
+            for (const p2 of team2) {
+              if (lastRoundOpponents.includes(p2)) {
+                consecutiveOpponentPenalty += 100; // Large penalty for consecutive rounds
+              }
+            }
+          }
+
+          // Check if played against any team2 player 2 rounds ago
+          if (recentHistory.length > 1) {
+            const twoRoundsAgoOpponents = recentHistory[recentHistory.length - 2];
+            for (const p2 of team2) {
+              if (twoRoundsAgoOpponents.includes(p2)) {
+                consecutiveOpponentPenalty += 50; // Smaller penalty for 2 rounds ago
+              }
+            }
+          }
+        }
+
         // Strongly prefer new opponents
         score -= opponentCount * 200;
+
+        // Apply consecutive opponent penalties
+        score -= consecutiveOpponentPenalty;
 
         // Consider skill balance
         if (this.opts.balanceSkillLevels) {
@@ -453,8 +511,37 @@ export class PickleballMatcher {
             }
           }
 
+          // Check for consecutive round opponent penalties
+          let consecutiveOpponentPenalty = 0;
+          for (const p1 of team1) {
+            const recentHistory = recentOpponentHistory[p1];
+
+            // Check if played against any team2 player in the last round (most recent)
+            if (recentHistory.length > 0) {
+              const lastRoundOpponents = recentHistory[recentHistory.length - 1];
+              for (const p2 of team2) {
+                if (lastRoundOpponents.includes(p2)) {
+                  consecutiveOpponentPenalty += 500; // Large penalty for consecutive rounds
+                }
+              }
+            }
+
+            // Check if played against any team2 player 2 rounds ago
+            if (recentHistory.length > 1) {
+              const twoRoundsAgoOpponents = recentHistory[recentHistory.length - 2];
+              for (const p2 of team2) {
+                if (twoRoundsAgoOpponents.includes(p2)) {
+                  consecutiveOpponentPenalty += 150; // Smaller penalty for 2 rounds ago
+                }
+              }
+            }
+          }
+
           // Prefer new opponents
           score -= opponentCount * 200;
+
+          // Apply consecutive opponent penalties
+          score -= consecutiveOpponentPenalty;
 
           // Prefer smaller skill differences even if over the limit
           score -= skillDiff * 20;
@@ -486,7 +573,7 @@ export class PickleballMatcher {
   }
 
   /**
-   * Assign games to courts, balancing court usage.
+   * Assign games to courts, penalizing consecutive same-court assignments.
    * Ensures each court is used exactly once per round.
    */
   private assignCourtsGreedy(
@@ -510,25 +597,24 @@ export class PickleballMatcher {
 
         let score = 0;
 
-        // Count how many times these players have played on this court
+        // Check for consecutive same-court penalties
         for (const pid of [...team1, ...team2]) {
           const history = courtHistory[pid];
-          const courtCount = history.filter(c => c === court).length;
-          score -= courtCount * 10;
 
-          // Add extra penalty for playing on the same court in the last round (consecutive rounds)
+          // Add heavy penalty if player was on this court in the last round
           if (history.length > 0) {
             const lastCourt = history[history.length - 1];
             if (lastCourt === court) {
-              score -= 50; // Heavy penalty for consecutive rounds on same court
+              score -= 100; // Heavy penalty for consecutive rounds on same court
             }
           }
 
-          // Add moderate penalty for playing on the same court in the last 2 rounds
+          // Add additional penalty if player was on this court in both of the last 2 rounds
           if (history.length > 1) {
+            const lastCourt = history[history.length - 1];
             const secondLastCourt = history[history.length - 2];
-            if (secondLastCourt === court) {
-              score -= 20; // Moderate penalty for recent play on same court
+            if (lastCourt === court && secondLastCourt === court) {
+              score -= 200; // Extra heavy penalty for 2 consecutive rounds on same court
             }
           }
         }
@@ -567,23 +653,26 @@ export class PickleballMatcher {
     // PRIORITY 2: Rest spacing (maximize distance between rests)
     score += this.scoreRestSpacing(schedule) * 1000;
 
-    // PRIORITY 3: Minimize partner repeats
-    score += this.scorePartnerRepeats(schedule) * 100;
+    // PRIORITY 3: Minimize partner repeats (HIGHEST priority for gameplay)
+    score += this.scorePartnerRepeats(schedule) * 200;
 
-    // PRIORITY 4: Minimize opponent repeats
-    score += this.scoreOpponentRepeats(schedule) * 50;
+    // PRIORITY 4: Consecutive opponent penalties
+    score += this.scoreConsecutiveOpponents(schedule) * 50;
 
-    // PRIORITY 5: Balance court usage
-    score += this.scoreCourtBalance(schedule) * 10;
+    // PRIORITY 5: Minimize opponent repeats (overall)
+    score += this.scoreOpponentRepeats(schedule) * 80;
 
-    // PRIORITY 6: Skill level balance (if enabled)
+    // PRIORITY 6: Consecutive court penalties
+    score += this.scoreConsecutiveCourts(schedule) * 30;
+
+    // PRIORITY 7: Skill level balance (if enabled)
     if (this.opts.balanceSkillLevels) {
       score += this.scoreSkillBalance(schedule) * 5;
       // Add penalty for games exceeding maxSkillDifference
       score += this.scoreMaxSkillDifferenceViolations(schedule) * 100;
     }
 
-    // PRIORITY 7: Couples play together (if enabled)
+    // PRIORITY 8: Couples play together (if enabled)
     if (this.opts.respectPartnerPreferences) {
       score += this.scoreCouplesPreference(schedule) * 1;
     }
@@ -677,6 +766,86 @@ export class PickleballMatcher {
     for (const count of Object.values(opponentCounts)) {
       if (count > 2) {
         penalty += Math.pow(2, count - 2);
+      }
+    }
+
+    return penalty;
+  }
+
+  private scoreConsecutiveOpponents(schedule: GameSchedule): number {
+    const players = this.players.filter(p => p.active !== false);
+    let penalty = 0;
+
+    for (const player of players) {
+      const opponentsByRound: string[][] = [];
+
+      // Build opponent history for each round
+      for (const round of schedule.rounds) {
+        const opponents: string[] = [];
+        for (const game of round) {
+          if (game.team1.includes(player.id)) {
+            opponents.push(...game.team2);
+          } else if (game.team2.includes(player.id)) {
+            opponents.push(...game.team1);
+          }
+        }
+        opponentsByRound.push(opponents);
+      }
+
+      // Check for consecutive round opponents
+      for (let i = 1; i < opponentsByRound.length; i++) {
+        const currentOpponents = opponentsByRound[i];
+        const lastRoundOpponents = opponentsByRound[i - 1];
+
+        // Large penalty if any opponent from last round appears again
+        for (const opp of currentOpponents) {
+          if (lastRoundOpponents.includes(opp)) {
+            penalty += 100; // Heavy penalty for consecutive round
+          }
+        }
+
+        // Check 2 rounds back (smaller penalty)
+        if (i >= 2) {
+          const twoRoundsAgoOpponents = opponentsByRound[i - 2];
+          for (const opp of currentOpponents) {
+            if (twoRoundsAgoOpponents.includes(opp)) {
+              penalty += 30; // Smaller penalty for 2 rounds ago
+            }
+          }
+        }
+      }
+    }
+
+    return penalty;
+  }
+
+  private scoreConsecutiveCourts(schedule: GameSchedule): number {
+    const players = this.players.filter(p => p.active !== false);
+    let penalty = 0;
+
+    for (const player of players) {
+      const courtHistory: number[] = [];
+
+      // Build court history for each round
+      for (const round of schedule.rounds) {
+        for (const game of round) {
+          if (game.team1.includes(player.id) || game.team2.includes(player.id)) {
+            courtHistory.push(game.court);
+            break;
+          }
+        }
+      }
+
+      // Check for consecutive same-court assignments
+      for (let i = 1; i < courtHistory.length; i++) {
+        if (courtHistory[i] === courtHistory[i - 1]) {
+          penalty += 50; // Penalty for playing on same court in consecutive rounds
+
+          // Extra penalty if same court for 2 consecutive rounds
+          if (i >= 2 && courtHistory[i] === courtHistory[i - 2]) {
+            penalty += 100; // Additional penalty for 3 consecutive rounds on same court
+          }
+        }
       }
     }
 
