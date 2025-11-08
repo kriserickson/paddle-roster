@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import type { TableColumn } from '@nuxt/ui';
-import type { Player } from '~/types';
+// biome-ignore lint/correctness/noUnusedImports: Used in template via Vue's component auto-registration
 import AddEditPlayerModal from '~/components/modals/AddEditPlayerModal.vue';
-import ImportPlayersModal from '~/components/modals/ImportPlayersModal.vue';
+// biome-ignore lint/correctness/noUnusedImports: Used in template via Vue's component auto-registration
 import DeletePlayerModal from '~/components/modals/DeletePlayerModal.vue';
+// biome-ignore lint/correctness/noUnusedImports: Used in template via Vue's component auto-registration
+import ImportPlayersModal from '~/components/modals/ImportPlayersModal.vue';
+import type { Player } from '~/types';
 
 // Define interfaces for CSV import
 interface PlayerImportData {
@@ -234,7 +237,7 @@ async function performImport(): Promise<void> {
     if (lines.length < 2) {
       throw new Error('CSV must have a header and at least one row.');
     }
-    const headers = lines[0].split(',').map(h => h.trim());
+    const headers = (lines[0] || '').split(',').map(h => h.trim());
     const playersData: PlayerImportData[] = lines.slice(1).map(line => {
       const values = line.split(',').map(v => v.trim());
       const obj: PlayerImportData = {
@@ -255,7 +258,7 @@ async function performImport(): Promise<void> {
       if (!obj.name) {
         obj.name = 'Unnamed Player';
       }
-      if (isNaN(obj.skillLevel)) {
+      if (Number.isNaN(obj.skillLevel)) {
         obj.skillLevel = 3.0;
       }
 
@@ -380,28 +383,16 @@ function handleExportPlayers(): void {
             Player Management
           </h2>
           <div class="flex gap-3">
-            <UButton
-              icon="i-heroicons-plus"
-              class="btn-primary"
-              data-testid="add-player-button"
-              @click="handleAddPlayer"
-            >
+            <UButton icon="i-heroicons-plus" class="btn-primary" data-testid="add-player-button"
+              @click="handleAddPlayer">
               Add Player
             </UButton>
-            <UButton
-              icon="i-heroicons-arrow-up-tray"
-              class="btn-secondary"
-              data-testid="import-players-button"
-              @click="showImportModal = true"
-            >
+            <UButton icon="i-heroicons-arrow-up-tray" class="btn-secondary" data-testid="import-players-button"
+              @click="showImportModal = true">
               Import
             </UButton>
-            <UButton
-              icon="i-heroicons-arrow-down-tray"
-              class="btn-secondary"
-              data-testid="export-players-button"
-              @click="handleExportPlayers"
-            >
+            <UButton icon="i-heroicons-arrow-down-tray" class="btn-secondary" data-testid="export-players-button"
+              @click="handleExportPlayers">
               Export
             </UButton>
           </div>
@@ -413,8 +404,7 @@ function handleExportPlayers(): void {
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div
-            class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
-          >
+            class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20">
             <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
             <div class="text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="total-players-count">
               {{ totalPlayers }}
@@ -423,8 +413,7 @@ function handleExportPlayers(): void {
           </div>
           <template #placeholder>
             <div
-              class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
-            >
+              class="p-6 text-center bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20">
               <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
               <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">0</div>
               <div class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Players</div>
@@ -436,16 +425,14 @@ function handleExportPlayers(): void {
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div
-            class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
-          >
+            class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20">
             <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
             <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">{{ averageSkillLevel }}</div>
             <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
           </div>
           <template #placeholder>
             <div
-              class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
-            >
+              class="p-6 text-center bg-gradient-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20">
               <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
               <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">0.0</div>
               <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
@@ -457,16 +444,14 @@ function handleExportPlayers(): void {
       <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
         <ClientOnly>
           <div
-            class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
-          >
+            class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20">
             <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
             <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">{{ playersWithPartners }}</div>
             <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
           </div>
           <template #placeholder>
             <div
-              class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
-            >
+              class="p-6 text-center bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20">
               <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
               <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">0</div>
               <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
@@ -484,13 +469,8 @@ function handleExportPlayers(): void {
             Players List
           </h3>
           <div class="flex items-center gap-3">
-            <UInput
-              v-model="searchQuery"
-              icon="i-heroicons-magnifying-glass"
-              placeholder="Search players..."
-              class="w-64 form-input"
-              data-testid="player-search-input"
-            />
+            <UInput v-model="searchQuery" icon="i-heroicons-magnifying-glass" placeholder="Search players..."
+              class="w-64 form-input" data-testid="player-search-input" />
           </div>
         </div>
       </div>
@@ -501,8 +481,7 @@ function handleExportPlayers(): void {
             <template #name-cell="{ row }">
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm"
-                >
+                  class="w-10 h-10 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm">
                   {{ row.original.name.charAt(0).toUpperCase() }}
                 </div>
                 <div>
@@ -528,24 +507,10 @@ function handleExportPlayers(): void {
             </template>
             <template #actions-cell="{ row }">
               <div class="flex gap-2 button-container">
-                <UButton
-                  icon="i-heroicons-pencil"
-                  variant="ghost"
-                  color="primary"
-                  size="sm"
-                  class="hover:bg-paddle-teal/10"
-                  data-testid="edit-player-button"
-                  @click="editPlayer(row.original)"
-                />
-                <UButton
-                  icon="i-heroicons-trash"
-                  variant="ghost"
-                  color="error"
-                  size="sm"
-                  class="hover:bg-paddle-red/10"
-                  data-testid="delete-player-button"
-                  @click="confirmDelete(row.original)"
-                />
+                <UButton icon="i-heroicons-pencil" variant="ghost" color="primary" size="sm"
+                  class="hover:bg-paddle-teal/10" data-testid="edit-player-button" @click="editPlayer(row.original)" />
+                <UButton icon="i-heroicons-trash" variant="ghost" color="error" size="sm" class="hover:bg-paddle-red/10"
+                  data-testid="delete-player-button" @click="confirmDelete(row.original)" />
               </div>
             </template>
           </UTable>
@@ -560,14 +525,8 @@ function handleExportPlayers(): void {
     </div>
     <!-- Modals -->
     <ClientOnly>
-      <AddEditPlayerModal
-        v-model:open="showAddPlayer"
-        v-model:player-form="playerForm"
-        :editing-player="editingPlayer"
-        :partner-options="partnerOptions"
-        @save="savePlayer"
-        @cancel="cancelPlayerForm"
-      />
+      <AddEditPlayerModal v-model:open="showAddPlayer" v-model:player-form="playerForm" :editing-player="editingPlayer"
+        :partner-options="partnerOptions" @save="savePlayer" @cancel="cancelPlayerForm" />
       <ImportPlayersModal v-model:open="showImportModal" v-model:import-data="importData" @import="performImport" />
 
       <DeletePlayerModal v-model:open="showDeleteConfirm" :player-to-delete="playerToDelete" @delete="deletePlayer" />
@@ -602,6 +561,7 @@ function handleExportPlayers(): void {
 
 /* Print-specific overrides */
 @media print {
+
   .content-card,
   .player-skill-badge,
   .btn-primary,

@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useColorMode } from '#imports';
 import { useRouter } from 'vue-router';
+import { useColorMode } from '#imports';
 
 const router = useRouter();
 const colorMode = useColorMode();

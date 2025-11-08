@@ -1,0 +1,75 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.3.4/schema.json",
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true,
+      "complexity": {
+        "noImportantStyles": "off"
+      },
+      "style": {
+        "noDescendingSpecificity": "off",
+        "useBlockStatements": "error"
+      }
+    }
+  },
+  "files": {
+    "includes": [
+      "**",
+      "!.nuxt",
+      "!**/.nuxt",
+      "!.output",
+      "!**/.output",
+      "!dist",
+      "!**/dist",
+      "!coverage",
+      "!**/coverage",
+      "!playwright-report",
+      "!**/playwright-report",
+      "!test-results",
+      "!**/test-results"
+    ]
+  },
+  "formatter": {
+    "enabled": true,
+    "formatWithErrors": false,
+    "indentStyle": "space",
+    "indentWidth": 2,
+    "lineEnding": "lf",
+    "lineWidth": 120
+  },
+  "javascript": {
+    "formatter": {
+      "semicolons": "always",
+      "trailingCommas": "none",
+      "quoteStyle": "single",
+      "bracketSpacing": true,
+      "bracketSameLine": false,
+      "arrowParentheses": "asNeeded",
+      "jsxQuoteStyle": "single"
+    },
+    "globals": ["$fetch", "defineNuxtConfig", "navigateTo", "useHead", "useState"]
+  },
+  "overrides": [
+    {
+      "includes": ["composables/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "useBlockStatements": "off"
+          }
+        }
+      }
+    },
+    {
+      "includes": ["**/*.vue"],
+      "linter": {
+        "rules": {
+          "correctness": {
+            "noUnusedVariables": "off"
+          }
+        }
+      }
+    }
+  ]
+}

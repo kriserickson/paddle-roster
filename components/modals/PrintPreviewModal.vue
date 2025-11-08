@@ -315,15 +315,14 @@ watch(
           </div>
           <!-- Preview Container with Paper-like appearance -->
           <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
-            <!-- eslint-disable vue/no-v-html -->
+            
             <div
               v-if="previewGenerated && schedule && generatedPreviewHTML"
               id="print-preview-element"
               ref="printPreviewRef"
               class="bg-white shadow-lg print-preview-container min-w-[8.5in] min-h-[11in] w-full max-w-[11in]"
               v-html="generatedPreviewHTML"
-            ></div>
-            <!-- eslint-enable vue/no-v-html -->
+            ></div>            
 
             <div v-else class="flex items-center justify-center h-full min-h-[400px]">
               <div class="text-center text-gray-500">

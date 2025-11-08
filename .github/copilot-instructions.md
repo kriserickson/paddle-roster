@@ -1,7 +1,5 @@
 # Copilot Instructions
 
-<!-- Use this file to provide workspace-specific custom instructions to Copilot. For more details, visit https://code.visualstudio.com/docs/copilot/copilot-customization#_use-a-githubcopilotinstructionsmd-file -->
-
 ## Project Overview
 
 This is a **Pickleball Player Matching System** built with Nuxt.js and TypeScript. The application helps organize recreational
@@ -34,7 +32,7 @@ pickleball leagues by intelligently matching players across multiple game rounds
 - Always use `async/await` for asynchronous operations
 - Always use braces and semicolons for clarity even with short control statements
 - Use descriptive variable and function names
-- Ue functions for methods and and arrow functions for computed properties e.g. in eslint ( 'func-style': ['error', 'declaration', { 'allowArrowFunctions': false }])
+- Ue functions for methods and and arrow functions for computed properties 
 - Use template syntax for declarative rendering.
 - In Vue files have the script first, then the template, and finally the style section.
 - The functions should use function declarations rather than constants with lambdas.

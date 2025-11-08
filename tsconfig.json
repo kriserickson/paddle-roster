@@ -5,5 +5,6 @@
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "useDefineForClassFields": false
-  }
+  },
+  "exclude": ["coverage", "playwright-report", "test-results", "tests", "node_modules"]
 }

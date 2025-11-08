@@ -1,13 +1,13 @@
-import { describe, it, expect } from 'vitest';
-import { PickleballMatcher } from '~/utils/pickleballMatcher';
-import type { Player, MatchingOptions, GameSchedule } from '~/types';
+import { describe, expect, it } from 'vitest';
+import type { Game, GameSchedule, MatchingOptions, Player } from '../../../types';
+import { PickleballMatcher } from '../../../utils/pickleballMatcher';
 
 /**
  * Helper function to validate all games have exactly 4 players
  */
 function validateAllGamesHavePlayers(schedule: GameSchedule): void {
-  schedule.rounds.forEach((round, roundIndex) => {
-    round.forEach((game, gameIndex) => {
+  schedule.rounds.forEach((round: Game[], roundIndex: number) => {
+    round.forEach((game: Game, gameIndex: number) => {
       expect(game.team1, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1 should have 2 players`).toHaveLength(2);
       expect(game.team2, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2 should have 2 players`).toHaveLength(2);
       expect(game.team1[0], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1[0] should be defined`).toBeDefined();
@@ -109,11 +109,11 @@ describe('PickleballMatcher', () => {
         expect(schedule.rounds).toHaveLength(6);
         expect(schedule.rounds[0]).toHaveLength(2);
         // 12 players, 8 playing per round (2 courts * 4 players), 4 resting
-        schedule.rounds.forEach((round, index) => {
+        schedule.rounds.forEach((round: Game[], index: number) => {
           expect(round.length).toBe(2);
           expect(schedule.restingPlayers[index]).toHaveLength(4);
           // Ensure every game has 4 players
-          round.forEach(game => {
+          round.forEach((game: Game) => {
             expect(game.team1).toHaveLength(2);
             expect(game.team2).toHaveLength(2);
             expect(game.team1[0]).toBeDefined();
@@ -165,11 +165,11 @@ describe('PickleballMatcher', () => {
         expect(schedule.rounds).toHaveLength(6);
         expect(schedule.rounds[0]).toHaveLength(2);
         // 10 players, 8 playing per round (2 courts * 4 players), 2 resting
-        schedule.rounds.forEach((round, index) => {
+        schedule.rounds.forEach((round: Game[], index: number) => {
           expect(round.length).toBe(2);
           expect(schedule.restingPlayers[index]).toHaveLength(2);
           // Ensure every game has 4 players
-          round.forEach(game => {
+          round.forEach((game: Game) => {
             expect(game.team1).toHaveLength(2);
             expect(game.team2).toHaveLength(2);
             expect(game.team1[0]).toBeDefined();
@@ -227,8 +227,8 @@ describe('PickleballMatcher', () => {
         // Track partnerships across all rounds
         const partnerships = new Map<string, number>();
 
-        schedule.rounds.forEach(round => {
-          round.forEach(game => {
+        schedule.rounds.forEach((round: Game[]) => {
+          round.forEach((game: Game) => {
             // Team 1 partnerships
             const team1Key = [game.team1[0], game.team1[1]].sort().join('-');
             partnerships.set(team1Key, (partnerships.get(team1Key) || 0) + 1);
@@ -338,16 +338,17 @@ describe('PickleballMatcher', () => {
           opponentCounts.set(player.id, new Map());
         });
 
-        schedule.rounds.forEach(round => {
-          round.forEach(game => {
+        schedule.rounds.forEach((round: Game[]) => {
+          round.forEach((game: Game) => {
             // Team 1 vs Team 2
-            game.team1.forEach(p1 => {
-              game.team2.forEach(p2 => {
-                const p1Map = opponentCounts.get(p1)!;
-                const p2Map = opponentCounts.get(p2)!;
-
-                p1Map.set(p2, (p1Map.get(p2) || 0) + 1);
-                p2Map.set(p1, (p2Map.get(p1) || 0) + 1);
+            game.team1.forEach((p1: string) => {
+              game.team2.forEach((p2: string) => {
+                const p1Map = opponentCounts.get(p1);
+                const p2Map = opponentCounts.get(p2);
+                if (p1Map && p2Map) {
+                  p1Map.set(p2, (p1Map.get(p2) || 0) + 1);
+                  p2Map.set(p1, (p2Map.get(p1) || 0) + 1);
+                }
               });
             });
           });
@@ -439,9 +440,9 @@ describe('PickleballMatcher', () => {
             playerRestRounds.set(player.id, []);
           });
 
-          schedule.rounds.forEach((round, roundIndex) => {
+          schedule.rounds.forEach((round: Game[], roundIndex: number) => {
             const playingPlayerIds = new Set<string>();
-            round.forEach(game => {
+            round.forEach((game: Game) => {
               playingPlayerIds.add(game.team1[0]);
               playingPlayerIds.add(game.team1[1]);
               playingPlayerIds.add(game.team2[0]);
@@ -450,13 +451,16 @@ describe('PickleballMatcher', () => {
 
             testPlayers.forEach(player => {
               if (!playingPlayerIds.has(player.id)) {
-                playerRestRounds.get(player.id)!.push(roundIndex);
+                const restRounds = playerRestRounds.get(player.id);
+                if (restRounds) {
+                  restRounds.push(roundIndex);
+                }
               }
             });
           });
 
           // Each round should have the expected number of resting players
-          schedule.restingPlayers.forEach((restingPlayersInRound, roundIndex) => {
+          schedule.restingPlayers.forEach((restingPlayersInRound: string[], roundIndex: number) => {
             expect(
               restingPlayersInRound.length,
               `Round ${roundIndex + 1} should have ${expectedRestingPerRound} resting players in ${testName}`
@@ -541,14 +545,20 @@ describe('PickleballMatcher', () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);
         const schedule = await matcher.generateSchedule();
 
-        schedule.rounds.forEach((round, roundIndex) => {
-          round.forEach((game, gameIndex) => {
+        schedule.rounds.forEach((round: Game[], roundIndex: number) => {
+          round.forEach((game: Game, gameIndex: number) => {
             // Calculate team skill averages
-            const team1Skills = game.team1.map(id => testPlayers.find(p => p.id === id)!.skillLevel);
-            const team2Skills = game.team2.map(id => testPlayers.find(p => p.id === id)!.skillLevel);
+            const team1Skills = game.team1.map((id: string) => {
+              const player = testPlayers.find(p => p.id === id);
+              return player ? player.skillLevel : 0;
+            });
+            const team2Skills = game.team2.map((id: string) => {
+              const player = testPlayers.find(p => p.id === id);
+              return player ? player.skillLevel : 0;
+            });
 
-            const team1Avg = team1Skills.reduce((sum, skill) => sum + skill, 0) / team1Skills.length;
-            const team2Avg = team2Skills.reduce((sum, skill) => sum + skill, 0) / team2Skills.length;
+            const team1Avg = team1Skills.reduce((sum: number, skill: number) => sum + skill, 0) / team1Skills.length;
+            const team2Avg = team2Skills.reduce((sum: number, skill: number) => sum + skill, 0) / team2Skills.length;
 
             const skillDifference = Math.abs(team1Avg - team2Avg);
 
@@ -635,8 +645,8 @@ describe('PickleballMatcher', () => {
         ['15', '16'] // Olivia & Peter
       ];
 
-      schedule.rounds.forEach(round => {
-        round.forEach(game => {
+      schedule.rounds.forEach((round: Game[]) => {
+        round.forEach((game: Game) => {
           // Check team 1
           const team1Sorted = game.team1.slice().sort();
           // Check team 2
@@ -729,12 +739,12 @@ describe('PickleballMatcher', () => {
       // All rounds should have same number of courts when player count allows
       const expectedCourts = Math.min(defaultOptions.numberOfCourts, Math.floor(players.length / 4));
 
-      schedule.rounds.forEach((round, index) => {
+      schedule.rounds.forEach((round: Game[], index: number) => {
         expect(round.length).toBeLessThanOrEqual(expectedCourts);
         expect(round.length).toBeGreaterThan(0);
 
         // Each game should be properly formed
-        round.forEach(game => {
+        round.forEach((game: Game) => {
           expect(game.team1).toHaveLength(2);
           expect(game.team2).toHaveLength(2);
           expect(game.court).toBeGreaterThan(0);
@@ -757,7 +767,7 @@ describe('PickleballMatcher', () => {
       expect(schedule.rounds).toHaveLength(9);
 
       // Check each round's resting player count
-      schedule.restingPlayers.forEach((restingPlayersInRound, roundIndex) => {
+      schedule.restingPlayers.forEach((restingPlayersInRound: string[], roundIndex: number) => {
         expect(
           restingPlayersInRound.length,
           `Round ${roundIndex + 1} should have exactly 4 resting players, but has ${restingPlayersInRound.length}`
@@ -765,10 +775,10 @@ describe('PickleballMatcher', () => {
       });
 
       // Verify the actual number of players playing in each round
-      schedule.rounds.forEach((round, roundIndex) => {
+      schedule.rounds.forEach((round: Game[], roundIndex: number) => {
         let playingPlayerCount = 0;
 
-        round.forEach(_game => {
+        round.forEach((_game: Game) => {
           // Each game has 4 players (2 per team)
           playingPlayerCount += 4;
         });
@@ -802,7 +812,7 @@ describe('PickleballMatcher', () => {
 
       // Verify these players are NOT playing in round 1
       const firstRoundGames = schedule.rounds[0];
-      firstRoundGames.forEach(game => {
+      firstRoundGames.forEach((game: Game) => {
         expect(game.team1).not.toContain('1');
         expect(game.team1).not.toContain('2');
         expect(game.team1).not.toContain('3');
@@ -831,7 +841,7 @@ describe('PickleballMatcher', () => {
 
       // Verify these players are NOT playing in round 1
       const firstRoundGames = schedule.rounds[0];
-      firstRoundGames.forEach(game => {
+      firstRoundGames.forEach((game: Game) => {
         expect(game.team1).not.toContain('5');
         expect(game.team1).not.toContain('6');
         expect(game.team2).not.toContain('5');

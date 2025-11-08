@@ -1,6 +1,6 @@
+import { useRuntimeConfig } from '#app';
 import { PlayerApiIndexedDb } from '~/services/playerApiIndexedDb';
 import { PlayerApiSupabase } from '~/services/playerApiSupabase';
-import { useRuntimeConfig } from '#app';
 
 /**
  * Returns the correct PlayerApi implementation based on runtime config.

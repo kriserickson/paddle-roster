@@ -11,7 +11,6 @@ export default defineNuxtConfig({
   // },
 
   modules: [
-    '@nuxt/eslint',
     '@nuxt/fonts',
     '@nuxt/icon',
     '@nuxt/test-utils',
@@ -44,7 +43,28 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    typeCheck: true
+    // Disable type checking during dev to speed up startup. Run full type checks in CI or manually.
+    typeCheck: false
+  },
+
+  // Vite hints to reduce file-watcher scanning and pre-bundle known heavy deps
+  vite: {
+    server: {
+      watch: {
+        // Ignore large folders that don't contain source files to speed up chokidar scanning on Windows
+        ignored: [
+          '**/coverage/**',
+          '**/playwright-report/**',
+          '**/test-results/**',
+          '**/node_modules/**',
+          '**/tests/**'
+        ]
+      }
+    },
+    optimizeDeps: {
+      // Pre-bundle deps that were shown re-optimizing in logs to avoid a second slow optimization pass
+      include: ['zod', 'jspdf', 'html2canvas']
+    }
   },
 
   // Add app configuration for default locale

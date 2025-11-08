@@ -1,5 +1,5 @@
-import type { IPlayerApi, ApiResponse } from '~/types/api';
 import type { Player } from '~/types';
+import type { ApiResponse, IPlayerApi } from '~/types/api';
 
 /**
  * IndexedDB implementation of the Player API
@@ -63,7 +63,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const transaction = this.db!.transaction([this.storeName], 'readonly');
+      const transaction = this.db?.transaction([this.storeName], 'readonly');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       const players = await new Promise<Player[]>((resolve, reject) => {
@@ -98,7 +101,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
         id: crypto.randomUUID()
       };
 
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      const transaction = this.db?.transaction([this.storeName], 'readwrite');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       await new Promise<void>((resolve, reject) => {
@@ -128,7 +134,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      const transaction = this.db?.transaction([this.storeName], 'readwrite');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       // Get existing player
@@ -174,7 +183,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      const transaction = this.db?.transaction([this.storeName], 'readwrite');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       await new Promise<void>((resolve, reject) => {
@@ -203,7 +215,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      const transaction = this.db?.transaction([this.storeName], 'readwrite');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       // Add all players
@@ -236,7 +251,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const transaction = this.db!.transaction([this.storeName], 'readwrite');
+      const transaction = this.db?.transaction([this.storeName], 'readwrite');
+      if (!transaction) {
+        throw new Error('Database not initialized');
+      }
       const store = transaction.objectStore(this.storeName);
 
       await new Promise<void>((resolve, reject) => {

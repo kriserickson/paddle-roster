@@ -1,8 +1,8 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed, ref } from 'vue';
 import { usePlayerApi } from '~/composables/usePlayerApi';
-import type { IPlayerApi } from '~/types/api';
 import type { Player } from '~/types';
+import type { IPlayerApi } from '~/types/api';
 
 export const usePlayerStore = defineStore('player', () => {
   // Get API instance from DI container
@@ -239,7 +239,7 @@ export const usePlayerStore = defineStore('player', () => {
       console.error('Error importing players:', error);
       return {
         success: false,
-        message: 'Error importing players: ' + (error instanceof Error ? error.message : 'Unknown error')
+        message: `Error importing players: ${error instanceof Error ? error.message : 'Unknown error'}`
       };
     }
   }

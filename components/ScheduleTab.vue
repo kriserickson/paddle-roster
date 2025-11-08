@@ -1,6 +1,8 @@
 <script setup lang="ts">
-import type { Game, GameSchedule, PrintOptions } from '~/types';
+// biome-ignore lint/correctness/noUnusedImports: Used in template via Vue's component auto-registration
 import PrintPreviewModal from '~/components/modals/PrintPreviewModal.vue';
+// biome-ignore lint/correctness/noUnusedImports: Used in code but Biome doesn't recognize type usage in Vue
+import type { Game, GameSchedule, PrintOptions } from '~/types';
 
 // Stores
 const playerStore = usePlayerStore();
@@ -35,21 +37,30 @@ watch(showPrintModal, isOpen => {
 
 // Computed properties
 const totalGames = computed(() => {
-  if (!gameStore.currentSchedule) return 0;
+  if (!gameStore.currentSchedule) {
+    return 0;
+  }
   return gameStore.currentSchedule.rounds.reduce((sum: number, round) => sum + round.length, 0);
 });
 
 const averageSkillDifference = computed(() => {
-  if (!gameStore.currentSchedule) return '0.0';
+  if (!gameStore.currentSchedule) {
+    return '0.0';
+  }
   const allGames = gameStore.currentSchedule.rounds.flat();
-  if (allGames.length === 0) return '0.0';
+  if (allGames.length === 0) {
+    return '0.0';
+  }
   const total = allGames.reduce((sum: number, game) => sum + game.skillDifference, 0);
   return (total / allGames.length).toFixed(1);
 });
 
 const restingPlayersPerRound = computed(() => {
-  if (!gameStore.currentSchedule || gameStore.currentSchedule.restingPlayers.length === 0) return 0;
-  return gameStore.currentSchedule.restingPlayers[0].length;
+  if (!gameStore.currentSchedule || gameStore.currentSchedule.restingPlayers.length === 0) {
+    return 0;
+  }
+  const firstRound = gameStore.currentSchedule.restingPlayers[0];
+  return firstRound ? firstRound.length : 0;
 });
 
 const selectedRoundGames = computed(() => {
@@ -61,7 +72,9 @@ const selectedRoundResting = computed(() => {
 });
 
 const hasRestingPlayers = computed(() => {
-  if (!gameStore.currentSchedule) return false;
+  if (!gameStore.currentSchedule) {
+    return false;
+  }
   return gameStore.currentSchedule.restingPlayers.some(round => round.length > 0);
 });
 
@@ -248,50 +261,37 @@ onMounted(async () => {
               <thead class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light">
                 <tr>
                   <th class="px-4 py-3 text-left text-xs font-bold text-white uppercase tracking-wider">Round</th>
-                  <th
-                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
-                    :key="court"
-                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider"
-                  >
+                  <th v-for="court in gameStore.currentSchedule.options.numberOfCourts" :key="court"
+                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
                     Court {{ court }}
                   </th>
-                  <th
-                    v-if="hasRestingPlayers"
-                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider"
-                  >
+                  <th v-if="hasRestingPlayers"
+                    class="px-4 py-3 text-center text-xs font-bold text-white uppercase tracking-wider">
                     Resting
                   </th>
                 </tr>
               </thead>
               <tbody class="bg-white dark:bg-slate-700 divide-y divide-gray-200 dark:divide-gray-600">
-                <tr
-                  v-for="(round, roundIndex) in gameStore.currentSchedule.rounds"
-                  :key="roundIndex"
+                <tr v-for="(round, roundIndex) in gameStore.currentSchedule.rounds" :key="roundIndex"
                   class="hover:bg-paddle-teal/5 dark:hover:bg-paddle-teal/10 transition-colors duration-200"
-                  :class="{ 'bg-gray-50 dark:bg-slate-700/50': roundIndex % 2 === 1 }"
-                >
+                  :class="{ 'bg-gray-50 dark:bg-slate-700/50': roundIndex % 2 === 1 }">
                   <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-700">
                     <div class="flex items-center gap-2">
                       <Icon name="mdi:numeric" class="text-paddle-teal dark:text-paddle-teal-light" />
                       Round {{ roundIndex + 1 }}
                     </div>
                   </td>
-                  <td
-                    v-for="court in gameStore.currentSchedule.options.numberOfCourts"
-                    :key="court"
-                    class="px-4 py-3 text-xs text-center"
-                  >
+                  <td v-for="court in gameStore.currentSchedule.options.numberOfCourts" :key="court"
+                    class="px-4 py-3 text-xs text-center">
                     <div v-if="getGameForCourt(round as Game[], court)" class="space-y-2">
                       <div
-                        class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium border border-blue-200 dark:border-blue-700"
-                      >
+                        class="bg-blue-100 dark:bg-blue-900/40 text-blue-800 dark:text-blue-300 px-2 py-1 rounded text-xs font-medium border border-blue-200 dark:border-blue-700">
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[0]) }},
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team1[1]) }}
                       </div>
                       <div class="text-paddle-teal dark:text-paddle-teal-light font-bold text-xs">vs</div>
                       <div
-                        class="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 px-2 py-1 rounded text-xs font-medium border border-red-200 dark:border-red-700"
-                      >
+                        class="bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-300 px-2 py-1 rounded text-xs font-medium border border-red-200 dark:border-red-700">
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[0]) }},
                         {{ getPlayerName(getGameForCourt(round as Game[], court)!.team2[1]) }}
                       </div>
@@ -299,11 +299,8 @@ onMounted(async () => {
                   </td>
                   <td v-if="hasRestingPlayers" class="px-4 py-3 text-xs text-center">
                     <div class="flex flex-wrap gap-1 justify-center">
-                      <span
-                        v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]"
-                        :key="playerId"
-                        class="inline-block px-2 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-700"
-                      >
+                      <span v-for="playerId in gameStore.currentSchedule.restingPlayers[roundIndex]" :key="playerId"
+                        class="inline-block px-2 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-full text-xs font-medium border border-amber-200 dark:border-amber-700">
                         {{ getPlayerName(playerId) }}
                       </span>
                     </div>
@@ -326,13 +323,9 @@ onMounted(async () => {
 
         <div class="p-6">
           <div class="flex flex-wrap gap-3">
-            <UButton
-              v-for="roundNumber in gameStore.currentSchedule.rounds.length"
-              :key="roundNumber"
-              :class="selectedRound === roundNumber ? 'btn-primary' : 'btn-secondary'"
-              size="sm"
-              @click="selectedRound = roundNumber"
-            >
+            <UButton v-for="roundNumber in gameStore.currentSchedule.rounds.length" :key="roundNumber"
+              :class="selectedRound === roundNumber ? 'btn-primary' : 'btn-secondary'" size="sm"
+              @click="selectedRound = roundNumber">
               Round {{ roundNumber }}
             </UButton>
           </div>
@@ -423,14 +416,11 @@ onMounted(async () => {
 
               <!-- Skill Difference -->
               <div class="text-center">
-                <div
-                  class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold"
-                  :class="{
-                    'bg-emerald-100 text-emerald-800': game.skillDifference <= 1,
-                    'bg-amber-100 text-amber-800': game.skillDifference > 1 && game.skillDifference <= 2,
-                    'bg-red-100 text-red-800': game.skillDifference > 2
-                  }"
-                >
+                <div class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold" :class="{
+                  'bg-emerald-100 text-emerald-800': game.skillDifference <= 1,
+                  'bg-amber-100 text-amber-800': game.skillDifference > 1 && game.skillDifference <= 2,
+                  'bg-red-100 text-red-800': game.skillDifference > 2
+                }">
                   <Icon name="mdi:scale-balance" />
                   Diff: {{ game.skillDifference.toFixed(1) }}
                 </div>
@@ -445,11 +435,8 @@ onMounted(async () => {
               Resting Players
             </h4>
             <div class="flex flex-wrap gap-3">
-              <div
-                v-for="playerId in selectedRoundResting"
-                :key="playerId"
-                class="flex items-center gap-2 bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium"
-              >
+              <div v-for="playerId in selectedRoundResting" :key="playerId"
+                class="flex items-center gap-2 bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium">
                 <Icon name="mdi:account-clock" />
                 {{ getPlayerName(playerId) }}
               </div>
@@ -460,10 +447,7 @@ onMounted(async () => {
     </div>
 
     <!-- Print Preview Modal -->
-    <PrintPreviewModal
-      v-model:open="showPrintModal"
-      v-model:print-options="printOptions"
-      :schedule="(gameStore.currentSchedule as GameSchedule) || null"
-    />
+    <PrintPreviewModal v-model:open="showPrintModal" v-model:print-options="printOptions"
+      :schedule="(gameStore.currentSchedule as GameSchedule) || null" />
   </div>
 </template>

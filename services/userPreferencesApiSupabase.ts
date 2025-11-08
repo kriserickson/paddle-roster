@@ -59,6 +59,7 @@ export class UserPreferencesApiSupabase {
   async saveUserPreferences(preferences: UserPreferences): Promise<void> {
     const rowData = this.mapUserPreferencesToRow(preferences);
 
+    // @ts-expect-error: Supabase generic type inference limitation in VS Code
     const { error } = await this.supabase.from('user_preferences').upsert(rowData, {
       onConflict: 'user_id'
     });

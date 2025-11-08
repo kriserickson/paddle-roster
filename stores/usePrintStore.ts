@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia';
-import type { Game, GameSchedule, PrintOptions } from '~/types';
 import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
+import type { Game, GameSchedule, PrintOptions } from '~/types';
 
 export const usePrintStore = defineStore('print', () => {
   /**
@@ -45,7 +45,7 @@ export const usePrintStore = defineStore('print', () => {
     }
 
     function playerName(id: string): string {
-      return store!.getPlayer(id)?.name || 'Unknown Player';
+      return store?.getPlayer(id)?.name || 'Unknown Player';
     }
 
     function formatSkillLevel(level: number): string {
@@ -53,7 +53,7 @@ export const usePrintStore = defineStore('print', () => {
     }
 
     function getPlayerSkill(id: string): number {
-      return store!.getPlayer(id)?.skillLevel || 0;
+      return store?.getPlayer(id)?.skillLevel || 0;
     }
 
     const colorStyles = options.colorMode
@@ -222,9 +222,15 @@ export const usePrintStore = defineStore('print', () => {
       if (options.compactLayout) {
         // All on one line
         const eventParts = [];
-        if (options.eventDate) eventParts.push(`Date: ${options.eventDate}`);
-        if (options.location) eventParts.push(`Location: ${options.location}`);
-        if (options.organizer) eventParts.push(`Organizer: ${options.organizer}`);
+        if (options.eventDate) {
+          eventParts.push(`Date: ${options.eventDate}`);
+        }
+        if (options.location) {
+          eventParts.push(`Location: ${options.location}`);
+        }
+        if (options.organizer) {
+          eventParts.push(`Organizer: ${options.organizer}`);
+        }
         html += eventParts.join(' • ');
       } else {
         // Separate lines
@@ -267,7 +273,7 @@ export const usePrintStore = defineStore('print', () => {
 
       // Games for each court
       for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
-        const game = round.find(g => g.court === court);
+        const game = round?.find(g => g.court === court);
 
         html += '<td class="game-cell">';
         if (game) {
@@ -279,7 +285,7 @@ export const usePrintStore = defineStore('print', () => {
       // Resting players
       if (hasRestingPlayers) {
         html += '<td class="game-cell">';
-        if (restingPlayers.length > 0) {
+        if (restingPlayers && restingPlayers.length > 0) {
           const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
           html += `<div class="resting-players">${restingNames}</div>`;
         } else {

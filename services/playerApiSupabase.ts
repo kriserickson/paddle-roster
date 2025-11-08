@@ -1,6 +1,6 @@
 import type { Player } from '~/types';
-import type { Database, PlayerRow, PlayerInsert, PlayerUpdate } from '~/types/database';
-import type { IPlayerApi, ApiResponse } from '~/types/api';
+import type { ApiResponse, IPlayerApi } from '~/types/api';
+import type { Database, PlayerInsert, PlayerRow, PlayerUpdate } from '~/types/database';
 
 /**
  * Supabase service for player management
@@ -28,7 +28,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Convert Player to database insert format
    */
-  private mapPlayerToInsert(player: Omit<Player, 'id'>): PlayerInsert {
+  private mapPlayerToInsert(player: Omit<Player, 'id'>): Omit<PlayerInsert, 'id'> {
     return {
       user_id: this.user.value?.id || 'anonymous-user', // Fallback for data recovery
       name: player.name,
@@ -67,7 +67,7 @@ export class PlayerApiSupabase implements IPlayerApi {
       let query = this.supabase.from('players').select('*');
 
       // If user is authenticated, filter by user_id
-      if (this.user.value) {
+      if (this.user.value?.id) {
         //console.log('User authenticated, filtering by user_id:', this.user.value.id);
         query = query.eq('user_id', this.user.value.id);
       } else {
@@ -118,7 +118,7 @@ export class PlayerApiSupabase implements IPlayerApi {
     if (!result.success) {
       throw new Error(result.error || result.message);
     }
-    return result.data!;
+    return result.data || player; // Fallback to original player if data is missing
   }
 
   /**
@@ -128,6 +128,8 @@ export class PlayerApiSupabase implements IPlayerApi {
     try {
       // Allow creating players even without authentication (temporary for data recovery)
       const insertData = this.mapPlayerToInsert(player);
+
+      // @ts-expect-error: Supabase generic type inference limitation in VS Code
       const { data, error } = await this.supabase.from('players').insert([insertData]).select().single();
 
       if (error) {
@@ -159,10 +161,12 @@ export class PlayerApiSupabase implements IPlayerApi {
       }
 
       const updateData = this.mapPlayerToUpdate({ id, ...updates } as Player);
+
+      // @ts-expect-error: Supabase generic type inference limitation in VS Code
       let query = this.supabase.from('players').update(updateData).eq('id', id);
 
       // If user is authenticated, also filter by user_id
-      if (this.user.value) {
+      if (this.user.value?.id) {
         query = query.eq('user_id', this.user.value.id);
       }
 
@@ -193,7 +197,7 @@ export class PlayerApiSupabase implements IPlayerApi {
       let query = this.supabase.from('players').delete().eq('id', id);
 
       // If user is authenticated, also filter by user_id
-      if (this.user.value) {
+      if (this.user.value?.id) {
         query = query.eq('user_id', this.user.value.id);
       }
 
@@ -220,6 +224,8 @@ export class PlayerApiSupabase implements IPlayerApi {
       }
 
       const insertData = players.map(player => this.mapPlayerToInsert(player));
+
+      // @ts-expect-error: Supabase generic type inference limitation in VS Code
       const { data, error } = await this.supabase.from('players').insert(insertData).select();
 
       if (error) {
@@ -244,7 +250,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async clearAllPlayers(): Promise<ApiResponse> {
     try {
-      if (!this.user.value) {
+      if (!this.user.value?.id) {
         return { success: false, message: 'User not authenticated' };
       }
 

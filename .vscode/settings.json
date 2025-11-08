@@ -6,16 +6,6 @@
     "strings": "on"
   },
   "tailwindCSS.classAttributes": ["class", "ui"],
-  "tailwindCSS.experimental.classRegex": [
-    ["ui:\\s*{([^)]*)\\s*}", "(?:'|\"|`)([^']*)(?:'|\"|`)"]
-  ],
-  "cSpell.words": [
-    "heroicons",
-    "Iconify",
-    "Nuxt",
-    "nuxtjs",
-    "Pickleball",
-    "Prefs",
-    "Supabase"
-  ]
+  "tailwindCSS.experimental.classRegex": [["ui:\\s*{([^)]*)\\s*}", "(?:'|\"|`)([^']*)(?:'|\"|`)"]],
+  "cSpell.words": ["heroicons", "Iconify", "Nuxt", "nuxtjs", "Pickleball", "Prefs", "Supabase"]
 }

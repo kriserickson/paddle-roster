@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia';
+import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 import type { Game, GameSchedule, MatchingOptions } from '~/types';
 import { PickleballMatcher } from '~/utils/pickleballMatcher';
-import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 
 export const useGameStore = defineStore('game', () => {
   /**
@@ -37,7 +37,7 @@ export const useGameStore = defineStore('game', () => {
     const schedule = currentSchedule.value;
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
     const totalRounds = schedule.rounds.length;
-    const playersPerRound = schedule.rounds[0]?.length * 4 || 0;
+    const playersPerRound = (schedule.rounds[0]?.length || 0) * 4;
     const restingPerRound = schedule.restingPlayers[0]?.length || 0;
 
     return {
@@ -203,14 +203,16 @@ export const useGameStore = defineStore('game', () => {
     if (!currentSchedule.value || roundNumber < 1 || roundNumber > currentSchedule.value.rounds.length) {
       return null;
     }
-    return currentSchedule.value.rounds[roundNumber - 1];
+    const games = currentSchedule.value.rounds[roundNumber - 1];
+    return games || null;
   }
 
   function getRestingPlayersForRound(roundNumber: number): string[] | null {
     if (!currentSchedule.value || roundNumber < 1 || roundNumber > currentSchedule.value.restingPlayers.length) {
       return null;
     }
-    return currentSchedule.value.restingPlayers[roundNumber - 1];
+    const resting = currentSchedule.value.restingPlayers[roundNumber - 1];
+    return resting || null;
   }
 
   return {

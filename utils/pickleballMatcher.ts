@@ -1,4 +1,4 @@
-import type { Player, Game, MatchingOptions, GameSchedule } from '~/types';
+import type { Game, GameSchedule, MatchingOptions, Player } from '~/types';
 
 /**
  * PickleballMatcher - Greedy constructive algorithm with local optimization
@@ -91,6 +91,11 @@ export class PickleballMatcher {
         const [a1, a2] = game.team1;
         const [b1, b2] = game.team2;
 
+        if (!partnerHistory[a1] || !partnerHistory[a2] || !partnerHistory[b1] || !partnerHistory[b2]) {
+          console.warn('Invalid player IDs in game:', game);
+          continue; // Skip invalid games
+        }
+
         // Partners
         partnerHistory[a1].add(a2);
         partnerHistory[a2].add(a1);
@@ -100,6 +105,12 @@ export class PickleballMatcher {
         // Opponents (overall count)
         for (const p1 of [a1, a2]) {
           for (const p2 of [b1, b2]) {
+            if (!opponentHistory[p1]) {
+              opponentHistory[p1] = {};
+            }
+            if (!opponentHistory[p2]) {
+              opponentHistory[p2] = {};
+            }
             opponentHistory[p1][p2] = (opponentHistory[p1][p2] || 0) + 1;
             opponentHistory[p2][p1] = (opponentHistory[p2][p1] || 0) + 1;
           }
@@ -108,6 +119,9 @@ export class PickleballMatcher {
         // Recent opponents (for consecutive round tracking)
         for (const p1 of [a1, a2]) {
           const opponents = [b1, b2];
+          if (!recentOpponentHistory[p1]) {
+            recentOpponentHistory[p1] = [];
+          }
           recentOpponentHistory[p1].push(opponents);
           // Keep only last 2 rounds
           if (recentOpponentHistory[p1].length > 2) {
@@ -116,6 +130,9 @@ export class PickleballMatcher {
         }
         for (const p2 of [b1, b2]) {
           const opponents = [a1, a2];
+          if (!recentOpponentHistory[p2]) {
+            recentOpponentHistory[p2] = [];
+          }
           recentOpponentHistory[p2].push(opponents);
           // Keep only last 2 rounds
           if (recentOpponentHistory[p2].length > 2) {
@@ -125,6 +142,9 @@ export class PickleballMatcher {
 
         // Courts
         for (const pid of [a1, a2, b1, b2]) {
+          if (!courtHistory[pid]) {
+            courtHistory[pid] = [];
+          }
           courtHistory[pid].push(game.court);
         }
       }
@@ -178,6 +198,9 @@ export class PickleballMatcher {
 
         // Update rest counts for specified sitters
         for (const pid of specifiedSitters) {
+          if (!restCounts[pid]) {
+            restCounts[pid] = 0;
+          }
           restCounts[pid]++;
           lastRestRound[pid] = r;
         }
@@ -235,12 +258,12 @@ export class PickleballMatcher {
 
       // Priority 1: Even distribution - players who need more rest (below average)
       if (this.opts.distributeRestEqually) {
-        const restDeficit = avgRestsPerPlayer - restCounts[pid];
+        const restDeficit = avgRestsPerPlayer - (restCounts[pid] || 0);
         score += restDeficit * 1000;
       }
 
       // Priority 2: Players who haven't rested recently (spacing)
-      const roundsSinceRest = currentRound - lastRestRound[pid];
+      const roundsSinceRest = currentRound - (lastRestRound[pid] || 0);
       score += roundsSinceRest * 10;
 
       // Add small random component for tie-breaking
@@ -255,6 +278,9 @@ export class PickleballMatcher {
 
     // Update counts
     for (const pid of selected) {
+      if (!restCounts[pid]) {
+        restCounts[pid] = 0;
+      }
       restCounts[pid]++;
       lastRestRound[pid] = currentRound;
     }
@@ -312,7 +338,11 @@ export class PickleballMatcher {
 
     // Create game objects
     for (let i = 0; i < courtAssignments.length; i++) {
-      const { team1, team2, court } = courtAssignments[i];
+      const assignment = courtAssignments[i];
+      if (!assignment) {
+        continue;
+      }
+      const { team1, team2, court } = assignment;
 
       // Validate teams have players
       if (!team1[0] || !team1[1] || !team2[0] || !team2[1]) {
@@ -347,7 +377,10 @@ export class PickleballMatcher {
     const shuffled = this.shuffleArray(available);
 
     while (shuffled.length >= 2) {
-      const p1 = shuffled.shift()!;
+      const p1 = shuffled.shift();
+      if (!p1) {
+        continue; // Should never happen due to length check, but satisfies linter
+      }
 
       // Find best partner for p1 (prefer someone they haven't played with)
       let bestPartner: string | null = null;
@@ -355,10 +388,13 @@ export class PickleballMatcher {
 
       for (let i = 0; i < shuffled.length; i++) {
         const p2 = shuffled[i];
+        if (!p2) {
+          continue; // Skip if somehow undefined
+        }
         let score = 0;
 
         // Prefer new partners - HIGHEST PRIORITY
-        if (!partnerHistory[p1].has(p2)) {
+        if (!partnerHistory[p1] || !partnerHistory[p1].has(p2)) {
           score += 2000; // Very high weight for new partners
         } else {
           score -= 1000; // Very heavy penalty for repeats - higher than consecutive opponent penalties
@@ -393,8 +429,10 @@ export class PickleballMatcher {
         shuffled.splice(shuffled.indexOf(bestPartner), 1);
       } else if (shuffled.length > 0) {
         // Force pairing with first available if no best partner found
-        const forcedPartner = shuffled.shift()!;
-        pairs.push([p1, forcedPartner]);
+        const forcedPartner = shuffled.shift();
+        if (forcedPartner) {
+          pairs.push([p1, forcedPartner]);
+        }
       }
     }
 
@@ -413,7 +451,10 @@ export class PickleballMatcher {
     const available = [...pairs];
 
     while (available.length >= 2) {
-      const team1 = available.shift()!;
+      const team1 = available.shift();
+      if (!team1) {
+        continue; // Should never happen due to length check
+      }
 
       // Find best opponent team
       let bestOpponent: string[] | null = null;
@@ -423,6 +464,9 @@ export class PickleballMatcher {
       // First pass: try to find opponent that meets all constraints
       for (let i = 0; i < available.length; i++) {
         const team2 = available[i];
+        if (!team2) {
+          continue;
+        }
         let score = 0;
 
         // Calculate skill difference
@@ -442,7 +486,7 @@ export class PickleballMatcher {
         let opponentCount = 0;
         for (const p1 of team1) {
           for (const p2 of team2) {
-            opponentCount += opponentHistory[p1][p2] || 0;
+            opponentCount += opponentHistory[p1]?.[p2] || 0;
           }
         }
 
@@ -452,20 +496,20 @@ export class PickleballMatcher {
           const recentHistory = recentOpponentHistory[p1];
 
           // Check if played against any team2 player in the last round (most recent)
-          if (recentHistory.length > 0) {
+          if (recentHistory && recentHistory.length > 0) {
             const lastRoundOpponents = recentHistory[recentHistory.length - 1];
             for (const p2 of team2) {
-              if (lastRoundOpponents.includes(p2)) {
+              if (lastRoundOpponents?.includes(p2)) {
                 consecutiveOpponentPenalty += 100; // Large penalty for consecutive rounds
               }
             }
           }
 
           // Check if played against any team2 player 2 rounds ago
-          if (recentHistory.length > 1) {
+          if (recentHistory && recentHistory.length > 1) {
             const twoRoundsAgoOpponents = recentHistory[recentHistory.length - 2];
             for (const p2 of team2) {
-              if (twoRoundsAgoOpponents.includes(p2)) {
+              if (twoRoundsAgoOpponents?.includes(p2)) {
                 consecutiveOpponentPenalty += 50; // Smaller penalty for 2 rounds ago
               }
             }
@@ -497,6 +541,10 @@ export class PickleballMatcher {
         // Second pass: ignore maxSkillDifference constraint to ensure all teams get matched
         for (let i = 0; i < available.length; i++) {
           const team2 = available[i];
+          if (!team2) {
+            console.warn('No team2 found during relaxed matching');
+            continue;
+          }
           let score = 0;
 
           const skill1 = team1.reduce((sum, id) => sum + this.player(id).skillLevel, 0);
@@ -507,7 +555,7 @@ export class PickleballMatcher {
           let opponentCount = 0;
           for (const p1 of team1) {
             for (const p2 of team2) {
-              opponentCount += opponentHistory[p1][p2] || 0;
+              opponentCount += opponentHistory[p1]?.[p2] || 0;
             }
           }
 
@@ -517,20 +565,20 @@ export class PickleballMatcher {
             const recentHistory = recentOpponentHistory[p1];
 
             // Check if played against any team2 player in the last round (most recent)
-            if (recentHistory.length > 0) {
+            if (recentHistory && recentHistory.length > 0) {
               const lastRoundOpponents = recentHistory[recentHistory.length - 1];
               for (const p2 of team2) {
-                if (lastRoundOpponents.includes(p2)) {
+                if (lastRoundOpponents?.includes(p2)) {
                   consecutiveOpponentPenalty += 500; // Large penalty for consecutive rounds
                 }
               }
             }
 
             // Check if played against any team2 player 2 rounds ago
-            if (recentHistory.length > 1) {
+            if (recentHistory && recentHistory.length > 1) {
               const twoRoundsAgoOpponents = recentHistory[recentHistory.length - 2];
               for (const p2 of team2) {
-                if (twoRoundsAgoOpponents.includes(p2)) {
+                if (twoRoundsAgoOpponents?.includes(p2)) {
                   consecutiveOpponentPenalty += 150; // Smaller penalty for 2 rounds ago
                 }
               }
@@ -555,17 +603,19 @@ export class PickleballMatcher {
 
       if (bestOpponent) {
         matchings.push({
-          team1: [team1[0], team1[1]],
-          team2: [bestOpponent[0], bestOpponent[1]]
+          team1: [team1[0] || '', team1[1] || ''],
+          team2: [bestOpponent[0] || '', bestOpponent[1] || '']
         });
         available.splice(available.indexOf(bestOpponent), 1);
       } else if (available.length > 0) {
         // This should never happen, but if it does, force a match with the first available team
-        const forcedOpponent = available.shift()!;
-        matchings.push({
-          team1: [team1[0], team1[1]],
-          team2: [forcedOpponent[0], forcedOpponent[1]]
-        });
+        const forcedOpponent = available.shift();
+        if (forcedOpponent) {
+          matchings.push({
+            team1: [team1[0] || '', team1[1] || ''],
+            team2: [forcedOpponent[0] || '', forcedOpponent[1] || '']
+          });
+        }
       }
     }
 
@@ -585,7 +635,12 @@ export class PickleballMatcher {
     const usedCourts = new Set<number>();
 
     for (let i = 0; i < matchings.length; i++) {
-      const { team1, team2 } = matchings[i];
+      const matching = matchings[i];
+      if (!matching) {
+        console.warn('No matching found for court assignment at index', i);
+        continue;
+      }
+      const { team1, team2 } = matching;
       let bestCourt = 1;
       let bestScore = -Infinity;
 
@@ -600,6 +655,11 @@ export class PickleballMatcher {
         // Check for consecutive same-court penalties
         for (const pid of [...team1, ...team2]) {
           const history = courtHistory[pid];
+
+          if (!history) {
+            console.warn(`No court history for player ${pid}`);
+            continue;
+          }
 
           // Add heavy penalty if player was on this court in the last round
           if (history.length > 0) {
@@ -690,6 +750,9 @@ export class PickleballMatcher {
 
     for (const roundRests of schedule.restingPlayers) {
       for (const pid of roundRests) {
+        if (!restCounts[pid]) {
+          restCounts[pid] = 0;
+        }
         restCounts[pid]++;
       }
     }
@@ -717,11 +780,11 @@ export class PickleballMatcher {
         // Calculate spacing variance (prefer even spacing)
         const gaps: number[] = [];
         for (let i = 1; i < restRounds.length; i++) {
-          gaps.push(restRounds[i] - restRounds[i - 1]);
+          gaps.push(restRounds[i] || 0 - (restRounds[i - 1] || 0));
         }
 
         const avgGap = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-        const variance = gaps.reduce((sum, gap) => sum + Math.pow(gap - avgGap, 2), 0) / gaps.length;
+        const variance = gaps.reduce((sum, gap) => sum + (gap - avgGap) ** 2, 0) / gaps.length;
         totalBadness += variance;
       }
     }
@@ -742,7 +805,7 @@ export class PickleballMatcher {
     let penalty = 0;
     for (const count of Object.values(partnerCounts)) {
       if (count > 1) {
-        penalty += Math.pow(2, count - 1);
+        penalty += 2 ** (count - 1);
       }
     }
 
@@ -765,7 +828,7 @@ export class PickleballMatcher {
     let penalty = 0;
     for (const count of Object.values(opponentCounts)) {
       if (count > 2) {
-        penalty += Math.pow(2, count - 2);
+        penalty += 2 ** (count - 2);
       }
     }
 
@@ -798,8 +861,8 @@ export class PickleballMatcher {
         const lastRoundOpponents = opponentsByRound[i - 1];
 
         // Large penalty if any opponent from last round appears again
-        for (const opp of currentOpponents) {
-          if (lastRoundOpponents.includes(opp)) {
+        for (const opp of currentOpponents || []) {
+          if (lastRoundOpponents?.includes(opp)) {
             penalty += 100; // Heavy penalty for consecutive round
           }
         }
@@ -807,8 +870,8 @@ export class PickleballMatcher {
         // Check 2 rounds back (smaller penalty)
         if (i >= 2) {
           const twoRoundsAgoOpponents = opponentsByRound[i - 2];
-          for (const opp of currentOpponents) {
-            if (twoRoundsAgoOpponents.includes(opp)) {
+          for (const opp of currentOpponents || []) {
+            if (twoRoundsAgoOpponents?.includes(opp)) {
               penalty += 30; // Smaller penalty for 2 rounds ago
             }
           }
@@ -852,35 +915,6 @@ export class PickleballMatcher {
     return penalty;
   }
 
-  private scoreCourtBalance(schedule: GameSchedule): number {
-    const courtCounts: Record<string, Record<number, number>> = {};
-    const players = this.players.filter(p => p.active !== false);
-
-    for (const player of players) {
-      courtCounts[player.id] = {};
-    }
-
-    for (const round of schedule.rounds) {
-      for (const game of round) {
-        for (const pid of [...game.team1, ...game.team2]) {
-          courtCounts[pid][game.court] = (courtCounts[pid][game.court] || 0) + 1;
-        }
-      }
-    }
-
-    let penalty = 0;
-    for (const pid in courtCounts) {
-      const counts = Object.values(courtCounts[pid]);
-      if (counts.length > 0) {
-        const max = Math.max(...counts);
-        const min = Math.min(...counts, 0);
-        penalty += (max - min) * (max - min);
-      }
-    }
-
-    return penalty;
-  }
-
   private scoreSkillBalance(schedule: GameSchedule): number {
     let totalImbalance = 0;
 
@@ -901,7 +935,7 @@ export class PickleballMatcher {
         if (game.skillDifference > this.opts.maxSkillDifference) {
           // Exponential penalty for violations
           const excess = game.skillDifference - this.opts.maxSkillDifference;
-          violations += Math.pow(2, excess);
+          violations += 2 ** excess;
         }
       }
     }
@@ -951,7 +985,13 @@ export class PickleballMatcher {
     const shuffled = [...array];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+      const temp = shuffled[i];
+      if (temp !== undefined && shuffled[j] !== undefined) {
+        shuffled[i] = shuffled[j];
+        shuffled[j] = temp;
+      } else {
+        console.warn('Undefined value encountered during shuffle');
+      }
     }
     return shuffled;
   }

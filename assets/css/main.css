@@ -1,5 +1,5 @@
-@import 'tailwindcss';
-@import '@nuxt/ui';
+@import "tailwindcss";
+@import "@nuxt/ui";
 
 /* Brand Colors and Custom Styles */
 :root {
@@ -21,365 +21,7 @@ body {
 }
 
 .dark body {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
-}
-
-/* Dark Mode Card Styling - Deep slate with proper depth */
-.dark .content-card,
-.dark .player-card,
-.dark .game-card,
-.dark .modal-content,
-.dark .UCard,
-.dark .u-card {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  color: #f1f5f9 !important;
-  border: 1px solid rgba(58, 182, 187, 0.2) !important;
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(58, 182, 187, 0.1) !important;
-}
-
-/* Tab Navigation - Modern dark with teal accent */
-.dark .tab-nav {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  box-shadow:
-    0 4px 24px rgba(0, 0, 0, 0.4),
-    0 0 0 1px rgba(58, 182, 187, 0.2) !important;
-  border: 1px solid rgba(58, 182, 187, 0.15) !important;
-}
-
-.dark .tab-button {
-  background: transparent !important;
-  color: #cbd5e1 !important;
-}
-
-.dark .tab-button.active {
-  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%) !important;
-  color: #0f172a !important;
-  font-weight: 600 !important;
-  box-shadow:
-    0 4px 16px rgba(58, 182, 187, 0.5),
-    0 0 20px rgba(58, 182, 187, 0.3) !important;
-}
-
-.dark .tab-button:hover:not(.active) {
-  background: rgba(58, 182, 187, 0.1) !important;
-  color: #4dd8de !important;
-}
-
-.dark .tab-button.disabled {
-  opacity: 0.4 !important;
-  cursor: not-allowed !important;
-  pointer-events: none !important;
-}
-
-/* Card Headers - Vibrant teal gradient */
-.dark .content-card-header,
-.dark .game-generation-header,
-.dark .player-management-header,
-.dark .player-list-header {
-  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
-  color: #ffffff !important;
-  border-bottom: none !important;
-  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3) !important;
-}
-
-/* Player Stats - Elevated cards with teal accents */
-.dark .player-stats {
-  background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
-  color: #f1f5f9 !important;
-  border-radius: 12px !important;
-  box-shadow:
-    0 4px 16px rgba(0, 0, 0, 0.3),
-    0 0 0 1px rgba(58, 182, 187, 0.3) !important;
-  border: 1px solid rgba(58, 182, 187, 0.25) !important;
-}
-
-.dark .player-stats .stat-label {
-  color: #4dd8de !important;
-  font-weight: 600 !important;
-}
-
-.dark .player-stats .stat-value {
-  color: #ffffff !important;
-  font-weight: 700 !important;
-}
-
-/* Search Bar - Elevated with teal glow */
-.dark .search-bar {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  color: #f1f5f9 !important;
-  border: 2px solid rgba(58, 182, 187, 0.4) !important;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 0 20px rgba(58, 182, 187, 0.1) !important;
-}
-
-.dark .search-bar input {
-  background: transparent !important;
-  color: #f1f5f9 !important;
-}
-
-.dark .search-bar input::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Form Inputs */
-.dark .form-input.u-select {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  border: 1px solid rgba(58, 182, 187, 0.3) !important;
-  color: #f1f5f9 !important;
-}
-
-.dark #configuration-container {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-}
-
-.dark #configuration-container button[role='checkbox'] {
-  --tw-ring-color: #4dd8de;
-}
-
-.dark .bg-default {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-}
-
-/* Table Styling - Better contrast and readability */
-.dark table {
-  background: transparent !important;
-}
-
-.dark thead {
-  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
-  color: #ffffff !important;
-}
-
-.dark thead th {
-  color: #ffffff !important;
-  font-weight: 700 !important;
-}
-
-.dark tbody tr {
-  border-bottom: 1px solid rgba(58, 182, 187, 0.1) !important;
-}
-
-.dark tbody tr:hover {
-  background: rgba(58, 182, 187, 0.08) !important;
-}
-
-.dark .bg-gray-50 {
-  background: rgba(71, 85, 105, 0.3) !important;
-}
-
-.dark .text-gray-900 {
-  color: #f1f5f9 !important;
-}
-
-.dark .bg-gray-200 {
-  background: rgba(71, 85, 105, 0.4) !important;
-}
-
-/* Game Cards - Enhanced depth */
-.dark .game-card {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  border: 1px solid rgba(58, 182, 187, 0.25) !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
-}
-
-.dark .game-card:hover {
-  border-color: rgba(58, 182, 187, 0.5) !important;
-  box-shadow:
-    0 6px 24px rgba(0, 0, 0, 0.4),
-    0 0 20px rgba(58, 182, 187, 0.2) !important;
-  transform: translateY(-2px) !important;
-  transition: all 0.3s ease !important;
-}
-
-/* Court Badges - Vibrant teal */
-.dark .court-badge {
-  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%) !important;
-  color: #0f172a !important;
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4) !important;
-}
-
-/* Team Containers */
-.dark .bg-blue-50 {
-  background: rgba(58, 182, 187, 0.15) !important;
-  border: 1px solid rgba(58, 182, 187, 0.3) !important;
-}
-
-.dark .bg-red-50 {
-  background: rgba(255, 39, 43, 0.15) !important;
-  border: 1px solid rgba(255, 39, 43, 0.3) !important;
-}
-
-/* Rest Players - Warm amber glow */
-.dark .rest-players {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.1) 100%) !important;
-  border: 2px solid rgba(245, 158, 11, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2) !important;
-}
-
-.dark .rest-title {
-  color: #fbbf24 !important;
-}
-
-/* Buttons - Enhanced with better shadows */
-.dark .btn-primary {
-  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%) !important;
-  color: #0f172a !important;
-  font-weight: 700 !important;
-  box-shadow:
-    0 4px 16px rgba(58, 182, 187, 0.4),
-    0 0 20px rgba(58, 182, 187, 0.2) !important;
-}
-
-.dark .btn-primary:hover {
-  box-shadow:
-    0 6px 24px rgba(58, 182, 187, 0.5),
-    0 0 30px rgba(58, 182, 187, 0.3) !important;
-  transform: translateY(-1px) !important;
-}
-
-.dark .btn-danger {
-  background: linear-gradient(135deg, #ff272b 0%, #ff5659 100%) !important;
-  box-shadow: 0 4px 16px rgba(255, 39, 43, 0.4) !important;
-}
-
-.dark .btn-secondary {
-  background: linear-gradient(135deg, #475569 0%, #64748b 100%) !important;
-  box-shadow: 0 4px 16px rgba(71, 85, 105, 0.4) !important;
-}
-
-/* Modal Overlay */
-.dark .modal-overlay {
-  background: rgba(15, 23, 42, 0.85) !important;
-  backdrop-filter: blur(8px) !important;
-}
-
-/* Alert Messages */
-.dark .alert-error {
-  background: linear-gradient(135deg, rgba(255, 39, 43, 0.2) 0%, rgba(255, 86, 89, 0.15) 100%) !important;
-  border: 2px solid rgba(255, 39, 43, 0.5) !important;
-  color: #fca5a5 !important;
-}
-
-.dark .alert-success {
-  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(74, 222, 128, 0.15) 100%) !important;
-  border: 2px solid rgba(34, 197, 94, 0.5) !important;
-  color: #86efac !important;
-}
-
-.dark .alert-warning {
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.15) 100%) !important;
-  border: 2px solid rgba(245, 158, 11, 0.5) !important;
-  color: #fde047 !important;
-}
-
-/* Player List Items */
-.dark .player-list-item {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  border: 1px solid rgba(58, 182, 187, 0.2) !important;
-}
-
-.dark .player-list-item:hover {
-  background: linear-gradient(135deg, #334155 0%, #475569 100%) !important;
-  border-color: rgba(58, 182, 187, 0.4) !important;
-  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.2) !important;
-}
-
-/* Skill Level Badges */
-.dark .skill-badge {
-  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%) !important;
-  color: #0f172a !important;
-  font-weight: 700 !important;
-  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4) !important;
-}
-
-/* Round Headers */
-.dark .round-header {
-  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%) !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3) !important;
-}
-
-/* UInput and Form Fields */
-.dark input[type='text'],
-.dark input[type='number'],
-.dark input[type='email'],
-.dark input[type='password'],
-.dark textarea,
-.dark select {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
-  border-color: rgba(58, 182, 187, 0.3) !important;
-  color: #f1f5f9 !important;
-}
-
-.dark input::placeholder,
-.dark textarea::placeholder {
-  color: #cbd5e1 !important;
-}
-
-.dark input:focus,
-.dark textarea:focus,
-.dark select:focus {
-  border-color: rgba(58, 182, 187, 0.6) !important;
-  box-shadow: 0 0 0 3px rgba(58, 182, 187, 0.15) !important;
-}
-
-/* Checkbox and Radio */
-.dark input[type='checkbox'],
-.dark input[type='radio'] {
-  border-color: rgba(58, 182, 187, 0.4) !important;
-}
-
-.dark input[type='checkbox']:checked,
-.dark input[type='radio']:checked {
-  background-color: #3ab6bb !important;
-  border-color: #3ab6bb !important;
-}
-
-/* Slider/Range */
-.dark input[type='range'] {
-  background: rgba(51, 65, 85, 0.5) !important;
-}
-
-.dark input[type='range']::-webkit-slider-thumb {
-  background: #3ab6bb !important;
-  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4) !important;
-}
-
-.dark input[type='range']::-moz-range-thumb {
-  background: #3ab6bb !important;
-  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4) !important;
-}
-
-/* Progress Bar */
-.dark .bg-gray-200 {
-  background: rgba(51, 65, 85, 0.6) !important;
-}
-
-/* Text Colors */
-.dark h1,
-.dark h2,
-.dark h3,
-.dark h4,
-.dark h5,
-.dark h6 {
-  color: #f1f5f9 !important;
-}
-
-.dark p {
-  color: #cbd5e1 !important;
-}
-
-/* Links */
-.dark a {
-  color: #4dd8de !important;
-}
-
-.dark a:hover {
-  color: #3ab6bb !important;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
 }
 
 /* Remove all !important from light mode selectors to allow dark mode to override */
@@ -394,75 +36,301 @@ body {
   border-color: #e2e8f0;
 }
 
-.tab-nav {
-  background: white;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+/* Dark Mode Card Styling - Deep slate with proper depth */
+.dark .content-card,
+.dark .player-card,
+.dark .game-card,
+.dark .modal-content,
+.dark .UCard,
+.dark .u-card {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #f1f5f9;
+  border: 1px solid rgba(58, 182, 187, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(58, 182, 187, 0.1);
 }
 
-.tab-button {
+.dark .player-stats .stat-value {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+/* Search Bar - Elevated with teal glow */
+.dark .search-bar {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  color: #f1f5f9;
+  border: 2px solid rgba(58, 182, 187, 0.4);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(58, 182, 187, 0.1);
+}
+
+.dark .search-bar input {
   background: transparent;
-  color: #23272f;
+  color: #f1f5f9;
 }
 
-.tab-button.active {
-  background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
-  color: white;
-  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3);
+.dark .search-bar input::placeholder {
+  color: #94a3b8;
 }
 
-.tab-button:hover:not(.active) {
-  background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
-  color: var(--paddle-teal);
+/* Form Inputs */
+.dark .form-input.u-select {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid rgba(58, 182, 187, 0.3);
+  color: #f1f5f9;
 }
 
-.tab-button.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  pointer-events: none;
+.dark #configuration-container {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
 
-.content-card-header,
-.game-generation-header,
-.player-management-header,
-.player-list-header {
-  background: linear-gradient(90deg, #f8fafc 0%, #f1f5f9 100%);
-  color: #18181b;
-  border-bottom: 2px solid var(--paddle-teal);
-  box-shadow: 0 2px 8px #e2e8f0cc;
+.dark #configuration-container button[role="checkbox"] {
+  --tw-ring-color: #4dd8de;
 }
 
-.player-stats {
-  background: #f1f5f9;
-  color: #18181b;
-  border-radius: 10px;
-  box-shadow: 0 2px 8px #e2e8f0cc;
+.dark .bg-default {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
 
-.player-stats .stat-label {
-  color: var(--paddle-teal);
-}
-
-.search-bar {
-  background: #f1f5f9;
-  color: #18181b;
-  border: 1.5px solid var(--paddle-teal);
-  box-shadow: 0 2px 8px #e2e8f0cc;
-}
-
-.search-bar input {
+/* Table Styling - Better contrast and readability */
+.dark table {
   background: transparent;
-  color: #18181b;
 }
 
-/* Header Styling */
-.app-header {
-  background: linear-gradient(90deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
-  box-shadow: 0 4px 20px rgba(58, 182, 187, 0.2);
+.dark thead {
+  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%);
+  color: #ffffff;
 }
 
-.app-title {
-  color: white;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.dark thead th {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.dark tbody tr {
+  border-bottom: 1px solid rgba(58, 182, 187, 0.1);
+}
+
+.dark tbody tr:hover {
+  background: rgba(58, 182, 187, 0.08);
+}
+
+.dark .bg-gray-50 {
+  background: rgba(71, 85, 105, 0.3);
+}
+
+.dark .text-gray-900 {
+  color: #f1f5f9;
+}
+
+.dark .bg-gray-200 {
+  background: rgba(71, 85, 105, 0.4);
+}
+
+/* Game Cards - Enhanced depth */
+.dark .game-card {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid rgba(58, 182, 187, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark .game-card:hover {
+  border-color: rgba(58, 182, 187, 0.5);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(58, 182, 187, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
+/* Court Badges - Vibrant teal */
+.dark .court-badge {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
+}
+
+/* Team Containers */
+.dark .bg-blue-50 {
+  background: rgba(58, 182, 187, 0.15);
+  border: 1px solid rgba(58, 182, 187, 0.3);
+}
+
+.dark .bg-red-50 {
+  background: rgba(255, 39, 43, 0.15);
+  border: 1px solid rgba(255, 39, 43, 0.3);
+}
+
+/* Rest Players - Warm amber glow */
+.dark .rest-players {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.1) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.dark .rest-title {
+  color: #fbbf24;
+}
+
+/* Buttons - Enhanced with better shadows */
+.dark .btn-primary {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow:
+    0 4px 16px rgba(58, 182, 187, 0.4),
+    0 0 20px rgba(58, 182, 187, 0.2);
+}
+
+.dark .btn-primary:hover {
+  box-shadow:
+    0 6px 24px rgba(58, 182, 187, 0.5),
+    0 0 30px rgba(58, 182, 187, 0.3);
+  transform: translateY(-1px);
+}
+
+.dark .btn-danger {
+  background: linear-gradient(135deg, #ff272b 0%, #ff5659 100%);
+  box-shadow: 0 4px 16px rgba(255, 39, 43, 0.4);
+}
+
+.dark .btn-secondary {
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  box-shadow: 0 4px 16px rgba(71, 85, 105, 0.4);
+}
+
+/* Modal Overlay */
+.dark .modal-overlay {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+}
+
+/* Alert Messages */
+.dark .alert-error {
+  background: linear-gradient(135deg, rgba(255, 39, 43, 0.2) 0%, rgba(255, 86, 89, 0.15) 100%);
+  border: 2px solid rgba(255, 39, 43, 0.5);
+  color: #fca5a5;
+}
+
+.dark .alert-success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(74, 222, 128, 0.15) 100%);
+  border: 2px solid rgba(34, 197, 94, 0.5);
+  color: #86efac;
+}
+
+.dark .alert-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.15) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  color: #fde047;
+}
+
+/* Player List Items */
+.dark .player-list-item {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid rgba(58, 182, 187, 0.2);
+}
+
+.dark .player-list-item:hover {
+  background: linear-gradient(135deg, #334155 0%, #475569 100%);
+  border-color: rgba(58, 182, 187, 0.4);
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.2);
+}
+
+/* Skill Level Badges */
+.dark .skill-badge {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
+}
+
+/* Round Headers */
+.dark .round-header {
+  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3);
+}
+
+/* UInput and Form Fields */
+.dark input[type="text"],
+.dark input[type="number"],
+.dark input[type="email"],
+.dark input[type="password"],
+.dark textarea,
+.dark select {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border-color: rgba(58, 182, 187, 0.3);
+  color: #f1f5f9;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #cbd5e1;
+}
+
+.dark input:focus,
+.dark textarea:focus,
+.dark select:focus {
+  border-color: rgba(58, 182, 187, 0.6);
+  box-shadow: 0 0 0 3px rgba(58, 182, 187, 0.15);
+}
+
+/* Checkbox and Radio */
+.dark input[type="checkbox"],
+.dark input[type="radio"] {
+  border-color: rgba(58, 182, 187, 0.4);
+}
+
+.dark input[type="checkbox"]:checked,
+.dark input[type="radio"]:checked {
+  background-color: #3ab6bb;
+  border-color: #3ab6bb;
+}
+
+/* Slider/Range */
+.dark input[type="range"] {
+  background: rgba(51, 65, 85, 0.5);
+}
+
+.dark input[type="range"]::-webkit-slider-thumb {
+  background: #3ab6bb;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
+}
+
+.dark input[type="range"]::-moz-range-thumb {
+  background: #3ab6bb;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
+}
+
+/* Progress Bar */
+.dark .bg-gray-200 {
+  background: rgba(51, 65, 85, 0.6);
+}
+
+/* Text Colors */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark h4,
+.dark h5,
+.dark h6 {
+  color: #f1f5f9;
+}
+
+.dark p {
+  color: #cbd5e1;
+}
+
+/* Links */
+.dark a {
+  color: #4dd8de;
+}
+
+.dark a:hover {
+  color: #3ab6bb;
 }
 
 /* Tab Navigation */
@@ -489,6 +357,51 @@ body {
 .tab-button:hover:not(.active) {
   background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
   color: var(--paddle-teal);
+}
+
+/* Tab Navigation - Modern dark with teal accent */
+.dark .tab-nav {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(58, 182, 187, 0.2);
+  border: 1px solid rgba(58, 182, 187, 0.15);
+}
+
+.dark .tab-button {
+  background: transparent;
+  color: #cbd5e1;
+}
+
+.dark .tab-button.active {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 600;
+  box-shadow:
+    0 4px 16px rgba(58, 182, 187, 0.5),
+    0 0 20px rgba(58, 182, 187, 0.3);
+}
+
+.dark .tab-button:hover:not(.active) {
+  background: rgba(58, 182, 187, 0.1);
+  color: #4dd8de;
+}
+
+.dark .tab-button.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Card Headers - Vibrant teal gradient */
+.dark .content-card-header,
+.dark .game-generation-header,
+.dark .player-management-header,
+.dark .player-list-header {
+  background: linear-gradient(135deg, #2a9fa3 0%, #3ab6bb 100%);
+  color: #ffffff;
+  border-bottom: none;
+  box-shadow: 0 4px 12px rgba(58, 182, 187, 0.3);
 }
 
 /* Card Components */
@@ -555,6 +468,33 @@ body {
   transform: translateY(-1px);
 }
 
+/* Buttons - Enhanced with better shadows */
+.dark .btn-primary {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow:
+    0 4px 16px rgba(58, 182, 187, 0.4),
+    0 0 20px rgba(58, 182, 187, 0.2);
+}
+
+.dark .btn-primary:hover {
+  box-shadow:
+    0 6px 24px rgba(58, 182, 187, 0.5),
+    0 0 30px rgba(58, 182, 187, 0.3);
+  transform: translateY(-1px);
+}
+
+.dark .btn-danger {
+  background: linear-gradient(135deg, #ff272b 0%, #ff5659 100%);
+  box-shadow: 0 4px 16px rgba(255, 39, 43, 0.4);
+}
+
+.dark .btn-secondary {
+  background: linear-gradient(135deg, #475569 0%, #64748b 100%);
+  box-shadow: 0 4px 16px rgba(71, 85, 105, 0.4);
+}
+
 /* Form Elements */
 .form-input {
   border: 2px solid #e2e8f0;
@@ -607,6 +547,22 @@ body {
   box-shadow: 0 6px 20px rgba(58, 182, 187, 0.1);
 }
 
+/* Game Cards - Enhanced depth */
+.dark .game-card {
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+  border: 1px solid rgba(58, 182, 187, 0.25);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.dark .game-card:hover {
+  border-color: rgba(58, 182, 187, 0.5);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(58, 182, 187, 0.2);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+
 .court-badge {
   background: linear-gradient(135deg, var(--paddle-teal) 0%, var(--paddle-teal-light) 100%);
   color: white;
@@ -614,6 +570,14 @@ body {
   font-weight: 600;
   padding: 6px 12px;
   box-shadow: 0 2px 8px rgba(58, 182, 187, 0.3);
+}
+
+/* Court Badges - Vibrant teal */
+.dark .court-badge {
+  background: linear-gradient(135deg, #3ab6bb 0%, #4dd8de 100%);
+  color: #0f172a;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
 }
 
 /* Rest Players */
@@ -629,6 +593,17 @@ body {
   color: #92400e;
   font-weight: 600;
   margin-bottom: 0.5rem;
+}
+
+/* Rest Players - Warm amber glow */
+.dark .rest-players {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.1) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.2);
+}
+
+.dark .rest-title {
+  color: #fbbf24;
 }
 
 /* Alerts and Notifications */
@@ -653,10 +628,35 @@ body {
   border-radius: 8px;
 }
 
+/* Alert Messages */
+.dark .alert-error {
+  background: linear-gradient(135deg, rgba(255, 39, 43, 0.2) 0%, rgba(255, 86, 89, 0.15) 100%);
+  border: 2px solid rgba(255, 39, 43, 0.5);
+  color: #fca5a5;
+}
+
+.dark .alert-success {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(74, 222, 128, 0.15) 100%);
+  border: 2px solid rgba(34, 197, 94, 0.5);
+  color: #86efac;
+}
+
+.dark .alert-warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(251, 191, 36, 0.15) 100%);
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  color: #fde047;
+}
+
 /* Modal Styling */
 .modal-overlay {
   background: rgba(0, 0, 0, 0.6);
   backdrop-filter: blur(4px);
+}
+
+/* Modal Overlay */
+.dark .modal-overlay {
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
 }
 
 .modal-content {
@@ -716,13 +716,35 @@ body {
     background: white !important;
   }
 
-  .app-header,
-  .tab-nav,
+  .app-header {
+    background: white !important;
+    color: black !important;
+  }
+
+  .tab-nav {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
   .btn-primary,
   .btn-danger,
-  .btn-secondary,
+  .btn-secondary {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
   .player-skill-badge,
-  .court-badge,
+  .court-badge {
+    background: white !important;
+    color: black !important;
+    box-shadow: none !important;
+    border: 1px solid #000 !important;
+  }
+
   .round-header,
   .rest-players {
     background: white !important;
@@ -739,8 +761,7 @@ body {
     box-shadow: none !important;
   }
 
-  .modal-overlay,
-  .tab-nav {
+  .modal-overlay {
     display: none !important;
   }
 }
