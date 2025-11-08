@@ -5,6 +5,8 @@
 This is a **Pickleball Player Matching System** built with Nuxt.js and TypeScript. The application helps organize recreational
 pickleball leagues by intelligently matching players across multiple game rounds.
 
+When testing fixes, DOT NOT RUN npm build as that will break the current running dev build.
+
 ## Key Features
 
 - **Player Management**: CRUD operations with local storage persistence

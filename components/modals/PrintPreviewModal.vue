@@ -199,15 +199,10 @@ watch(
 </script>
 
 <template>
-  <UModal
-    v-model:open="isOpen"
-    title="Print Configuration & Preview"
-    class="print-preview-modal"
-    :ui="{
-      wrapper: 'w-full max-w-[95vw] h-full max-h-[95vh]',
-      content: 'w-full h-full max-w-none'
-    }"
-  >
+  <UModal v-model:open="isOpen" title="Print Configuration & Preview" class="print-preview-modal" :ui="{
+    wrapper: 'w-full max-w-[95vw] h-full max-h-[95vh]',
+    content: 'w-full h-full max-w-none'
+  }">
     <template #body>
       <div class="flex gap-6 h-full min-h-[80vh]">
         <!-- Configuration Panel (Left Side) -->
@@ -216,11 +211,8 @@ watch(
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Event Information</h3>
             <UFormField label="Event Name">
-              <UInput
-                v-model="localPrintOptions.eventTitle"
-                placeholder="Pickleball League"
-                class="form-input w-full"
-              />
+              <UInput v-model="localPrintOptions.eventTitle" placeholder="Pickleball League"
+                class="form-input w-full" />
             </UFormField>
 
             <UFormField label="Event Date">
@@ -232,11 +224,8 @@ watch(
             </UFormField>
 
             <UFormField label="Organizer">
-              <UInput
-                v-model="localPrintOptions.organizer"
-                placeholder="League Coordinator"
-                class="form-input w-full"
-              />
+              <UInput v-model="localPrintOptions.organizer" placeholder="League Coordinator"
+                class="form-input w-full" />
             </UFormField>
           </div>
 
@@ -245,42 +234,29 @@ watch(
             <h3 class="text-lg font-semibold text-gray-900">Print Options</h3>
 
             <UFormField label="Configuration">
-              <div
-                id="configuration-container"
-                class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl"
-              >
+              <div id="configuration-container"
+                class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
                 <!-- Layout and Display Options -->
                 <div class="space-y-3">
                   <div class="flex items-center space-x-3">
-                    <input
-                      id="compact-layout-checkbox"
-                      v-model="localPrintOptions.compactLayout"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label for="compact-layout-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                    <input id="compact-layout-checkbox" v-model="localPrintOptions.compactLayout" type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <label for="compact-layout-checkbox"
+                      class="text-sm text-blue-800 dark:text-blue-300 cursor-pointer">
                       Compact Layout
                     </label>
                   </div>
                   <div class="flex items-center space-x-3">
-                    <input
-                      id="color-mode-checkbox"
-                      v-model="localPrintOptions.colorMode"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label for="color-mode-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                    <input id="color-mode-checkbox" v-model="localPrintOptions.colorMode" type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <label for="color-mode-checkbox" class="text-sm text-blue-800 dark:text-blue-300 cursor-pointer">
                       Color Mode (uncheck for black & white printers)
                     </label>
                   </div>
                   <div class="flex items-center space-x-3">
-                    <input
-                      id="show-ratings-checkbox"
-                      v-model="localPrintOptions.showRatings"
-                      type="checkbox"
-                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label for="show-ratings-checkbox" class="text-sm text-blue-800 cursor-pointer">
+                    <input id="show-ratings-checkbox" v-model="localPrintOptions.showRatings" type="checkbox"
+                      class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+                    <label for="show-ratings-checkbox" class="text-sm text-blue-800 dark:text-blue-300 cursor-pointer">
                       Show Player Skill Ratings
                     </label>
                   </div>
@@ -315,14 +291,11 @@ watch(
           </div>
           <!-- Preview Container with Paper-like appearance -->
           <div class="flex-1 overflow-auto bg-gray-100 p-4 rounded-lg min-h-[600px] flex justify-center items-start">
-            
-            <div
-              v-if="previewGenerated && schedule && generatedPreviewHTML"
-              id="print-preview-element"
+
+            <div v-if="previewGenerated && schedule && generatedPreviewHTML" id="print-preview-element"
               ref="printPreviewRef"
               class="bg-white shadow-lg print-preview-container min-w-[8.5in] min-h-[11in] w-full max-w-[11in]"
-              v-html="generatedPreviewHTML"
-            ></div>            
+              v-html="generatedPreviewHTML"></div>
 
             <div v-else class="flex items-center justify-center h-full min-h-[400px]">
               <div class="text-center text-gray-500">

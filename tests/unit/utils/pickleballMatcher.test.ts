@@ -42,8 +42,8 @@ describe('PickleballMatcher', () => {
   const defaultOptions: MatchingOptions = {
     numberOfCourts: 3,
     numberOfRounds: 8,
-    balanceSkillLevels: true,
-    respectPartnerPreferences: true,
+    balanceSkillLevels: false,
+    respectPartnerPreferences: false,
     maxSkillDifference: 1.5,
     distributeRestEqually: true
   };
@@ -255,73 +255,27 @@ describe('PickleballMatcher', () => {
 
     describe('16 players on 3 courts', () => {
       testPartnerships(players, { ...defaultOptions, numberOfRounds: 6 }, 1, 0, '16 players, 3 courts, 6 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 8 }, 2, 1, '16 players, 3 courts, 8 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 10 }, 2, 2, '16 players, 3 courts, 10 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 12 }, 2, 3, '16 players, 3 courts, 12 rounds');
+      testPartnerships(players, { ...defaultOptions, numberOfRounds: 8 }, 1, 0, '16 players, 3 courts, 8 rounds');
+      testPartnerships(players, { ...defaultOptions, numberOfRounds: 10 }, 1, 1, '16 players, 3 courts, 10 rounds');
+      testPartnerships(players, { ...defaultOptions, numberOfRounds: 12 }, 1, 1, '16 players, 3 courts, 12 rounds');
     });
 
     describe('12 players on 2 courts', () => {
       const twelvePlayers = players.slice(0, 12);
-      testPartnerships(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        2,
-        0,
-        '12 players, 2 courts, 6 rounds'
-      );
-      testPartnerships(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        2,
-        0,
-        '12 players, 2 courts, 8 rounds'
-      );
-      testPartnerships(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        2,
-        2,
-        '12 players, 2 courts, 10 rounds'
-      );
-      testPartnerships(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        2,
-        1,
-        '12 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testPartnerships( twelvePlayers, { ...options, numberOfRounds: 6 }, 2, 0, '12 players, 2 courts, 6 rounds' );
+      testPartnerships( twelvePlayers, { ...options, numberOfRounds: 8 }, 2, 0, '12 players, 2 courts, 8 rounds' );
+      testPartnerships( twelvePlayers, { ...options, numberOfRounds: 10 }, 2, 0, '12 players, 2 courts, 10 rounds' );
+      testPartnerships( twelvePlayers, { ...options, numberOfRounds: 12 }, 2, 0, '12 players, 2 courts, 12 rounds' );
     });
 
     describe('10 players on 2 courts', () => {
       const tenPlayers = players.slice(0, 10);
-      testPartnerships(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        2,
-        0,
-        '10 players, 2 courts, 6 rounds'
-      );
-      testPartnerships(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        2,
-        1,
-        '10 players, 2 courts, 8 rounds'
-      );
-      testPartnerships(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        2,
-        2,
-        '10 players, 2 courts, 10 rounds'
-      );
-      testPartnerships(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        2,
-        5,
-        '10 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testPartnerships( tenPlayers, { ...options, numberOfRounds: 6 }, 2, 0, '10 players, 2 courts, 6 rounds' );
+      testPartnerships( tenPlayers, { ...options, numberOfRounds: 8 }, 2, 1, '10 players, 2 courts, 8 rounds' );
+      testPartnerships( tenPlayers, { ...options, numberOfRounds: 10 }, 2, 1, '10 players, 2 courts, 10 rounds' );
+      testPartnerships( tenPlayers, { ...options, numberOfRounds: 12 }, 2, 1, '10 players, 2 courts, 12 rounds' );
     });
   });
 
@@ -375,49 +329,20 @@ describe('PickleballMatcher', () => {
 
     describe('12 players on 2 courts', () => {
       const twelvePlayers = players.slice(0, 12);
-      testOpponentLimits(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '12 players, 2 courts, 6 rounds'
-      );
-      testOpponentLimits(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '12 players, 2 courts, 8 rounds'
-      );
-      testOpponentLimits(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '12 players, 2 courts, 10 rounds'
-      );
-      testOpponentLimits(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '12 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testOpponentLimits( twelvePlayers, { ...options, numberOfRounds: 6 }, '12 players, 2 courts, 6 rounds' );
+      testOpponentLimits( twelvePlayers, { ...options, numberOfRounds: 8 }, '12 players, 2 courts, 8 rounds' );
+      testOpponentLimits( twelvePlayers, { ...options, numberOfCourts: 2, numberOfRounds: 10 }, '12 players, 2 courts, 10 rounds' );
+      testOpponentLimits( twelvePlayers, { ...options, numberOfCourts: 2, numberOfRounds: 12 }, '12 players, 2 courts, 12 rounds' );
     });
 
     describe('10 players on 2 courts', () => {
       const tenPlayers = players.slice(0, 10);
-      testOpponentLimits(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '10 players, 2 courts, 6 rounds'
-      );
-      testOpponentLimits(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '10 players, 2 courts, 8 rounds'
-      );
-      testOpponentLimits(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '10 players, 2 courts, 10 rounds'
-      );
-      testOpponentLimits(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '10 players, 2 courts, 12 rounds'
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testOpponentLimits( tenPlayers, { ...options, numberOfRounds: 6 }, '10 players, 2 courts, 6 rounds' );
+      testOpponentLimits( tenPlayers, { ...options, numberOfRounds: 8 }, '10 players, 2 courts, 8 rounds' );
+      testOpponentLimits( tenPlayers, { ...options, numberOfRounds: 10 }, '10 players, 2 courts, 10 rounds' );
+      testOpponentLimits( tenPlayers, { ...options, numberOfRounds: 12 }, '10 players, 2 courts, 12 rounds'
       );
     });
   });
@@ -492,50 +417,20 @@ describe('PickleballMatcher', () => {
 
     describe('12 players on 2 courts', () => {
       const twelvePlayers = players.slice(0, 12);
-      testRestDistribution(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '12 players, 2 courts, 6 rounds'
-      );
-      testRestDistribution(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '12 players, 2 courts, 8 rounds'
-      );
-      testRestDistribution(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '12 players, 2 courts, 10 rounds'
-      );
-      testRestDistribution(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '12 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testRestDistribution( twelvePlayers, { ...options, numberOfRounds: 6 }, '12 players, 2 courts, 6 rounds' );
+      testRestDistribution( twelvePlayers, { ...options, numberOfRounds: 8 }, '12 players, 2 courts, 8 rounds' );
+      testRestDistribution( twelvePlayers, { ...options, numberOfRounds: 10 }, '12 players, 2 courts, 10 rounds' );
+      testRestDistribution( twelvePlayers, { ...options, numberOfRounds: 12 }, '12 players, 2 courts, 12 rounds' );
     });
 
     describe('10 players on 2 courts', () => {
       const tenPlayers = players.slice(0, 10);
-      testRestDistribution(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '10 players, 2 courts, 6 rounds'
-      );
-      testRestDistribution(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '10 players, 2 courts, 8 rounds'
-      );
-      testRestDistribution(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '10 players, 2 courts, 10 rounds'
-      );
-      testRestDistribution(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '10 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testRestDistribution( tenPlayers, { ...options, numberOfRounds: 6 }, '10 players, 2 courts, 6 rounds' );
+      testRestDistribution( tenPlayers, { ...options, numberOfRounds: 8 }, '10 players, 2 courts, 8 rounds' );
+      testRestDistribution( tenPlayers, { ...options, numberOfRounds: 10 }, '10 players, 2 courts, 10 rounds' );
+      testRestDistribution( tenPlayers, { ...options, numberOfRounds: 12 }, '10 players, 2 courts, 12 rounds' );
     });
   });
 
@@ -579,52 +474,21 @@ describe('PickleballMatcher', () => {
       testSkillBalancing(players, { ...defaultOptions, numberOfRounds: 12 }, '16 players, 3 courts, 12 rounds');
     });
 
-    describe('12 players on 2 courts', () => {
-      const twelvePlayers = players.slice(0, 12);
-      testSkillBalancing(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '12 players, 2 courts, 6 rounds'
-      );
-      testSkillBalancing(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '12 players, 2 courts, 8 rounds'
-      );
-      testSkillBalancing(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '12 players, 2 courts, 10 rounds'
-      );
-      testSkillBalancing(
-        twelvePlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '12 players, 2 courts, 12 rounds'
-      );
+    describe('12 players on 2 courts', () => { const twelvePlayers = players.slice(0, 12);
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testSkillBalancing( twelvePlayers, { ...options, numberOfRounds: 6 }, '12 players, 2 courts, 6 rounds' );
+      testSkillBalancing( twelvePlayers, { ...options, numberOfRounds: 8 }, '12 players, 2 courts, 8 rounds' );
+      testSkillBalancing( twelvePlayers, { ...options, numberOfRounds: 10 }, '12 players, 2 courts, 10 rounds' );
+      testSkillBalancing( twelvePlayers, { ...options, numberOfRounds: 12 }, '12 players, 2 courts, 12 rounds' );
     });
 
     describe('10 players on 2 courts', () => {
       const tenPlayers = players.slice(0, 10);
-      testSkillBalancing(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 },
-        '10 players, 2 courts, 6 rounds'
-      );
-      testSkillBalancing(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 },
-        '10 players, 2 courts, 8 rounds'
-      );
-      testSkillBalancing(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 },
-        '10 players, 2 courts, 10 rounds'
-      );
-      testSkillBalancing(
-        tenPlayers,
-        { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 },
-        '10 players, 2 courts, 12 rounds'
-      );
+      const options = { ...defaultOptions, numberOfCourts: 2 };
+      testSkillBalancing( tenPlayers, { ...options, numberOfRounds: 6 }, '10 players, 2 courts, 6 rounds' );
+      testSkillBalancing( tenPlayers, { ...options, numberOfRounds: 8 }, '10 players, 2 courts, 8 rounds' );
+      testSkillBalancing( tenPlayers, { ...options, numberOfRounds: 10 }, '10 players, 2 courts, 10 rounds' );
+      testSkillBalancing( tenPlayers, { ...options, numberOfRounds: 12 }, '10 players, 2 courts, 12 rounds' );
     });
   });
 

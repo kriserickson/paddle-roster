@@ -76,6 +76,8 @@ export const usePlayerStore = defineStore('player', () => {
       //console.log('PlayerStore: API result:', result);
 
       if (result.success && result.data) {
+        // Sort players alphabetically by name
+        result.data.sort((a, b) => a.name.localeCompare(b.name));
         players.value = result.data;
         //console.log(
         //  `PlayerStore: Successfully loaded ${result.data.length} players:`,
@@ -130,6 +132,8 @@ export const usePlayerStore = defineStore('player', () => {
 
       if (result.success && result.data) {
         players.value.push(result.data);
+        // Keep players alphabetically sorted
+        players.value.sort((a, b) => a.name.localeCompare(b.name));
         return result.data;
       }
 
@@ -161,6 +165,10 @@ export const usePlayerStore = defineStore('player', () => {
         const index = players.value.findIndex(p => p.id === id);
         if (index !== -1) {
           players.value[index] = { ...players.value[index], ...result.data };
+          // If name was updated, re-sort to maintain alphabetical order
+          if (updates.name !== undefined) {
+            players.value.sort((a, b) => a.name.localeCompare(b.name));
+          }
         }
         return true;
       }
@@ -232,6 +240,7 @@ export const usePlayerStore = defineStore('player', () => {
         // Assuming importPlayers from API returns the full list or successfully imported ones
         // For simplicity, let's reload all players after import, or merge carefully
         await loadPlayers();
+        // loadPlayers already sorts, so no need to sort again
         return { success: true, message: `Imported ${result.data.length} players.` };
       }
       return { success: false, message: result.message || 'Failed to import players' };

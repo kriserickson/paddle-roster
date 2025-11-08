@@ -48,6 +48,16 @@ export const usePrintStore = defineStore('print', () => {
       return store?.getPlayer(id)?.name || 'Unknown Player';
     }
 
+    function getDisplayName(id: string, compactMode: boolean): string {
+      const fullName = playerName(id);
+      if (!compactMode) {
+        return fullName;
+      }
+      // In compact mode, show only first name
+      const nameParts = fullName.trim().split(' ');
+      return nameParts[0] || fullName;
+    }
+
     function formatSkillLevel(level: number): string {
       return level % 1 === 0 ? level.toString() : level.toFixed(2);
     }
@@ -79,7 +89,7 @@ export const usePrintStore = defineStore('print', () => {
             
     `
       : `
-        .team2 {
+        .team1 {
             background: #ccc;
             border: none;
             padding: 2px 0;
@@ -120,7 +130,7 @@ export const usePrintStore = defineStore('print', () => {
         
         body {
             font-family: Arial, sans-serif;
-            font-size: ${options.compactLayout ? '10px' : '11px'};
+            font-size: ${options.compactLayout ? '14px' : '11px'};
             line-height: 1.2;
             margin: 0;
             padding: 0;
@@ -135,13 +145,13 @@ export const usePrintStore = defineStore('print', () => {
         
         .header h1 {
             margin: 0;
-            font-size: ${options.compactLayout ? '16px' : '18px'};
+            font-size: ${options.compactLayout ? '18px' : '18px'};
             font-weight: bold;
         }
         
         .header .event-info {
             margin: 5px 0;
-            font-size: ${options.compactLayout ? '10px' : '12px'};
+            font-size: ${options.compactLayout ? '14px' : '12px'};
             color: #555;
         }
         
@@ -161,18 +171,18 @@ export const usePrintStore = defineStore('print', () => {
         
         .schedule-grid th {
             font-weight: bold;
-            font-size: ${options.compactLayout ? '10px' : '13px'};
+            font-size: ${options.compactLayout ? '14px' : '12px'};
         }
         
         .round-header {
             font-weight: bold;
-            font-size: ${options.compactLayout ? '10px' : '12px'};
+            font-size: ${options.compactLayout ? '14px' : '12px'};
         }
         
         .game-cell {
-            font-size: ${options.compactLayout ? '10px' : '12px'};
+            font-size: ${options.compactLayout ? '14px' : '12px'};
             line-height: 1.1;
-            min-height: ${options.compactLayout ? '30px' : '40px'};
+            min-height: ${options.compactLayout ? '40px' : '40px'};
         }
 
         .game-holder {
@@ -183,9 +193,9 @@ export const usePrintStore = defineStore('print', () => {
         
         .team {
             margin: 1px 0;
-            padding: 1px 2px;
+            padding: 2px 2px;
             border-radius: 2px;
-            font-size: ${options.compactLayout ? '10px' : '12px'};            
+            font-size: ${options.compactLayout ? '14px' : '12px'};            
             flex: 1; 
             align-content: center;
         }
@@ -200,7 +210,7 @@ export const usePrintStore = defineStore('print', () => {
         .resting-players {
             padding: 5px;
             border-radius: 3px;
-            font-size: ${options.compactLayout ? '10px' : '12px'};            
+            font-size: ${options.compactLayout ? '14px' : '12px'};            
         }
         
         @media print {
@@ -277,7 +287,7 @@ export const usePrintStore = defineStore('print', () => {
 
         html += '<td class="game-cell">';
         if (game) {
-          html += generateGameHTML(game, playerName, formatSkillLevel, getPlayerSkill, options);
+          html += generateGameHTML(game, playerName, formatSkillLevel, getPlayerSkill, options, getDisplayName);
         }
         html += '</td>';
       }
@@ -286,7 +296,9 @@ export const usePrintStore = defineStore('print', () => {
       if (hasRestingPlayers) {
         html += '<td class="game-cell">';
         if (restingPlayers && restingPlayers.length > 0) {
-          const restingNames = restingPlayers.map(id => playerName(id)).join('<br>');
+          const restingNames = restingPlayers
+            .map(id => getDisplayName(id, options.compactLayout ?? false))
+            .join('<br>');
           html += `<div class="resting-players">${restingNames}</div>`;
         } else {
           html += '-';
@@ -307,12 +319,16 @@ export const usePrintStore = defineStore('print', () => {
     playerName: (id: string) => string,
     formatSkillLevel: (level: number) => string,
     getPlayerSkill: (id: string) => number,
-    options: PrintOptions
+    options: PrintOptions,
+    getDisplayName?: (id: string, compactMode: boolean) => string
   ): string {
-    const team1Player1 = playerName(game.team1[0]);
-    const team1Player2 = playerName(game.team1[1]);
-    const team2Player1 = playerName(game.team2[0]);
-    const team2Player2 = playerName(game.team2[1]);
+    const displayNameFn = getDisplayName || ((id: string, _: boolean) => playerName(id));
+    const isCompactLayout = options.compactLayout ?? false;
+
+    const team1Player1 = displayNameFn(game.team1[0], isCompactLayout);
+    const team1Player2 = displayNameFn(game.team1[1], isCompactLayout);
+    const team2Player1 = displayNameFn(game.team2[0], isCompactLayout);
+    const team2Player2 = displayNameFn(game.team2[1], isCompactLayout);
 
     let html = '<div class="game-holder">';
 
