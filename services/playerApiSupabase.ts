@@ -8,7 +8,12 @@ import type { Database, PlayerInsert, PlayerRow, PlayerUpdate } from '~/types/da
  */
 export class PlayerApiSupabase implements IPlayerApi {
   private supabase = useSupabaseClient<Database>();
-  private user = useSupabaseUser();
+  private userId: string | null;
+
+  constructor() {
+    const user = useSupabaseUser();
+    this.userId = user.value?.id || user.value?.sub || null;
+  }
 
   /**
    * Convert database row to Player interface
@@ -29,8 +34,11 @@ export class PlayerApiSupabase implements IPlayerApi {
    * Convert Player to database insert format
    */
   private mapPlayerToInsert(player: Omit<Player, 'id'>): Omit<PlayerInsert, 'id'> {
+    if (!this.userId) {
+      throw new Error('User must be authenticated to create players');
+    }
     return {
-      user_id: this.user.value?.id || 'anonymous-user', // Fallback for data recovery
+      user_id: this.userId,
       name: player.name,
       skill_level: player.skillLevel,
       partner_id: player.partnerId || null,
@@ -67,11 +75,11 @@ export class PlayerApiSupabase implements IPlayerApi {
       let query = this.supabase.from('players').select('*');
 
       // If user is authenticated, filter by user_id
-      if (this.user.value?.id) {
+      if (this.userId) {
         //console.log('User authenticated, filtering by user_id:', this.user.value.id);
-        query = query.eq('user_id', this.user.value.id);
+        query = query.eq('user_id', this.userId);
       } else {
-        //console.log('User not authenticated, loading all players for data recovery');
+        console.error('User not authenticated, loading all players for data recovery');
       }
       // If not authenticated, load all players (temporary for data recovery)
 
@@ -126,7 +134,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
     try {
-      // Allow creating players even without authentication (temporary for data recovery)
+      // User must be authenticated to create players (user_id is a required UUID field)
       const insertData = this.mapPlayerToInsert(player);
 
       // @ts-expect-error: Supabase generic type inference limitation in VS Code
@@ -166,8 +174,8 @@ export class PlayerApiSupabase implements IPlayerApi {
       let query = this.supabase.from('players').update(updateData).eq('id', id);
 
       // If user is authenticated, also filter by user_id
-      if (this.user.value?.id) {
-        query = query.eq('user_id', this.user.value.id);
+      if (this.userId) {
+        query = query.eq('user_id', this.userId);
       }
 
       const { data, error } = await query.select().single();
@@ -197,8 +205,8 @@ export class PlayerApiSupabase implements IPlayerApi {
       let query = this.supabase.from('players').delete().eq('id', id);
 
       // If user is authenticated, also filter by user_id
-      if (this.user.value?.id) {
-        query = query.eq('user_id', this.user.value.id);
+      if (this.userId) {
+        query = query.eq('user_id', this.userId);
       }
 
       const { error } = await query;
@@ -219,7 +227,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
     try {
-      if (!this.user.value) {
+      if (!this.userId) {
         return { success: false, message: 'User not authenticated' };
       }
 
@@ -250,11 +258,11 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   async clearAllPlayers(): Promise<ApiResponse> {
     try {
-      if (!this.user.value?.id) {
+      if (!this.userId) {
         return { success: false, message: 'User not authenticated' };
       }
 
-      const { error } = await this.supabase.from('players').delete().eq('user_id', this.user.value.id);
+      const { error } = await this.supabase.from('players').delete().eq('user_id', this.userId);
 
       if (error) {
         return { success: false, message: 'Failed to clear players', error: error.message };
