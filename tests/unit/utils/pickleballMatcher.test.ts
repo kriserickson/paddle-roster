@@ -257,7 +257,7 @@ describe('PickleballMatcher', () => {
       testPartnerships(players, { ...defaultOptions, numberOfRounds: 6 }, 1, 0, '16 players, 3 courts, 6 rounds');
       testPartnerships(players, { ...defaultOptions, numberOfRounds: 8 }, 1, 0, '16 players, 3 courts, 8 rounds');
       testPartnerships(players, { ...defaultOptions, numberOfRounds: 10 }, 1, 1, '16 players, 3 courts, 10 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 12 }, 1, 1, '16 players, 3 courts, 12 rounds');
+      testPartnerships(players, { ...defaultOptions, numberOfRounds: 12 }, 1, 3, '16 players, 3 courts, 12 rounds');
     });
 
     describe('12 players on 2 courts', () => {

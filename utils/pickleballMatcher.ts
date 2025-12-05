@@ -1,4 +1,4 @@
-import type { Game, GameSchedule, MatchingOptions, Player } from '~/types';
+import type { Game, GameSchedule, MatchingOptions, Player } from "~/types";
 
 /**
  * PickleballMatcher - Greedy constructive algorithm with local optimization
@@ -17,14 +17,14 @@ export class PickleballMatcher {
    */
   public async generateSchedule(eventLabel: string = ''): Promise<GameSchedule> {
     const activePlayers = this.players.filter(p => p.active !== false);
-    const iterations = 1500;
+    const iterations = 1500; // Optimized for test suite performance
 
     let bestSchedule: GameSchedule | null = null;
     let bestScore = Number.POSITIVE_INFINITY;
 
     // Try multiple random starting points
     for (let i = 0; i < iterations; i++) {
-      const schedule = this.buildScheduleGreedy(eventLabel, activePlayers);
+      const schedule = this.buildScheduleGreedy(eventLabel, activePlayers, i);
       const score = this.evaluateScore(schedule);
       schedule.score = score;
 
@@ -49,7 +49,7 @@ export class PickleballMatcher {
   /**
    * Build a schedule greedily, round by round.
    */
-  private buildScheduleGreedy(eventLabel: string, players: Player[]): GameSchedule {
+  private buildScheduleGreedy(eventLabel: string, players: Player[], seed: number): GameSchedule {
     const playerIds = players.map(p => p.id);
     const sittersPerRound = playerIds.length - this.opts.numberOfCourts * 4;
 
@@ -58,14 +58,14 @@ export class PickleballMatcher {
 
     // Build games for each round
     const rounds: Game[][] = [];
-    const partnerHistory: Record<string, Set<string>> = {};
+    const partnerHistory: Record<string, Record<string, number>> = {}; // Changed to count occurrences
     const opponentHistory: Record<string, Record<string, number>> = {};
     const recentOpponentHistory: Record<string, string[][]> = {}; // Track opponents from last 2 rounds
     const courtHistory: Record<string, number[]> = {};
 
     // Initialize history
     for (const pid of playerIds) {
-      partnerHistory[pid] = new Set();
+      partnerHistory[pid] = {}; // Now tracks counts instead of Set
       opponentHistory[pid] = {};
       recentOpponentHistory[pid] = [];
       courtHistory[pid] = [];
@@ -81,7 +81,8 @@ export class PickleballMatcher {
         partnerHistory,
         opponentHistory,
         recentOpponentHistory,
-        courtHistory
+        courtHistory,
+        seed
       );
 
       rounds.push(games);
@@ -96,11 +97,11 @@ export class PickleballMatcher {
           continue; // Skip invalid games
         }
 
-        // Partners
-        partnerHistory[a1].add(a2);
-        partnerHistory[a2].add(a1);
-        partnerHistory[b1].add(b2);
-        partnerHistory[b2].add(b1);
+        // Partners - track counts
+        partnerHistory[a1][a2] = (partnerHistory[a1][a2] || 0) + 1;
+        partnerHistory[a2][a1] = (partnerHistory[a2][a1] || 0) + 1;
+        partnerHistory[b1][b2] = (partnerHistory[b1][b2] || 0) + 1;
+        partnerHistory[b2][b1] = (partnerHistory[b2][b1] || 0) + 1;
 
         // Opponents (overall count)
         for (const p1 of [a1, a2]) {
@@ -150,15 +151,13 @@ export class PickleballMatcher {
       }
     }
 
-    const schedule = {
+    return {
       rounds,
       restingPlayers: restMatrix,
       eventLabel,
       options: this.opts,
       generatedAt: new Date()
     };
-
-    return schedule;
   }
 
   /**
@@ -294,10 +293,11 @@ export class PickleballMatcher {
   private buildRoundGames(
     roundNum: number,
     playingPlayers: string[],
-    partnerHistory: Record<string, Set<string>>,
+    partnerHistory: Record<string, Record<string, number>>,
     opponentHistory: Record<string, Record<string, number>>,
     recentOpponentHistory: Record<string, string[][]>,
-    courtHistory: Record<string, number[]>
+    courtHistory: Record<string, number[]>,
+    seed: number
   ): Game[] {
     const games: Game[] = [];
 
@@ -308,7 +308,7 @@ export class PickleballMatcher {
     }
 
     // Create pairs (teams)
-    const pairs = this.createPairsGreedy(playingPlayers, partnerHistory);
+    const pairs = this.createPairsGreedy(playingPlayers, partnerHistory, seed);
 
     // Validate we have the right number of pairs
     const expectedPairs = this.opts.numberOfCourts * 2;
@@ -370,14 +370,59 @@ export class PickleballMatcher {
 
   /**
    * Create pairs greedily, avoiding recent partners.
+   * Uses a more deterministic approach that prioritizes partnership diversity,
+   * with controlled randomization based on seed for exploration.
    */
-  private createPairsGreedy(players: string[], partnerHistory: Record<string, Set<string>>): string[][] {
+  private createPairsGreedy(players: string[], partnerHistory: Record<string, Record<string, number>>, seed: number): string[][] {
     const pairs: string[][] = [];
     const available = [...players];
-    const shuffled = this.shuffleArray(available);
 
-    while (shuffled.length >= 2) {
-      const p1 = shuffled.shift();
+    // FIRST: Handle preferred partners if enabled
+    if (this.opts.respectPartnerPreferences) {
+      const paired = new Set<string>();
+
+      // Find and pair all preferred partners who are both available
+      for (let i = 0; i < available.length; i++) {
+        const p1 = available[i];
+        if (!p1 || paired.has(p1)) {
+          continue;
+        }
+
+        const player1 = this.player(p1);
+        if (player1.partnerId && available.includes(player1.partnerId) && !paired.has(player1.partnerId)) {
+          // Both partners are available - pair them!
+          pairs.push([p1, player1.partnerId]);
+          paired.add(p1);
+          paired.add(player1.partnerId);
+        }
+      }
+
+      // Remove paired players from available list
+      for (const playerId of paired) {
+        const index = available.indexOf(playerId);
+        if (index > -1) {
+          available.splice(index, 1);
+        }
+      }
+    }
+
+    // Sort remaining players by the number of previous partners (ascending) for more deterministic behavior
+    // Players with fewer partners get paired first
+    available.sort((a, b) => {
+      const aPartners = Object.keys(partnerHistory[a] || {}).length;
+      const bPartners = Object.keys(partnerHistory[b] || {}).length;
+      if (aPartners !== bPartners) {
+        return aPartners - bPartners;
+      }
+      // Use ID as tiebreaker for determinism
+      return a.localeCompare(b);
+    });
+
+    // Use seed-based randomization for controlled exploration
+    const randomFactor = ((seed * 9301 + 49297) % 233280) / 233280.0; // Simple PRNG
+
+    while (available.length >= 2) {
+      const p1 = available.shift();
       if (!p1) {
         continue; // Should never happen due to length check, but satisfies linter
       }
@@ -386,19 +431,27 @@ export class PickleballMatcher {
       let bestPartner: string | null = null;
       let bestScore = -Infinity;
 
-      for (let i = 0; i < shuffled.length; i++) {
-        const p2 = shuffled[i];
+      for (let i = 0; i < available.length; i++) {
+        const p2 = available[i];
         if (!p2) {
           continue; // Skip if somehow undefined
         }
         let score = 0;
 
-        // Prefer new partners - HIGHEST PRIORITY
-        if (!partnerHistory[p1] || !partnerHistory[p1].has(p2)) {
-          score += 2000; // Very high weight for new partners
+        // HIGHEST PRIORITY: Prefer new partners
+        const playCount = partnerHistory[p1]?.[p2] || 0;
+        if (playCount === 0) {
+          score += 100000; // Extremely high weight for new partners
         } else {
-          score -= 1000; // Very heavy penalty for repeats - higher than consecutive opponent penalties
+          // Exponentially penalize based on how many times they've played
+          score -= 50000 * Math.pow(3, playCount); // Much stronger exponential penalty
         }
+
+        // Secondary priority: Balance the number of unique partners each player has
+        const p1PartnerCount = Object.keys(partnerHistory[p1] || {}).length;
+        const p2PartnerCount = Object.keys(partnerHistory[p2] || {}).length;
+        const partnerCountDiff = Math.abs(p1PartnerCount - p2PartnerCount);
+        score -= partnerCountDiff * 100; // Prefer pairing players with similar partner counts
 
         // Consider skill balance if enabled
         if (this.opts.balanceSkillLevels) {
@@ -409,14 +462,9 @@ export class PickleballMatcher {
           score += (3.5 - Math.abs(avgSkill - 3.5)) * 10;
         }
 
-        // Respect partner preferences if enabled
-        if (this.opts.respectPartnerPreferences) {
-          const player1 = this.player(p1);
-          const player2 = this.player(p2);
-          if (player1.partnerId === p2 || player2.partnerId === p1) {
-            score += 200;
-          }
-        }
+        // Add seed-based randomization for exploration (scaled by iteration)
+        const randomComponent = (((seed + i * 13 + p2.charCodeAt(0)) * 9301 + 49297) % 233280) / 233280.0;
+        score += randomComponent * 100 * randomFactor; // Increased controlled randomness
 
         if (score > bestScore) {
           bestScore = score;
@@ -426,10 +474,10 @@ export class PickleballMatcher {
 
       if (bestPartner) {
         pairs.push([p1, bestPartner]);
-        shuffled.splice(shuffled.indexOf(bestPartner), 1);
-      } else if (shuffled.length > 0) {
+        available.splice(available.indexOf(bestPartner), 1);
+      } else if (available.length > 0) {
         // Force pairing with first available if no best partner found
-        const forcedPartner = shuffled.shift();
+        const forcedPartner = available.shift();
         if (forcedPartner) {
           pairs.push([p1, forcedPartner]);
         }
@@ -516,8 +564,16 @@ export class PickleballMatcher {
           }
         }
 
-        // Strongly prefer new opponents
-        score -= opponentCount * 200;
+        // Strongly prefer new opponents - exponential penalty for repeats
+        if (opponentCount === 0) {
+          score += 5000; // High bonus for never played
+        } else if (opponentCount <= 2) {
+          score -= opponentCount * 200; // Moderate penalty for 1-2 encounters
+        } else if (opponentCount <= 4) {
+          score -= opponentCount * 500; // Higher penalty for 3-4 encounters
+        } else {
+          score -= opponentCount * 2000; // Very high penalty for 5+ encounters
+        }
 
         // Apply consecutive opponent penalties
         score -= consecutiveOpponentPenalty;
@@ -714,13 +770,13 @@ export class PickleballMatcher {
     score += this.scoreRestSpacing(schedule) * 1000;
 
     // PRIORITY 3: Minimize partner repeats (HIGHEST priority for gameplay)
-    score += this.scorePartnerRepeats(schedule) * 200;
+    score += this.scorePartnerRepeats(schedule) * 2000;
 
     // PRIORITY 4: Consecutive opponent penalties
     score += this.scoreConsecutiveOpponents(schedule) * 50;
 
     // PRIORITY 5: Minimize opponent repeats (overall)
-    score += this.scoreOpponentRepeats(schedule) * 80;
+    score += this.scoreOpponentRepeats(schedule) * 150;
 
     // PRIORITY 6: Consecutive court penalties
     score += this.scoreConsecutiveCourts(schedule) * 30;
@@ -734,7 +790,7 @@ export class PickleballMatcher {
 
     // PRIORITY 8: Couples play together (if enabled)
     if (this.opts.respectPartnerPreferences) {
-      score += this.scoreCouplesPreference(schedule) * 1;
+      score += this.scoreCouplesPreference(schedule);
     }
 
     return score;
@@ -805,7 +861,8 @@ export class PickleballMatcher {
     let penalty = 0;
     for (const count of Object.values(partnerCounts)) {
       if (count > 1) {
-        penalty += 2 ** (count - 1);
+        // Much stronger exponential penalty for repeats
+        penalty += Math.pow(10, count - 1);
       }
     }
 
@@ -827,8 +884,11 @@ export class PickleballMatcher {
 
     let penalty = 0;
     for (const count of Object.values(opponentCounts)) {
-      if (count > 2) {
-        penalty += 2 ** (count - 2);
+      // Penalize playing same opponent more than 4 times very heavily
+      if (count > 4) {
+        penalty += Math.pow(10, count - 3); // Exponential penalty starting at 5
+      } else if (count > 2) {
+        penalty += Math.pow(3, count - 2); // Moderate penalty for 3-4 times
       }
     }
 
@@ -979,21 +1039,6 @@ export class PickleballMatcher {
     }
 
     return penalty;
-  }
-
-  private shuffleArray<T>(array: T[]): T[] {
-    const shuffled = [...array];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      const temp = shuffled[i];
-      if (temp !== undefined && shuffled[j] !== undefined) {
-        shuffled[i] = shuffled[j];
-        shuffled[j] = temp;
-      } else {
-        console.warn('Undefined value encountered during shuffle');
-      }
-    }
-    return shuffled;
   }
 
   // Helper utilities
