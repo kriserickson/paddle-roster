@@ -144,7 +144,7 @@ export const usePrintStore = defineStore('print', () => {
 
     const colorStyles = options.colorMode
       ? `
-        /* team1 row: accent colour; team2 row: white */
+        /* team1 row: warm peach; team2 row: white */
         .team1 {
             background-color: #fce5cd;
         }
@@ -153,13 +153,27 @@ export const usePrintStore = defineStore('print', () => {
             background-color: #ffffff;
         }
 
-        /* Resting column alternates: odd rounds white, even rounds accent */
-        tbody tr:nth-child(odd) .resting-players {
+        /* Round header alternates opposite to resting:
+           odd rounds = peach (matches game cells), even rounds = white */
+        tbody tr:nth-child(odd) td.round-header {
+            background-color: #fce5cd;
+        }
+
+        tbody tr:nth-child(even) td.round-header {
             background-color: #ffffff;
         }
 
-        tbody tr:nth-child(even) .resting-players {
-            background-color: #fce5cd;
+        /* Resting: whole td coloured (different colour from game cells), content transparent */
+        tbody tr:nth-child(odd) td.resting-cell {
+            background-color: #ffffff;
+        }
+
+        tbody tr:nth-child(even) td.resting-cell {
+            background-color: #cce4f7;
+        }
+
+        .resting-players {
+            background: transparent;
         }
 
     `
@@ -173,13 +187,26 @@ export const usePrintStore = defineStore('print', () => {
             background: #ffffff;
         }
 
-        /* Resting column alternates: odd rounds white, even rounds grey */
-        tbody tr:nth-child(odd) .resting-players {
+        /* Round header alternates opposite to resting */
+        tbody tr:nth-child(odd) td.round-header {
+            background: #b0b0b0;
+        }
+
+        tbody tr:nth-child(even) td.round-header {
             background: #ffffff;
         }
 
-        tbody tr:nth-child(even) .resting-players {
+        /* Resting: whole td coloured, content transparent */
+        tbody tr:nth-child(odd) td.resting-cell {
+            background: #ffffff;
+        }
+
+        tbody tr:nth-child(even) td.resting-cell {
             background: #b0b0b0;
+        }
+
+        .resting-players {
+            background: transparent;
         }
 
     `;
@@ -361,7 +388,7 @@ export const usePrintStore = defineStore('print', () => {
 
       // Resting players
       if (hasRestingPlayers) {
-        html += '<td class="game-cell">';
+        html += '<td class="game-cell resting-cell">';
         if (restingPlayers && restingPlayers.length > 0) {
           const restingNames = restingPlayers
             .map(id => getDisplayName(id, options.compactLayout ?? false))
@@ -433,10 +460,7 @@ export const usePrintStore = defineStore('print', () => {
       }
       html += '</div>';
 
-      html +=
-        '<div style="font-weight: bold; margin: 2px 0; font-size: ' +
-        (options.compactLayout ? '7px' : '8px') +
-        ';">vs</div>';
+      html += '<div class="team-divider"></div>';
 
       html += `<div class="team team2">`;
       if (options.showRatings) {
