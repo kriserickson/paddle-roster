@@ -52,18 +52,26 @@ export const usePrintStore = defineStore('print', () => {
     // of their last name appended to tell them apart (e.g. "John Do" vs "John Da").
     // Only computed when compact mode is active.
     const compactNameMap: Map<string, string> = (() => {
-      if (!(options.compactLayout ?? false)) { return new Map(); }
+      if (!(options.compactLayout ?? false)) {
+        return new Map();
+      }
 
       // Collect every player ID that appears in the schedule
       const playerIds = new Set<string>();
       for (const round of schedule.rounds) {
         for (const game of round) {
-          for (const id of game.team1) { playerIds.add(id); }
-          for (const id of game.team2) { playerIds.add(id); }
+          for (const id of game.team1) {
+            playerIds.add(id);
+          }
+          for (const id of game.team2) {
+            playerIds.add(id);
+          }
         }
       }
       for (const restRound of schedule.restingPlayers) {
-        for (const id of restRound) { playerIds.add(id); }
+        for (const id of restRound) {
+          playerIds.add(id);
+        }
       }
 
       // Split each player's name into first / last parts
@@ -101,7 +109,9 @@ export const usePrintStore = defineStore('print', () => {
             })
           );
           resolved = seen.size === ids.length;
-          if (prefixLen >= maxLastLen) { break; }
+          if (prefixLen >= maxLastLen) {
+            break;
+          }
         }
         for (const id of ids) {
           const last = idToNameParts.get(id)?.last;

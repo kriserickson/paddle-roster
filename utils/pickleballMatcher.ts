@@ -1,4 +1,4 @@
-import type { Game, GameSchedule, MatchingOptions, Player } from "~/types";
+import type { Game, GameSchedule, MatchingOptions, Player } from '~/types';
 
 /**
  * PickleballMatcher - Greedy constructive algorithm with local optimization
@@ -121,7 +121,13 @@ export class PickleballMatcher {
           const remaining = sittersPerRound - specifiedSitters.length;
           const available = playerIds.filter(pid => !specifiedSitters.includes(pid));
           const extra = this.selectSittersForRound(
-            available, remaining, roundNum, restCounts, lastRestRound, avgRestsPerPlayer, opponentHistory
+            available,
+            remaining,
+            roundNum,
+            restCounts,
+            lastRestRound,
+            avgRestsPerPlayer,
+            opponentHistory
           );
           roundSitters = [...specifiedSitters, ...extra];
         } else {
@@ -129,7 +135,13 @@ export class PickleballMatcher {
         }
       } else {
         roundSitters = this.selectSittersForRound(
-          playerIds, sittersPerRound, roundNum, restCounts, lastRestRound, avgRestsPerPlayer, opponentHistory
+          playerIds,
+          sittersPerRound,
+          roundNum,
+          restCounts,
+          lastRestRound,
+          avgRestsPerPlayer,
+          opponentHistory
         );
       }
 
@@ -223,86 +235,6 @@ export class PickleballMatcher {
   }
 
   /**
-   * Build rest schedule ensuring even distribution and spacing.
-   * Priority: Even distribution > Max spacing between rests
-   */
-  private buildRestSchedule(
-    playerIds: string[],
-    sittersPerRound: number,
-    firstRoundSitters?: readonly string[]
-  ): string[][] {
-    if (sittersPerRound <= 0) {
-      return Array.from({ length: this.opts.numberOfRounds }, () => []);
-    }
-
-    const rounds = this.opts.numberOfRounds;
-    const restMatrix: string[][] = [];
-    const restCounts: Record<string, number> = {};
-    const lastRestRound: Record<string, number> = {};
-
-    // Initialize
-    for (const pid of playerIds) {
-      restCounts[pid] = 0;
-      lastRestRound[pid] = -100; // Far in the past
-    }
-
-    // Calculate target rests per player (used when distributeRestEqually is enabled)
-    const totalRestSlots = rounds * sittersPerRound;
-    const avgRestsPerPlayer = totalRestSlots / playerIds.length;
-
-    for (let r = 0; r < rounds; r++) {
-      let sitters: string[];
-
-      if (r === 0 && firstRoundSitters && firstRoundSitters.length > 0) {
-        // Use specified first round sitters (if any), and fill remaining slots
-        const specifiedSitters = [...firstRoundSitters];
-
-        // Update rest counts for specified sitters
-        for (const pid of specifiedSitters) {
-          if (!restCounts[pid]) {
-            restCounts[pid] = 0;
-          }
-          restCounts[pid]++;
-          lastRestRound[pid] = r;
-        }
-
-        if (specifiedSitters.length < sittersPerRound) {
-          // Need to select additional sitters
-          const remainingSlots = sittersPerRound - specifiedSitters.length;
-          const availablePlayers = playerIds.filter(pid => !specifiedSitters.includes(pid));
-
-          const additionalSitters = this.selectSittersForRound(
-            availablePlayers,
-            remainingSlots,
-            r,
-            restCounts,
-            lastRestRound,
-            avgRestsPerPlayer
-          );
-
-          sitters = [...specifiedSitters, ...additionalSitters];
-        } else {
-          sitters = specifiedSitters;
-        }
-      } else {
-        // Select sitters greedily
-        sitters = this.selectSittersForRound(
-          playerIds,
-          sittersPerRound,
-          r,
-          restCounts,
-          lastRestRound,
-          avgRestsPerPlayer
-        );
-      }
-
-      restMatrix.push(sitters);
-    }
-
-    return restMatrix;
-  }
-
-  /**
    * Select sitters for a round using greedy heuristic.
    * Optionally uses opponent history so that players with many repeated opponents
    * are slightly preferred to sit (reducing future repeated encounters).
@@ -345,14 +277,17 @@ export class PickleballMatcher {
 
       for (let i = 0; i < playerIds.length; i++) {
         for (let j = i + 1; j < playerIds.length; j++) {
-          const pid1 = playerIds[i]!;
-          const pid2 = playerIds[j]!;
+          const pid1 = playerIds[i];
+          const pid2 = playerIds[j];
+          if (pid1 === undefined || pid2 === undefined) {
+            continue;
+          }
           let pairScore = computeScore(pid1) + computeScore(pid2) + Math.random() * 0.1;
 
           // Hot-pair bonus: slightly prefer co-sitting players who face each other often.
           // Kept small (1000) so rest equity (1000 per deficit unit) remains the primary driver.
           // Guard: only apply if neither player has significantly more rests than average.
-          const oppCount = (opponentHistory[pid1] ?? {})[pid2] ?? 0;
+          const oppCount = opponentHistory[pid1]?.[pid2] ?? 0;
           if (oppCount >= 2) {
             const equity1 = avgRestsPerPlayer - (restCounts[pid1] || 0);
             const equity2 = avgRestsPerPlayer - (restCounts[pid2] || 0);
@@ -398,7 +333,10 @@ export class PickleballMatcher {
    * Cached pair-index partitions for n players (computed once per n, reused each round).
    * For n=8 there are 7!! = 105 partitions; each entry is an array of [i,j] index pairs.
    */
-  private static readonly indexPartitionCache = new Map<number, ReadonlyArray<ReadonlyArray<readonly [number, number]>>>();
+  private static readonly indexPartitionCache = new Map<
+    number,
+    ReadonlyArray<ReadonlyArray<readonly [number, number]>>
+  >();
 
   private static computePairIndexPartitions(n: number): ReadonlyArray<ReadonlyArray<readonly [number, number]>> {
     const result: [number, number][][] = [];
@@ -407,11 +345,15 @@ export class PickleballMatcher {
         result.push([...cur]);
         return;
       }
-      const first = avail[0]!;
+      const first = avail[0] || 0;
       for (let i = 1; i < avail.length; i++) {
         const remaining: number[] = [];
-        for (let j = 1; j < avail.length; j++) if (j !== i) remaining.push(avail[j]!);
-        cur.push([first, avail[i]!]);
+        for (let j = 1; j < avail.length; j++) {
+          if (j !== i) {
+            remaining.push(avail[j] || 0);
+          }
+        }
+        cur.push([first, avail[i] || 0]);
         helper(remaining, cur);
         cur.pop();
       }
@@ -475,14 +417,30 @@ export class PickleballMatcher {
 
     let lr = 0;
     let ta = 0;
-    if (last1a?.includes(t2a)) lr++;
-    if (last1a?.includes(t2b)) lr++;
-    if (last1b?.includes(t2a)) lr++;
-    if (last1b?.includes(t2b)) lr++;
-    if (twoAgo1a?.includes(t2a)) ta++;
-    if (twoAgo1a?.includes(t2b)) ta++;
-    if (twoAgo1b?.includes(t2a)) ta++;
-    if (twoAgo1b?.includes(t2b)) ta++;
+    if (last1a?.includes(t2a)) {
+      lr++;
+    }
+    if (last1a?.includes(t2b)) {
+      lr++;
+    }
+    if (last1b?.includes(t2a)) {
+      lr++;
+    }
+    if (last1b?.includes(t2b)) {
+      lr++;
+    }
+    if (twoAgo1a?.includes(t2a)) {
+      ta++;
+    }
+    if (twoAgo1a?.includes(t2b)) {
+      ta++;
+    }
+    if (twoAgo1b?.includes(t2a)) {
+      ta++;
+    }
+    if (twoAgo1b?.includes(t2b)) {
+      ta++;
+    }
     score -= lr * 900 * opponentPriority;
     score -= ta * 300 * opponentPriority;
 
@@ -509,15 +467,45 @@ export class PickleballMatcher {
     let bestMatchings: Array<{ team1: [string, string]; team2: [string, string] }> | null = null;
 
     for (const idxPart of indexPartitions) {
-      const i0 = idxPart[0]![0], i1 = idxPart[0]![1];
-      const i2 = idxPart[1]![0], i3 = idxPart[1]![1];
-      const i4 = idxPart[2]![0], i5 = idxPart[2]![1];
-      const i6 = idxPart[3]![0], i7 = idxPart[3]![1];
+      const part0 = idxPart[0];
+      const part1 = idxPart[1];
+      const part2 = idxPart[2];
+      const part3 = idxPart[3];
 
-      const p0 = playingPlayers[i0]!, p1 = playingPlayers[i1]!;
-      const p2 = playingPlayers[i2]!, p3 = playingPlayers[i3]!;
-      const p4 = playingPlayers[i4]!, p5 = playingPlayers[i5]!;
-      const p6 = playingPlayers[i6]!, p7 = playingPlayers[i7]!;
+      if (!part0 || !part1 || !part2 || !part3) {
+        continue;
+      }
+
+      const i0 = part0[0],
+        i1 = part0[1];
+      const i2 = part1[0],
+        i3 = part1[1];
+      const i4 = part2[0],
+        i5 = part2[1];
+      const i6 = part3[0],
+        i7 = part3[1];
+
+      const p0 = playingPlayers[i0],
+        p1 = playingPlayers[i1];
+      const p2 = playingPlayers[i2],
+        p3 = playingPlayers[i3];
+      const p4 = playingPlayers[i4],
+        p5 = playingPlayers[i5];
+      const p6 = playingPlayers[i6],
+        p7 = playingPlayers[i7];
+
+      if (
+        p0 === undefined ||
+        p1 === undefined ||
+        p2 === undefined ||
+        p3 === undefined ||
+        p4 === undefined ||
+        p5 === undefined ||
+        p6 === undefined ||
+        p7 === undefined
+      ) {
+        continue;
+      }
 
       // Partner quality: 4 pairs
       let partnerScore = 0;
@@ -528,9 +516,11 @@ export class PickleballMatcher {
         if (playCount === 0) {
           partnerScore += 100000;
           const oppCount = opponentHistory[pa]?.[pb] || 0;
-          if (oppCount > 0) partnerScore += Math.min(oppCount * 600, 5000);
+          if (oppCount > 0) {
+            partnerScore += Math.min(oppCount * 600, 5000);
+          }
         } else {
-          partnerScore -= 50000 * Math.pow(3, playCount);
+          partnerScore -= 50000 * 3 ** playCount;
         }
       }
 
@@ -542,7 +532,9 @@ export class PickleballMatcher {
       const s03 = this.scoreOpponentPairFast(p0, p1, p6, p7, opponentHistory, recentOpponentHistory, opPri);
       const s12 = this.scoreOpponentPairFast(p2, p3, p4, p5, opponentHistory, recentOpponentHistory, opPri);
 
-      const sc1 = s01 + s23, sc2 = s02 + s13, sc3 = s03 + s12;
+      const sc1 = s01 + s23,
+        sc2 = s02 + s13,
+        sc3 = s03 + s12;
 
       let bestOppScore: number;
       let matchIdx: 0 | 1 | 2;
@@ -557,7 +549,7 @@ export class PickleballMatcher {
         matchIdx = 2;
       }
 
-      const rnd = ((seed * 1664525 + i1 * 22695477 + 1013904223) >>> 0) / 4294967295.0 * 50;
+      const rnd = (((seed * 1664525 + i1 * 22695477 + 1013904223) >>> 0) / 4294967295.0) * 50;
       const totalScore = partnerScore + bestOppScore + rnd;
 
       if (totalScore > bestScore) {
@@ -620,7 +612,8 @@ export class PickleballMatcher {
           opponentHistory,
           recentOpponentHistory,
           seed
-        ) ?? this.matchPairsGreedy(
+        ) ??
+        this.matchPairsGreedy(
           this.createPairsGreedy(playingPlayers, partnerHistory, opponentHistory, seed),
           opponentHistory,
           recentOpponentHistory
@@ -689,7 +682,7 @@ export class PickleballMatcher {
     const pairs: string[][] = [];
     // Shuffle first for genuine diversity across iterations, then stable-sort by partner count
     // Players with equal partner counts keep their shuffled relative order (explored differently each seed)
-    let available = this.shuffleWithSeed([...players], seed);
+    const available = this.shuffleWithSeed([...players], seed);
 
     // FIRST: Handle preferred partners if enabled
     if (this.opts.respectPartnerPreferences) {
@@ -755,7 +748,7 @@ export class PickleballMatcher {
           score += 100000; // Extremely high weight for new partners
         } else {
           // Exponentially penalize based on how many times they've played
-          score -= 50000 * Math.pow(3, playCount); // Much stronger exponential penalty
+          score -= 50000 * 3 ** playCount; // Much stronger exponential penalty
         }
 
         // Secondary priority: Among new partners, prefer to pair frequent opponents together.
@@ -850,7 +843,10 @@ export class PickleballMatcher {
     recentOpponentHistory: Record<string, string[][]>,
     enforceSkillLimit: boolean
   ): Array<{ team1: [string, string]; team2: [string, string] }> | null {
-    const memo = new Map<string, { score: number; matchings: Array<{ team1: [string, string]; team2: [string, string] }> } | null>();
+    const memo = new Map<
+      string,
+      { score: number; matchings: Array<{ team1: [string, string]; team2: [string, string] }> } | null
+    >();
 
     const solve = (
       remainingTeams: string[][]
@@ -1194,7 +1190,7 @@ export class PickleballMatcher {
     for (const count of Object.values(partnerCounts)) {
       if (count > 1) {
         // Much stronger exponential penalty for repeats
-        penalty += Math.pow(10, count - 1);
+        penalty += 10 ** (count - 1);
       }
     }
 
@@ -1218,7 +1214,7 @@ export class PickleballMatcher {
     for (const count of Object.values(opponentCounts)) {
       // Penalize every repeat; escalate rapidly as repeat count grows.
       if (count > 1) {
-        penalty += Math.pow(6, count - 1);
+        penalty += 6 ** (count - 1);
       }
     }
 
@@ -1244,7 +1240,9 @@ export class PickleballMatcher {
 
     let total = 0;
     for (const count of Object.values(opponentCounts)) {
-      if (count > 2) total += count - 2;
+      if (count > 2) {
+        total += count - 2;
+      }
     }
     return total;
   }
@@ -1439,7 +1437,9 @@ export class PickleballMatcher {
         .filter(([, c]) => c >= 3)
         .sort((a, b) => b[1] - a[1]);
 
-      if (hotPairs.length === 0) break;
+      if (hotPairs.length === 0) {
+        break;
+      }
 
       let improved = false;
 
@@ -1447,17 +1447,22 @@ export class PickleballMatcher {
         const parts = pairKey.split('|');
         const id1 = parts[0];
         const id2 = parts[1];
-        if (!id1 || !id2) continue;
+        if (!id1 || !id2) {
+          continue;
+        }
 
         // Find rounds where this pair faced each other as opponents
         for (let r = 0; r < current.rounds.length; r++) {
           const round = current.rounds[r];
+          if (!round) {
+            continue;
+          }
           const facingInRound = round.some(
-            g =>
-              (g.team1.includes(id1) && g.team2.includes(id2)) ||
-              (g.team2.includes(id1) && g.team1.includes(id2))
+            g => (g.team1.includes(id1) && g.team2.includes(id2)) || (g.team2.includes(id1) && g.team1.includes(id2))
           );
-          if (!facingInRound) continue;
+          if (!facingInRound) {
+            continue;
+          }
 
           // Try all cross-game swaps in this round
           type Pos = { gi: number; ti: 0 | 1; pi: 0 | 1 };
@@ -1470,7 +1475,9 @@ export class PickleballMatcher {
             for (let j = i + 1; j < positions.length && !improved; j++) {
               const a = positions[i];
               const b = positions[j];
-              if (!a || !b || a.gi === b.gi) continue;
+              if (!a || !b || a.gi === b.gi) {
+                continue;
+              }
 
               const candidate = this.applySwap(current, r, a, b);
               const newCount = this.countPairOpponentEncounters(candidate, id1, id2);
@@ -1482,13 +1489,17 @@ export class PickleballMatcher {
                 // Reject if any partnership count would exceed 2 (count>2 penalty is 100+)
                 // Allow creating count-2 partnerships (penalty of 10 each) — these are
                 // within the test tolerances for small player pools with many rounds.
-                if (candPartner > currPartner + 15) continue; // 15 allows at most one new count-2 pair (penalty 10)
+                if (candPartner > currPartner + 15) {
+                  continue; // 15 allows at most one new count-2 pair (penalty 10)
+                }
 
                 // If partner preferences enabled, also protect couple pairings
                 if (this.opts.respectPartnerPreferences) {
                   const currCouples = this.scoreCouplesPreference(current);
                   const candCouples = this.scoreCouplesPreference(candidate);
-                  if (candCouples > currCouples) continue;
+                  if (candCouples > currCouples) {
+                    continue;
+                  }
                 }
 
                 current = candidate;
@@ -1504,24 +1515,36 @@ export class PickleballMatcher {
             const currOppScore = this.scoreOpponentRepeats(current);
             const sittersInR = current.restingPlayers[r] || [];
             for (const sitterIdInR of sittersInR) {
-              if (improved) break;
+              if (improved) {
+                break;
+              }
               // Try sitting id1 in round r (id1 was playing, swaps role with sitterIdInR)
               for (let r2 = 0; r2 < current.rounds.length && !improved; r2++) {
-                if (r2 === r) continue;
+                if (r2 === r) {
+                  continue;
+                }
                 const sittersR2 = current.restingPlayers[r2] || [];
                 // id1 must be a sitter in r2, sitterIdInR must be a player in r2
-                if (!sittersR2.includes(id1)) continue;
-                if (sittersR2.includes(sitterIdInR)) continue;
+                if (!sittersR2.includes(id1)) {
+                  continue;
+                }
+                if (sittersR2.includes(sitterIdInR)) {
+                  continue;
+                }
                 // Rest-spacing guard: moving id1 from r2 to r must not create gap < 2.
                 // Also, moving sitterIdInR from r to r2 must not create gap < 2 for them.
                 const id1ViolatesSpacing = current.restingPlayers.some(
                   (sitters, ri) => ri !== r2 && sitters.includes(id1) && Math.abs(ri - r) < 2
                 );
-                if (id1ViolatesSpacing) continue;
+                if (id1ViolatesSpacing) {
+                  continue;
+                }
                 const sitterViolatesSpacing = current.restingPlayers.some(
                   (sitters, ri) => ri !== r && sitters.includes(sitterIdInR) && Math.abs(ri - r2) < 2
                 );
-                if (sitterViolatesSpacing) continue;
+                if (sitterViolatesSpacing) {
+                  continue;
+                }
                 const candidate = this.applyInterRoundSitterSwap(current, id1, sitterIdInR, r, r2);
                 const newCount = this.countPairOpponentEncounters(candidate, id1, id2);
                 if (newCount < hotCount) {
@@ -1529,33 +1552,51 @@ export class PickleballMatcher {
                   const candPartner = this.scorePartnerRepeats(candidate);
                   // Inter-round swaps affect partnerships in TWO rounds, so allow up to two new
                   // count-2 partnerships (penalty 10 each → threshold 25 covers both).
-                  if (candPartner > currPartner + 25) continue;
+                  if (candPartner > currPartner + 25) {
+                    continue;
+                  }
                   // Reject if total opponent score doesn't improve — prevents creating new hot pairs
                   // and avoids "neutral" swap chains that can eventually produce count=4 pairs.
-                  if (this.scoreOpponentRepeats(candidate) >= currOppScore) continue;
+                  if (this.scoreOpponentRepeats(candidate) >= currOppScore) {
+                    continue;
+                  }
                   if (this.opts.respectPartnerPreferences) {
-                    if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) continue;
+                    if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) {
+                      continue;
+                    }
                   }
                   current = candidate;
                   improved = true;
                 }
               }
-              if (improved) break;
+              if (improved) {
+                break;
+              }
               // Try sitting id2 in round r instead
               for (let r2 = 0; r2 < current.rounds.length && !improved; r2++) {
-                if (r2 === r) continue;
+                if (r2 === r) {
+                  continue;
+                }
                 const sittersR2 = current.restingPlayers[r2] || [];
-                if (!sittersR2.includes(id2)) continue;
-                if (sittersR2.includes(sitterIdInR)) continue;
+                if (!sittersR2.includes(id2)) {
+                  continue;
+                }
+                if (sittersR2.includes(sitterIdInR)) {
+                  continue;
+                }
                 // Rest-spacing guard: same checks as for id1 above.
                 const id2ViolatesSpacing = current.restingPlayers.some(
                   (sitters, ri) => ri !== r2 && sitters.includes(id2) && Math.abs(ri - r) < 2
                 );
-                if (id2ViolatesSpacing) continue;
+                if (id2ViolatesSpacing) {
+                  continue;
+                }
                 const sitterViolatesSpacing2 = current.restingPlayers.some(
                   (sitters, ri) => ri !== r && sitters.includes(sitterIdInR) && Math.abs(ri - r2) < 2
                 );
-                if (sitterViolatesSpacing2) continue;
+                if (sitterViolatesSpacing2) {
+                  continue;
+                }
                 const candidate = this.applyInterRoundSitterSwap(current, id2, sitterIdInR, r, r2);
                 const newCount = this.countPairOpponentEncounters(candidate, id1, id2);
                 if (newCount < hotCount) {
@@ -1563,12 +1604,18 @@ export class PickleballMatcher {
                   const candPartner = this.scorePartnerRepeats(candidate);
                   // Inter-round swaps affect partnerships in TWO rounds, so allow up to two new
                   // count-2 partnerships (penalty 10 each → threshold 25 covers both).
-                  if (candPartner > currPartner + 25) continue;
+                  if (candPartner > currPartner + 25) {
+                    continue;
+                  }
                   // Reject if total opponent score doesn't improve — prevents creating new hot pairs
                   // and avoids "neutral" swap chains that can eventually produce count=4 pairs.
-                  if (this.scoreOpponentRepeats(candidate) >= currOppScore) continue;
+                  if (this.scoreOpponentRepeats(candidate) >= currOppScore) {
+                    continue;
+                  }
                   if (this.opts.respectPartnerPreferences) {
-                    if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) continue;
+                    if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) {
+                      continue;
+                    }
                   }
                   current = candidate;
                   improved = true;
@@ -1589,12 +1636,18 @@ export class PickleballMatcher {
             }
           }
 
-          if (improved) break;
+          if (improved) {
+            break;
+          }
         }
-        if (improved) break;
+        if (improved) {
+          break;
+        }
       }
 
-      if (!improved) break;
+      if (!improved) {
+        break;
+      }
     }
 
     return current;
@@ -1619,23 +1672,37 @@ export class PickleballMatcher {
     hotCount: number
   ): GameSchedule | null {
     const round = current.rounds[roundIdx];
-    if (!round || round.length !== 2) return null; // Only handle 2-court rounds
+    if (!round || round.length !== 2) {
+      return null; // Only handle 2-court rounds
+    }
 
     const playingInRound: string[] = round.flatMap(g => [...g.team1, ...g.team2]);
-    if (playingInRound.length !== 8) return null;
+    if (playingInRound.length !== 8) {
+      return null;
+    }
 
     // Build opponent and partner histories from all OTHER rounds.
     const oppHistory: Record<string, Record<string, number>> = {};
     const partnerHistory: Record<string, Record<string, number>> = {};
 
     for (let r = 0; r < current.rounds.length; r++) {
-      if (r === roundIdx) continue;
-      for (const game of current.rounds[r]) {
+      if (r === roundIdx) {
+        continue;
+      }
+      const roundAtR = current.rounds[r];
+      if (!roundAtR) {
+        continue;
+      }
+      for (const game of roundAtR) {
         // Partner history
         const addPartner = (a: string, b: string): void => {
-          if (!partnerHistory[a]) partnerHistory[a] = {};
+          if (!partnerHistory[a]) {
+            partnerHistory[a] = {};
+          }
           partnerHistory[a][b] = (partnerHistory[a][b] || 0) + 1;
-          if (!partnerHistory[b]) partnerHistory[b] = {};
+          if (!partnerHistory[b]) {
+            partnerHistory[b] = {};
+          }
           partnerHistory[b][a] = (partnerHistory[b][a] || 0) + 1;
         };
         addPartner(game.team1[0], game.team1[1]);
@@ -1644,9 +1711,13 @@ export class PickleballMatcher {
         // Opponent history (bidirectional)
         for (const p1 of game.team1) {
           for (const p2 of game.team2) {
-            if (!oppHistory[p1]) oppHistory[p1] = {};
+            if (!oppHistory[p1]) {
+              oppHistory[p1] = {};
+            }
             oppHistory[p1][p2] = (oppHistory[p1][p2] || 0) + 1;
-            if (!oppHistory[p2]) oppHistory[p2] = {};
+            if (!oppHistory[p2]) {
+              oppHistory[p2] = {};
+            }
             oppHistory[p2][p1] = (oppHistory[p2][p1] || 0) + 1;
           }
         }
@@ -1661,15 +1732,45 @@ export class PickleballMatcher {
     let bestMatchings: { team1: [string, string]; team2: [string, string] }[] | null = null;
 
     for (const idxPart of indexPartitions) {
-      const i0 = idxPart[0]![0], i1 = idxPart[0]![1];
-      const i2 = idxPart[1]![0], i3 = idxPart[1]![1];
-      const i4 = idxPart[2]![0], i5 = idxPart[2]![1];
-      const i6 = idxPart[3]![0], i7 = idxPart[3]![1];
+      const part0 = idxPart[0];
+      const part1 = idxPart[1];
+      const part2 = idxPart[2];
+      const part3 = idxPart[3];
 
-      const p0 = playingInRound[i0]!, p1 = playingInRound[i1]!;
-      const p2 = playingInRound[i2]!, p3 = playingInRound[i3]!;
-      const p4 = playingInRound[i4]!, p5 = playingInRound[i5]!;
-      const p6 = playingInRound[i6]!, p7 = playingInRound[i7]!;
+      if (!part0 || !part1 || !part2 || !part3) {
+        continue;
+      }
+
+      const i0 = part0[0],
+        i1 = part0[1];
+      const i2 = part1[0],
+        i3 = part1[1];
+      const i4 = part2[0],
+        i5 = part2[1];
+      const i6 = part3[0],
+        i7 = part3[1];
+
+      const p0 = playingInRound[i0],
+        p1 = playingInRound[i1];
+      const p2 = playingInRound[i2],
+        p3 = playingInRound[i3];
+      const p4 = playingInRound[i4],
+        p5 = playingInRound[i5];
+      const p6 = playingInRound[i6],
+        p7 = playingInRound[i7];
+
+      if (
+        p0 === undefined ||
+        p1 === undefined ||
+        p2 === undefined ||
+        p3 === undefined ||
+        p4 === undefined ||
+        p5 === undefined ||
+        p6 === undefined ||
+        p7 === undefined
+      ) {
+        continue;
+      }
 
       // Partner score: 4 pairs
       let partnerScore = 0;
@@ -1677,7 +1778,7 @@ export class PickleballMatcher {
         const pa = pi === 0 ? p0 : pi === 1 ? p2 : pi === 2 ? p4 : p6;
         const pb = pi === 0 ? p1 : pi === 1 ? p3 : pi === 2 ? p5 : p7;
         const pc = partnerHistory[pa]?.[pb] || 0;
-        partnerScore += pc === 0 ? 100000 : -50000 * Math.pow(3, pc);
+        partnerScore += pc === 0 ? 100000 : -50000 * 3 ** pc;
       }
 
       // Pre-compute which team-pairs contain id1 / id2 (avoids repeated comparisons).
@@ -1695,14 +1796,18 @@ export class PickleballMatcher {
       const hot1a = (t0h1 && t1h2) || (t0h2 && t1h1); // game1
       const hot1b = (t2h1 && t3h2) || (t2h2 && t3h1); // game2
       if (!hot1a && !hot1b) {
-        const s = this.scoreOpponentPairFast(p0, p1, p2, p3, oppHistory, emptyRecent, opPri)
-                + this.scoreOpponentPairFast(p4, p5, p6, p7, oppHistory, emptyRecent, opPri);
+        const s =
+          this.scoreOpponentPairFast(p0, p1, p2, p3, oppHistory, emptyRecent, opPri) +
+          this.scoreOpponentPairFast(p4, p5, p6, p7, oppHistory, emptyRecent, opPri);
         // Opponent score drives selection; partner score is a minor tiebreaker.
         // The partner constraint is enforced at the end of the function.
         const total = s + partnerScore * 0.001;
         if (total > bestScore) {
           bestScore = total;
-          bestMatchings = [{ team1: [p0, p1], team2: [p2, p3] }, { team1: [p4, p5], team2: [p6, p7] }];
+          bestMatchings = [
+            { team1: [p0, p1], team2: [p2, p3] },
+            { team1: [p4, p5], team2: [p6, p7] }
+          ];
         }
       }
 
@@ -1710,12 +1815,16 @@ export class PickleballMatcher {
       const hot2a = (t0h1 && t2h2) || (t0h2 && t2h1);
       const hot2b = (t1h1 && t3h2) || (t1h2 && t3h1);
       if (!hot2a && !hot2b) {
-        const s = this.scoreOpponentPairFast(p0, p1, p4, p5, oppHistory, emptyRecent, opPri)
-                + this.scoreOpponentPairFast(p2, p3, p6, p7, oppHistory, emptyRecent, opPri);
+        const s =
+          this.scoreOpponentPairFast(p0, p1, p4, p5, oppHistory, emptyRecent, opPri) +
+          this.scoreOpponentPairFast(p2, p3, p6, p7, oppHistory, emptyRecent, opPri);
         const total = s + partnerScore * 0.001;
         if (total > bestScore) {
           bestScore = total;
-          bestMatchings = [{ team1: [p0, p1], team2: [p4, p5] }, { team1: [p2, p3], team2: [p6, p7] }];
+          bestMatchings = [
+            { team1: [p0, p1], team2: [p4, p5] },
+            { team1: [p2, p3], team2: [p6, p7] }
+          ];
         }
       }
 
@@ -1723,24 +1832,40 @@ export class PickleballMatcher {
       const hot3a = (t0h1 && t3h2) || (t0h2 && t3h1);
       const hot3b = (t1h1 && t2h2) || (t1h2 && t2h1);
       if (!hot3a && !hot3b) {
-        const s = this.scoreOpponentPairFast(p0, p1, p6, p7, oppHistory, emptyRecent, opPri)
-                + this.scoreOpponentPairFast(p2, p3, p4, p5, oppHistory, emptyRecent, opPri);
+        const s =
+          this.scoreOpponentPairFast(p0, p1, p6, p7, oppHistory, emptyRecent, opPri) +
+          this.scoreOpponentPairFast(p2, p3, p4, p5, oppHistory, emptyRecent, opPri);
         const total = s + partnerScore * 0.001;
         if (total > bestScore) {
           bestScore = total;
-          bestMatchings = [{ team1: [p0, p1], team2: [p6, p7] }, { team1: [p2, p3], team2: [p4, p5] }];
+          bestMatchings = [
+            { team1: [p0, p1], team2: [p6, p7] },
+            { team1: [p2, p3], team2: [p4, p5] }
+          ];
         }
       }
     }
 
-    if (!bestMatchings) return null;
+    if (!bestMatchings) {
+      return null;
+    }
 
     // Build the candidate schedule.
     const newRound: Game[] = round.map((g, gi) => {
-      const m = bestMatchings![gi]!;
+      const m = bestMatchings[gi];
+      if (!m) {
+        return g;
+      }
       const s1 = this.player(m.team1[0]).skillLevel + this.player(m.team1[1]).skillLevel;
       const s2 = this.player(m.team2[0]).skillLevel + this.player(m.team2[1]).skillLevel;
-      return { ...g, team1: m.team1, team2: m.team2, team1SkillLevel: s1, team2SkillLevel: s2, skillDifference: Math.abs(s1 - s2) };
+      return {
+        ...g,
+        team1: m.team1,
+        team2: m.team2,
+        team1SkillLevel: s1,
+        team2SkillLevel: s2,
+        skillDifference: Math.abs(s1 - s2)
+      };
     });
     const newRounds = [...current.rounds];
     newRounds[roundIdx] = newRound;
@@ -1748,41 +1873,29 @@ export class PickleballMatcher {
 
     // The re-solve must actually reduce the hot pair's encounter count.
     const newCount = this.countPairOpponentEncounters(candidate, id1, id2);
-    if (newCount >= hotCount) return null;
+    if (newCount >= hotCount) {
+      return null;
+    }
 
     // Require a strict improvement in total opponent overflow — prevents neutral swaps that cycle.
-    if (this.scoreOpponentRepeats(candidate) >= this.scoreOpponentRepeats(current)) return null;
+    if (this.scoreOpponentRepeats(candidate) >= this.scoreOpponentRepeats(current)) {
+      return null;
+    }
 
     // Protect partner diversity.
     const currPartner = this.scorePartnerRepeats(current);
     const candPartner = this.scorePartnerRepeats(candidate);
-    if (candPartner > currPartner + 15) return null;
+    if (candPartner > currPartner + 15) {
+      return null;
+    }
 
     if (this.opts.respectPartnerPreferences) {
-      if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) return null;
+      if (this.scoreCouplesPreference(candidate) > this.scoreCouplesPreference(current)) {
+        return null;
+      }
     }
 
     return candidate;
-  }
-
-  /**
-   * Return the maximum opponent encounter count for any pair in the schedule.
-   */
-  private computeMaxOpponentCount(schedule: GameSchedule): number {
-    const counts = new Map<string, number>();
-    for (const round of schedule.rounds) {
-      for (const game of round) {
-        for (const p1 of game.team1) {
-          for (const p2 of game.team2) {
-            const k = this.pairKey(p1, p2);
-            counts.set(k, (counts.get(k) || 0) + 1);
-          }
-        }
-      }
-    }
-    let max = 0;
-    for (const v of counts.values()) if (v > max) max = v;
-    return max;
   }
 
   /**
@@ -1790,7 +1903,7 @@ export class PickleballMatcher {
    */
   private shuffleWithSeed<T>(arr: T[], seed: number): T[] {
     const result = [...arr];
-    let s = Math.abs(seed * 9301 + 49297) % 233280 + 1;
+    let s = (Math.abs(seed * 9301 + 49297) % 233280) + 1;
     for (let i = result.length - 1; i > 0; i--) {
       s = (s * 9301 + 49297) % 233280;
       const j = Math.floor((s / 233280) * (i + 1));
@@ -1814,18 +1927,15 @@ export class PickleballMatcher {
 
       for (let roundIdx = 0; roundIdx < current.rounds.length; roundIdx++) {
         const round = current.rounds[roundIdx];
-        if (!round || round.length < 2) continue;
+        if (!round || round.length < 2) {
+          continue;
+        }
 
         // Enumerate all player positions in this round
         type Pos = { gi: number; ti: 0 | 1; pi: 0 | 1 };
         const positions: Pos[] = [];
         for (let gi = 0; gi < round.length; gi++) {
-          positions.push(
-            { gi, ti: 0, pi: 0 },
-            { gi, ti: 0, pi: 1 },
-            { gi, ti: 1, pi: 0 },
-            { gi, ti: 1, pi: 1 }
-          );
+          positions.push({ gi, ti: 0, pi: 0 }, { gi, ti: 0, pi: 1 }, { gi, ti: 1, pi: 0 }, { gi, ti: 1, pi: 1 });
         }
 
         // Try all pairwise swaps between different games
@@ -1833,7 +1943,9 @@ export class PickleballMatcher {
           for (let j = i + 1; j < positions.length; j++) {
             const a = positions[i];
             const b = positions[j];
-            if (a.gi === b.gi) continue; // Only swap between different games
+            if (!a || !b || a.gi === b.gi) {
+              continue; // Only swap between different games
+            }
 
             const candidate = this.applySwap(current, roundIdx, a, b);
             const score = this.evaluateScore(candidate);
@@ -1847,7 +1959,9 @@ export class PickleballMatcher {
         }
       }
 
-      if (!improved) break;
+      if (!improved) {
+        break;
+      }
     }
 
     return current;
@@ -1863,7 +1977,11 @@ export class PickleballMatcher {
     b: { gi: number; ti: 0 | 1; pi: 0 | 1 }
   ): GameSchedule {
     // Copy only the affected round; all other rounds are shared
-    const newRound = schedule.rounds[roundIdx].map(g => ({
+    const roundToSwap = schedule.rounds[roundIdx];
+    if (!roundToSwap) {
+      return schedule;
+    }
+    const newRound = roundToSwap.map(g => ({
       ...g,
       team1: [g.team1[0], g.team1[1]] as [string, string],
       team2: [g.team2[0], g.team2[1]] as [string, string]
@@ -1871,7 +1989,9 @@ export class PickleballMatcher {
 
     const ga = newRound[a.gi];
     const gb = newRound[b.gi];
-    if (!ga || !gb) return schedule;
+    if (!ga || !gb) {
+      return schedule;
+    }
 
     const teamA = a.ti === 0 ? ga.team1 : ga.team2;
     const teamB = b.ti === 0 ? gb.team1 : gb.team2;
@@ -1921,7 +2041,11 @@ export class PickleballMatcher {
 
     // Round R: replace playerToSit with sitterToPlay in the games
     {
-      const roundCopy = newRounds[roundR]!.map(g => ({
+      const roundAtR = newRounds[roundR];
+      if (!roundAtR) {
+        return schedule;
+      }
+      const roundCopy = roundAtR.map(g => ({
         ...g,
         team1: [g.team1[0], g.team1[1]] as [string, string],
         team2: [g.team2[0], g.team2[1]] as [string, string]
@@ -1929,8 +2053,11 @@ export class PickleballMatcher {
       for (const g of roundCopy) {
         const t1idx = g.team1.indexOf(playerToSit);
         const t2idx = g.team2.indexOf(playerToSit);
-        if (t1idx >= 0) g.team1[t1idx] = sitterToPlay;
-        else if (t2idx >= 0) g.team2[t2idx] = sitterToPlay;
+        if (t1idx >= 0) {
+          g.team1[t1idx] = sitterToPlay;
+        } else if (t2idx >= 0) {
+          g.team2[t2idx] = sitterToPlay;
+        }
         const s1 = this.player(g.team1[0]).skillLevel + this.player(g.team1[1]).skillLevel;
         const s2 = this.player(g.team2[0]).skillLevel + this.player(g.team2[1]).skillLevel;
         g.team1SkillLevel = s1;
@@ -1940,14 +2067,20 @@ export class PickleballMatcher {
       newRounds[roundR] = roundCopy;
       const sittersR = [...(newRestingPlayers[roundR] || [])];
       const si = sittersR.indexOf(sitterToPlay);
-      if (si >= 0) sittersR.splice(si, 1);
+      if (si >= 0) {
+        sittersR.splice(si, 1);
+      }
       sittersR.push(playerToSit);
       newRestingPlayers[roundR] = sittersR;
     }
 
     // Round R2: replace sitterToPlay with playerToSit in the games
     {
-      const roundCopy = newRounds[roundR2]!.map(g => ({
+      const roundAtR2 = newRounds[roundR2];
+      if (!roundAtR2) {
+        return schedule;
+      }
+      const roundCopy = roundAtR2.map(g => ({
         ...g,
         team1: [g.team1[0], g.team1[1]] as [string, string],
         team2: [g.team2[0], g.team2[1]] as [string, string]
@@ -1955,8 +2088,11 @@ export class PickleballMatcher {
       for (const g of roundCopy) {
         const t1idx = g.team1.indexOf(sitterToPlay);
         const t2idx = g.team2.indexOf(sitterToPlay);
-        if (t1idx >= 0) g.team1[t1idx] = playerToSit;
-        else if (t2idx >= 0) g.team2[t2idx] = playerToSit;
+        if (t1idx >= 0) {
+          g.team1[t1idx] = playerToSit;
+        } else if (t2idx >= 0) {
+          g.team2[t2idx] = playerToSit;
+        }
         const s1 = this.player(g.team1[0]).skillLevel + this.player(g.team1[1]).skillLevel;
         const s2 = this.player(g.team2[0]).skillLevel + this.player(g.team2[1]).skillLevel;
         g.team1SkillLevel = s1;
@@ -1966,7 +2102,9 @@ export class PickleballMatcher {
       newRounds[roundR2] = roundCopy;
       const sittersR2 = [...(newRestingPlayers[roundR2] || [])];
       const si2 = sittersR2.indexOf(playerToSit);
-      if (si2 >= 0) sittersR2.splice(si2, 1);
+      if (si2 >= 0) {
+        sittersR2.splice(si2, 1);
+      }
       sittersR2.push(sitterToPlay);
       newRestingPlayers[roundR2] = sittersR2;
     }
