@@ -36,31 +36,34 @@ watch(showPrintModal, isOpen => {
 });
 
 // Computed properties
+const scheduleStats = computed(() => gameStore.scheduleStats);
+
 const totalGames = computed(() => {
-  if (!gameStore.currentSchedule) {
-    return 0;
-  }
-  return gameStore.currentSchedule.rounds.reduce((sum: number, round) => sum + round.length, 0);
+  return scheduleStats.value?.totalGames || 0;
 });
 
 const averageSkillDifference = computed(() => {
-  if (!gameStore.currentSchedule) {
-    return '0.0';
-  }
-  const allGames = gameStore.currentSchedule.rounds.flat();
-  if (allGames.length === 0) {
-    return '0.0';
-  }
-  const total = allGames.reduce((sum: number, game) => sum + game.skillDifference, 0);
-  return (total / allGames.length).toFixed(1);
+  return (scheduleStats.value?.averageSkillDifference || 0).toFixed(1);
 });
 
 const restingPlayersPerRound = computed(() => {
-  if (!gameStore.currentSchedule || gameStore.currentSchedule.restingPlayers.length === 0) {
-    return 0;
-  }
-  const firstRound = gameStore.currentSchedule.restingPlayers[0];
-  return firstRound ? firstRound.length : 0;
+  return scheduleStats.value?.restingPerRound || 0;
+});
+
+const duplicatePartners = computed(() => {
+  return scheduleStats.value?.duplicatePartners || 0;
+});
+
+const duplicateOpponents = computed(() => {
+  return scheduleStats.value?.duplicateOpponents || 0;
+});
+
+const maxOpponentRepeats = computed(() => {
+  return scheduleStats.value?.maxOpponentRepeats || 0;
+});
+
+const maxRests = computed(() => {
+  return scheduleStats.value?.maxRests || 0;
 });
 
 const selectedRoundGames = computed(() => {
@@ -230,6 +233,34 @@ onMounted(async () => {
                 <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-purple-700">{{ restingPlayersPerRound }}</div>
                 <div class="text-sm font-medium text-purple-600">Resting per Round</div>
+              </div>
+            </div>
+            <div class="content-card overflow-hidden">
+              <div class="p-4 text-center bg-gradient-to-br from-rose-50 to-rose-100">
+                <Icon name="mdi:account-group" class="text-3xl text-rose-600 mb-2 mx-auto" />
+                <div class="text-2xl font-bold text-rose-700">{{ duplicatePartners }}</div>
+                <div class="text-sm font-medium text-rose-600">Duplicated Partners</div>
+              </div>
+            </div>
+            <div class="content-card overflow-hidden">
+              <div class="p-4 text-center bg-gradient-to-br from-emerald-50 to-emerald-100">
+                <Icon name="mdi:account-switch" class="text-3xl text-emerald-600 mb-2 mx-auto" />
+                <div class="text-2xl font-bold text-emerald-700">{{ duplicateOpponents }}</div>
+                <div class="text-sm font-medium text-emerald-600">Duplicated Opponents</div>
+              </div>
+            </div>
+            <div class="content-card overflow-hidden">
+              <div class="p-4 text-center bg-gradient-to-br from-emerald-50 to-emerald-100">
+                <Icon name="mdi:arrow-expand-up" class="text-3xl text-emerald-600 mb-2 mx-auto" />
+                <div class="text-2xl font-bold text-emerald-700">{{ maxOpponentRepeats }}</div>
+                <div class="text-sm font-medium text-emerald-600">Max Opponent Repeats</div>
+              </div>
+            </div>
+            <div class="content-card overflow-hidden">
+              <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-orange-100">
+                <Icon name="mdi:seat" class="text-3xl text-orange-600 mb-2 mx-auto" />
+                <div class="text-2xl font-bold text-orange-700">{{ maxRests }}</div>
+                <div class="text-sm font-medium text-orange-600">Max Rests</div>
               </div>
             </div>
           </div>

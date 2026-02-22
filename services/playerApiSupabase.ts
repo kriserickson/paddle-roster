@@ -1,6 +1,6 @@
 import type { Player } from '~/types';
 import type { ApiResponse, IPlayerApi } from '~/types/api';
-import type { Database, PlayerInsert, PlayerRow, PlayerUpdate } from '~/types/database';
+import type { Database, PlayerInsert, PlayerRow, PlayerUpdate } from '~/types/database.types';
 
 /**
  * Supabase service for player management

@@ -2,7 +2,7 @@
  * Supabase API service for user preferences
  */
 import type { MatchingOptions, PrintOptions } from '~/types';
-import type { Database, UserPreferencesRow } from '~/types/database';
+import type { Database, UserPreferencesRow } from '~/types/database.types';
 
 export interface UserPreferences {
   matchingOptions: MatchingOptions;
@@ -28,7 +28,9 @@ export class UserPreferencesApiSupabase {
             balanceSkillLevels: true,
             respectPartnerPreferences: true,
             maxSkillDifference: 2.0,
-            distributeRestEqually: true
+            distributeRestEqually: true,
+            opponentDiversityPriority: 'balanced',
+            courtDiversityPriority: 'balanced'
           },
           printOptions: {
             eventTitle: '',
@@ -80,7 +82,9 @@ export class UserPreferencesApiSupabase {
         balanceSkillLevels: true,
         respectPartnerPreferences: true,
         maxSkillDifference: 2.0,
-        distributeRestEqually: true
+        distributeRestEqually: true,
+        opponentDiversityPriority: 'balanced',
+        courtDiversityPriority: 'balanced'
       },
       printOptions: {
         eventTitle: '',
@@ -110,7 +114,9 @@ export class UserPreferencesApiSupabase {
         balanceSkillLevels: row.balance_skill_levels,
         respectPartnerPreferences: row.respect_partner_preferences,
         maxSkillDifference: row.max_skill_difference,
-        distributeRestEqually: row.distribute_rest_equally
+        distributeRestEqually: row.distribute_rest_equally,
+        opponentDiversityPriority: 'balanced',
+        courtDiversityPriority: 'balanced'
       },
       printOptions: {
         eventTitle: row.print_event_title,

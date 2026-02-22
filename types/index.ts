@@ -58,6 +58,16 @@ export interface MatchingOptions {
   distributeRestEqually: boolean;
   /**  */
   firstRoundSitters?: readonly string[];
+  /**
+   * Outcome preference for reducing repeated opponents.
+   * `balanced` matches current default behavior.
+   */
+  opponentDiversityPriority?: 'relaxed' | 'balanced' | 'strict';
+  /**
+   * Outcome preference for reducing repeated court assignments.
+   * `balanced` matches current default behavior.
+   */
+  courtDiversityPriority?: 'relaxed' | 'balanced' | 'strict';
 }
 
 /**

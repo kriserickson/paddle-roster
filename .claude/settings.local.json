@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run test:*)",
+      "Bash(npx vitest:*)",
+      "Bash(for i in 1 2 3)",
+      "Bash(do npx vitest run tests/unit/utils/pickleballMatcher.test.ts)",
+      "Bash(do echo \"=== Run $i ===\")",
+      "Bash(done)",
+      "Bash(for i in 1 2 3 4)",
+      "Bash(for i in 1 2 3 4 5)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

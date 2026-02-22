@@ -20,11 +20,58 @@ export const useGameStore = defineStore('game', () => {
     balanceSkillLevels: true,
     respectPartnerPreferences: true,
     maxSkillDifference: 2.0,
-    distributeRestEqually: true
+    distributeRestEqually: true,
+    opponentDiversityPriority: 'balanced',
+    courtDiversityPriority: 'balanced'
   };
 
   const matchingOptions = ref<MatchingOptions>({ ...defaultOptions });
   const preferencesApi = new UserPreferencesApiSupabase();
+  const advancedPreferenceStorageKey = 'paddleroster-advanced-matching-preferences';
+
+  function normalizePriority(value: unknown): 'relaxed' | 'balanced' | 'strict' {
+    if (value === 'relaxed' || value === 'strict' || value === 'balanced') {
+      return value;
+    }
+    return 'balanced';
+  }
+
+  function loadLocalAdvancedPreferences(): Partial<MatchingOptions> {
+    if (!process.client) {
+      return {};
+    }
+    try {
+      const raw = localStorage.getItem(advancedPreferenceStorageKey);
+      if (!raw) {
+        return {};
+      }
+      const parsed = JSON.parse(raw) as Partial<MatchingOptions>;
+      return {
+        opponentDiversityPriority: normalizePriority(parsed.opponentDiversityPriority),
+        courtDiversityPriority: normalizePriority(parsed.courtDiversityPriority)
+      };
+    } catch (error) {
+      console.warn('Failed to load local advanced preferences:', error);
+      return {};
+    }
+  }
+
+  function saveLocalAdvancedPreferences(options: MatchingOptions): void {
+    if (!process.client) {
+      return;
+    }
+    try {
+      localStorage.setItem(
+        advancedPreferenceStorageKey,
+        JSON.stringify({
+          opponentDiversityPriority: normalizePriority(options.opponentDiversityPriority),
+          courtDiversityPriority: normalizePriority(options.courtDiversityPriority)
+        })
+      );
+    } catch (error) {
+      console.warn('Failed to save local advanced preferences:', error);
+    }
+  }
 
   /**
    * Getters
@@ -39,6 +86,10 @@ export const useGameStore = defineStore('game', () => {
     const totalRounds = schedule.rounds.length;
     const playersPerRound = (schedule.rounds[0]?.length || 0) * 4;
     const restingPerRound = schedule.restingPlayers[0]?.length || 0;
+    const duplicatePartners = countDuplicatePartnerOccurrences(schedule);
+    const duplicateOpponents = countDuplicateOpponentOccurrences(schedule);
+    const maxOpponentRepeats = calculateMaxOpponentRepeats(schedule);
+    const maxRests = calculateMaxRests(schedule);
 
     return {
       totalGames,
@@ -46,6 +97,10 @@ export const useGameStore = defineStore('game', () => {
       playersPerRound,
       restingPerRound,
       averageSkillDifference: calculateAverageSkillDifference(schedule),
+      duplicatePartners,
+      duplicateOpponents,
+      maxOpponentRepeats,
+      maxRests,
       generatedAt: schedule.generatedAt
     };
   }); /**
@@ -88,11 +143,15 @@ export const useGameStore = defineStore('game', () => {
     try {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
-      matchingOptions.value = { ...userPrefs.matchingOptions };
+      matchingOptions.value = {
+        ...defaultOptions,
+        ...userPrefs.matchingOptions,
+        ...loadLocalAdvancedPreferences()
+      };
     } catch (error) {
       console.error('Error loading user preferences:', error);
       // Fall back to default options if loading fails
-      matchingOptions.value = { ...defaultOptions };
+      matchingOptions.value = { ...defaultOptions, ...loadLocalAdvancedPreferences() };
     } finally {
       isLoadingPreferences.value = false;
     }
@@ -117,6 +176,7 @@ export const useGameStore = defineStore('game', () => {
 
   async function updateOptions(newOptions: Partial<MatchingOptions>): Promise<void> {
     matchingOptions.value = { ...matchingOptions.value, ...newOptions };
+    saveLocalAdvancedPreferences(matchingOptions.value);
 
     // Automatically save preferences to Supabase
     try {
@@ -130,11 +190,13 @@ export const useGameStore = defineStore('game', () => {
   async function resetOptions(): Promise<void> {
     try {
       const resetPrefs = await preferencesApi.resetUserPreferences();
-      matchingOptions.value = { ...resetPrefs.matchingOptions };
+      matchingOptions.value = { ...defaultOptions, ...resetPrefs.matchingOptions };
+      saveLocalAdvancedPreferences(matchingOptions.value);
     } catch (error) {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
       matchingOptions.value = { ...defaultOptions };
+      saveLocalAdvancedPreferences(matchingOptions.value);
     }
   }
 
@@ -197,6 +259,58 @@ export const useGameStore = defineStore('game', () => {
 
   function clearSchedule(): void {
     currentSchedule.value = null;
+  }
+
+  function pairKey(a: string, b: string): string {
+    return a < b ? `${a}|${b}` : `${b}|${a}`;
+  }
+
+  function countDuplicatePartnerOccurrences(schedule: GameSchedule): number {
+    const pairCounts: Record<string, number> = {};
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        const k1 = pairKey(game.team1[0], game.team1[1]);
+        const k2 = pairKey(game.team2[0], game.team2[1]);
+        pairCounts[k1] = (pairCounts[k1] || 0) + 1;
+        pairCounts[k2] = (pairCounts[k2] || 0) + 1;
+      }
+    }
+    return Object.values(pairCounts).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+  }
+
+  function countDuplicateOpponentOccurrences(schedule: GameSchedule): number {
+    const pairCounts = buildOpponentPairCounts(schedule);
+    return Object.values(pairCounts).reduce((sum, count) => sum + Math.max(0, count - 1), 0);
+  }
+
+  function buildOpponentPairCounts(schedule: GameSchedule): Record<string, number> {
+    const pairCounts: Record<string, number> = {};
+    for (const round of schedule.rounds) {
+      for (const game of round) {
+        for (const p1 of game.team1) {
+          for (const p2 of game.team2) {
+            const key = pairKey(p1, p2);
+            pairCounts[key] = (pairCounts[key] || 0) + 1;
+          }
+        }
+      }
+    }
+    return pairCounts;
+  }
+
+  function calculateMaxOpponentRepeats(schedule: GameSchedule): number {
+    const pairCounts = buildOpponentPairCounts(schedule);
+    return Object.values(pairCounts).reduce((maxCount, count) => Math.max(maxCount, count), 0);
+  }
+
+  function calculateMaxRests(schedule: GameSchedule): number {
+    const restCounts: Record<string, number> = {};
+    for (const roundRestingPlayers of schedule.restingPlayers) {
+      for (const playerId of roundRestingPlayers) {
+        restCounts[playerId] = (restCounts[playerId] || 0) + 1;
+      }
+    }
+    return Object.values(restCounts).reduce((maxCount, count) => Math.max(maxCount, count), 0);
   }
 
   function getGamesForRound(roundNumber: number): Game[] | null {

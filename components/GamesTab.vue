@@ -13,8 +13,13 @@ const toast = useToast();
 
 // Local reactive state
 const eventLabel = ref('');
-const matchingOptions = ref<MatchingOptions>({ ...gameStore.matchingOptions });
+const matchingOptions = ref<MatchingOptions>({
+  ...gameStore.matchingOptions,
+  opponentDiversityPriority: gameStore.matchingOptions.opponentDiversityPriority || 'balanced',
+  courtDiversityPriority: gameStore.matchingOptions.courtDiversityPriority || 'balanced'
+});
 const isSavingPreferences = ref(false);
+const showAdvancedPreferences = ref(false);
 
 // Player filtering state
 const playerSearchQuery = ref('');
@@ -48,8 +53,18 @@ function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
     a.respectPartnerPreferences === b.respectPartnerPreferences &&
     a.maxSkillDifference === b.maxSkillDifference &&
     a.distributeRestEqually === b.distributeRestEqually &&
+    (a.opponentDiversityPriority || 'balanced') === (b.opponentDiversityPriority || 'balanced') &&
+    (a.courtDiversityPriority || 'balanced') === (b.courtDiversityPriority || 'balanced') &&
     firstRoundSittersEqual
   );
+}
+
+function withPreferenceDefaults(options: MatchingOptions): MatchingOptions {
+  return {
+    ...options,
+    opponentDiversityPriority: options.opponentDiversityPriority || 'balanced',
+    courtDiversityPriority: options.courtDiversityPriority || 'balanced'
+  };
 }
 
 // Watch for changes and update the game generator
@@ -130,7 +145,7 @@ watch(
   () => gameStore.matchingOptions,
   newStoreOptions => {
     isUpdatingFromStore.value = true;
-    matchingOptions.value = { ...newStoreOptions };
+    matchingOptions.value = withPreferenceDefaults({ ...newStoreOptions });
     nextTick(() => {
       isUpdatingFromStore.value = false;
     });
@@ -144,6 +159,11 @@ const skillLevelFilterOptions = [
   { label: 'Beginner (1.0-2.75)', value: 'beginner' },
   { label: 'Intermediate (3-3.5)', value: 'intermediate' },
   { label: 'Advanced (3.6-5.0)', value: 'advanced' }
+];
+const preferencePriorityOptions = [
+  { label: 'Relaxed', value: 'relaxed' },
+  { label: 'Balanced (Default)', value: 'balanced' },
+  { label: 'Strict', value: 'strict' }
 ];
 
 // Computed properties
@@ -305,7 +325,7 @@ async function generateSchedule(): Promise<void> {
 function resetToDefaults(): void {
   isUpdatingFromStore.value = true;
   gameStore.resetOptions();
-  matchingOptions.value = { ...gameStore.matchingOptions };
+  matchingOptions.value = withPreferenceDefaults({ ...gameStore.matchingOptions });
   firstRoundSitters.value = [];
   nextTick(() => {
     isUpdatingFromStore.value = false;
@@ -320,7 +340,7 @@ function resetToDefaults(): void {
 // Initialize with current options
 onMounted(() => {
   isUpdatingFromStore.value = true;
-  matchingOptions.value = { ...gameStore.matchingOptions };
+  matchingOptions.value = withPreferenceDefaults({ ...gameStore.matchingOptions });
   firstRoundSitters.value = [...(gameStore.matchingOptions.firstRoundSitters || [])];
   nextTick(() => {
     isUpdatingFromStore.value = false;
@@ -444,10 +464,16 @@ onMounted(() => {
       <!-- Algorithm Options -->
       <div class="content-card">
         <div class="content-card-header">
-          <h3 class="text-xl font-semibold flex items-center gap-2">
-            <Icon name="mdi:tune" class="text-paddle-teal" />
-            Algorithm Options
-          </h3>
+          <div class="flex items-center justify-between">
+            <h3 class="text-xl font-semibold flex items-center gap-2">
+              <Icon name="mdi:tune" class="text-paddle-teal" />
+              Algorithm Options
+            </h3>
+            <UButton size="sm" variant="ghost" color="neutral" @click="showAdvancedPreferences = !showAdvancedPreferences">
+              <Icon name="mdi:tune-variant" class="mr-2" />
+              {{ showAdvancedPreferences ? 'Hide Advanced' : 'Advanced' }}
+            </UButton>
+          </div>
         </div>
 
         <div class="p-6 space-y-6">
@@ -466,6 +492,25 @@ onMounted(() => {
             <USwitch v-model="matchingOptions.distributeRestEqually"
               :label="matchingOptions.distributeRestEqually ? 'Enabled' : 'Disabled'" class="text-paddle-teal" />
           </UFormField>
+
+          <div v-if="showAdvancedPreferences"
+            class="space-y-4 p-4 bg-gray-50 dark:bg-slate-700/50 rounded-lg border border-gray-200 dark:border-slate-600">
+            <div class="text-sm text-gray-600 dark:text-gray-300">
+              Tune outcome preferences without adjusting raw penalty numbers.
+            </div>
+
+            <UFormField label="Opponent Variety Priority"
+              help="Prefer fewer repeated opponents across the full schedule">
+              <USelect v-model="matchingOptions.opponentDiversityPriority" :items="preferencePriorityOptions"
+                class="form-input w-full u-select" />
+            </UFormField>
+
+            <UFormField label="Court Variety Priority"
+              help="Prefer fewer back-to-back rounds on the same court">
+              <USelect v-model="matchingOptions.courtDiversityPriority" :items="preferencePriorityOptions"
+                class="form-input w-full u-select" />
+            </UFormField>
+          </div>
 
           <!-- Reset Options -->
           <div class="pt-6 border-t border-gray-200">
@@ -561,7 +606,7 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                  class="w-8 h-8 rounded-full bg-linear-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <div class="flex flex-row align-items-center">
@@ -592,28 +637,28 @@ onMounted(() => {
       <div class="p-6">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-blue-50 to-blue-100">
+            <div class="p-4 text-center bg-linear-to-br from-blue-50 to-blue-100">
               <Icon name="mdi:account-multiple" class="text-3xl text-blue-600 mb-2 mx-auto" />
               <div class="text-2xl font-bold text-blue-700">{{ selectedPlayers.length }}</div>
               <div class="text-sm font-medium text-blue-600">Selected Players</div>
             </div>
           </div>
           <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-paddle-teal/10 to-paddle-teal/20">
+            <div class="p-4 text-center bg-linear-to-br from-paddle-teal/10 to-paddle-teal/20">
               <Icon name="mdi:account-convert" class="text-3xl text-paddle-teal mb-2 mx-auto" />
               <div class="text-2xl font-bold text-paddle-teal">{{ playersPerRound }}</div>
               <div class="text-sm font-medium text-paddle-teal-dark">Players per Round</div>
             </div>
           </div>
           <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-amber-50 to-amber-100">
+            <div class="p-4 text-center bg-linear-to-br from-amber-50 to-amber-100">
               <Icon name="mdi:seat" class="text-3xl text-amber-600 mb-2 mx-auto" />
               <div class="text-2xl font-bold text-amber-700">{{ restingPerRound }}</div>
               <div class="text-sm font-medium text-amber-600">Resting per Round</div>
             </div>
           </div>
           <div class="content-card overflow-hidden">
-            <div class="p-4 text-center bg-gradient-to-br from-purple-50 to-purple-100">
+            <div class="p-4 text-center bg-linear-to-br from-purple-50 to-purple-100">
               <Icon name="mdi:star" class="text-3xl text-purple-600 mb-2 mx-auto" />
               <div class="text-2xl font-bold text-purple-700">{{ averageSkillLevel }}</div>
               <div class="text-sm font-medium text-purple-600">Avg Skill Level</div>
@@ -629,7 +674,7 @@ onMounted(() => {
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-2">
                 <div
-                  class="w-8 h-8 rounded-full bg-gradient-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
+                  class="w-8 h-8 rounded-full bg-linear-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-xs">
                   {{ player.name.charAt(0).toUpperCase() }}
                 </div>
                 <span class="text-sm font-medium">{{ player.name }}</span>
@@ -655,7 +700,7 @@ onMounted(() => {
         <h3 class="text-2xl font-bold mb-3 text-gray-900 dark:text-white">Generating Schedule...</h3>
         <p class="text-gray-600 text-lg">Creating balanced games across {{ matchingOptions.numberOfRounds }} rounds</p>
         <div class="mt-6 max-w-md mx-auto bg-gray-200 rounded-full h-2">
-          <div class="bg-gradient-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse"
+          <div class="bg-linear-to-r from-paddle-teal to-paddle-teal-light h-2 rounded-full animate-pulse"
             style="width: 60%" />
         </div>
       </div>

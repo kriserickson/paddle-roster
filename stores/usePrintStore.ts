@@ -48,14 +48,80 @@ export const usePrintStore = defineStore('print', () => {
       return store?.getPlayer(id)?.name || 'Unknown Player';
     }
 
-    function getDisplayName(id: string, compactMode: boolean): string {
-      const fullName = playerName(id);
-      if (!compactMode) {
-        return fullName;
+    // Build a disambiguation map so players sharing the same first name get enough
+    // of their last name appended to tell them apart (e.g. "John Do" vs "John Da").
+    // Only computed when compact mode is active.
+    const compactNameMap: Map<string, string> = (() => {
+      if (!(options.compactLayout ?? false)) { return new Map(); }
+
+      // Collect every player ID that appears in the schedule
+      const playerIds = new Set<string>();
+      for (const round of schedule.rounds) {
+        for (const game of round) {
+          for (const id of game.team1) { playerIds.add(id); }
+          for (const id of game.team2) { playerIds.add(id); }
+        }
       }
-      // In compact mode, show only first name
-      const nameParts = fullName.trim().split(' ');
-      return nameParts[0] || fullName;
+      for (const restRound of schedule.restingPlayers) {
+        for (const id of restRound) { playerIds.add(id); }
+      }
+
+      // Split each player's name into first / last parts
+      const idToNameParts = new Map<string, { first: string; last: string }>();
+      for (const id of playerIds) {
+        const parts = playerName(id).trim().split(/\s+/);
+        idToNameParts.set(id, { first: parts[0] || '', last: parts.slice(1).join(' ') });
+      }
+
+      // Group player IDs by first name
+      const byFirst = new Map<string, string[]>();
+      for (const [id, { first }] of idToNameParts) {
+        const group = byFirst.get(first) ?? [];
+        group.push(id);
+        byFirst.set(first, group);
+      }
+
+      // Resolve each group
+      const nameMap = new Map<string, string>();
+      for (const [firstName, ids] of byFirst) {
+        if (ids.length === 1) {
+          nameMap.set(ids[0] ?? '', firstName);
+          continue;
+        }
+        // Find the minimum last-name prefix length that makes all names unique
+        const maxLastLen = Math.max(...ids.map(id => idToNameParts.get(id)?.last.length || 0));
+        let prefixLen = 0;
+        let resolved = false;
+        while (!resolved) {
+          prefixLen++;
+          const seen = new Set(
+            ids.map(id => {
+              const last = idToNameParts.get(id)?.last;
+              return last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName;
+            })
+          );
+          resolved = seen.size === ids.length;
+          if (prefixLen >= maxLastLen) { break; }
+        }
+        for (const id of ids) {
+          const last = idToNameParts.get(id)?.last;
+          nameMap.set(id, last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName);
+        }
+      }
+
+      return nameMap;
+    })();
+
+    function getDisplayName(id: string, compactMode: boolean): string {
+      if (!compactMode) {
+        return playerName(id);
+      }
+      if (compactNameMap.has(id)) {
+        return compactNameMap.get(id) ?? playerName(id);
+      }
+      // Fallback: first name only
+      const nameParts = playerName(id).trim().split(/\s+/);
+      return nameParts[0] || playerName(id);
     }
 
     function formatSkillLevel(level: number): string {
@@ -68,52 +134,44 @@ export const usePrintStore = defineStore('print', () => {
 
     const colorStyles = options.colorMode
       ? `
+        /* team1 row: accent colour; team2 row: white */
         .team1 {
-            background-color: #e8f4f8;
-            border: 1px solid #b8d4da;
+            background-color: #fce5cd;
         }
-        
+
         .team2 {
-            background-color: #f8e8e8;
-            border: 1px solid #dab8b8;
+            background-color: #ffffff;
         }
-        
-        .round-header {
-            background-color: #f8f8f8;
+
+        /* Resting column alternates: odd rounds white, even rounds accent */
+        tbody tr:nth-child(odd) .resting-players {
+            background-color: #ffffff;
         }
-        
-        .schedule-grid thead th {
-            background-color: #f0f0f0;
-            color: #333 !important;
+
+        tbody tr:nth-child(even) .resting-players {
+            background-color: #fce5cd;
         }
-            
+
     `
       : `
+        /* team1 row: grey; team2 row: white */
         .team1 {
-            background: #ccc;
-            border: none;
-            padding: 2px 0;
+            background: #b0b0b0;
         }
-        
-        .round-header {
-            background: transparent;
+
+        .team2 {
+            background: #ffffff;
         }
-        
-        .schedule-grid th {
-            background: transparent;
-            color: #333;
+
+        /* Resting column alternates: odd rounds white, even rounds grey */
+        tbody tr:nth-child(odd) .resting-players {
+            background: #ffffff;
         }
-        
-        .resting-players {
-            background: transparent;
-            border: none !important;
-            padding: 5px 0;
+
+        tbody tr:nth-child(even) .resting-players {
+            background: #b0b0b0;
         }
-        
-        .game-cell {
-            border: none;
-        }
-        
+
     `;
 
     let html = `
@@ -164,7 +222,7 @@ export const usePrintStore = defineStore('print', () => {
         .schedule-grid th,
         .schedule-grid td {
             border: 1px solid #333;
-            padding: ${options.compactLayout ? '2px' : '4px'};
+            padding: 0;
             text-align: center;
             vertical-align: middle;
         }
@@ -192,10 +250,8 @@ export const usePrintStore = defineStore('print', () => {
         }
         
         .team {
-            margin: 1px 0;
-            padding: 2px 2px;
-            border-radius: 2px;
-            font-size: ${options.compactLayout ? '14px' : '12px'};            
+            font-size: ${options.compactLayout ? '14px' : '12px'};       
+            font-weight: bold;     
             flex: 1; 
             align-content: center;
         }
@@ -211,6 +267,7 @@ export const usePrintStore = defineStore('print', () => {
             padding: 5px;
             border-radius: 3px;
             font-size: ${options.compactLayout ? '14px' : '12px'};            
+            font-weight: bold;
         }
         
         @media print {
