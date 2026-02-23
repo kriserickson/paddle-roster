@@ -156,21 +156,18 @@ onMounted(async () => {
             Game Schedule
           </h2>
           <div v-if="gameStore.currentSchedule" class="flex gap-3">
-            <UButton icon="i-heroicons-eye" class="btn-primary" @click="openPrintModal">
-              <Icon name="mdi:eye" class="mr-2" />
+            <UButton icon="mdi:eye" class="btn-primary" @click="openPrintModal">              
               Preview
             </UButton>
-            <UButton icon="i-heroicons-printer" class="btn-secondary" @click="openPrintModal">
-              <Icon name="mdi:printer" class="mr-2" />
+            <UButton icon="mdi:printer" class="btn-secondary" @click="openPrintModal">
               Print
             </UButton>
             <ClientOnly>
-              <UButton icon="i-heroicons-document-arrow-down" class="btn-secondary" @click="openPrintModal">
-                <Icon name="mdi:file-pdf-box" class="mr-2" />
+              <UButton icon="mdi:file-pdf-box" class="btn-secondary" @click="openPrintModal">                
                 Download PDF
               </UButton>
             </ClientOnly>
-            <UButton icon="i-heroicons-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
+            <UButton icon="mdi-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
           </div>
         </div>
       </div>

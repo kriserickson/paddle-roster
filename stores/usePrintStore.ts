@@ -228,7 +228,7 @@ export const usePrintStore = defineStore('print', () => {
             font-size: ${options.compactLayout ? '14px' : '11px'};
             line-height: 1.2;
             margin: 0;
-            padding: 0;
+            padding: 0;            
         }
         
         .header {
@@ -267,6 +267,7 @@ export const usePrintStore = defineStore('print', () => {
         .schedule-grid th {
             font-weight: bold;
             font-size: ${options.compactLayout ? '14px' : '12px'};
+            padding: 0px 2px 6px;
         }
         
         .round-header {
