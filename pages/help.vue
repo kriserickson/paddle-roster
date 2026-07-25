@@ -9,6 +9,10 @@ useHead({
 function navigateToHome(): void {
   navigateTo('/');
 }
+
+function navigateToPlayers(): void {
+  navigateTo('/?tab=players');
+}
 </script>
 
 <template>
@@ -164,7 +168,7 @@ function navigateToHome(): void {
           <!-- Action Buttons -->
           <div class="mt-8 flex justify-center gap-4">
             <UButton class="btn-primary" icon="i-heroicons-arrow-left" @click="navigateToHome"> Back to App </UButton>
-            <UButton class="btn-secondary" icon="i-heroicons-users" @click="navigateTo('/?tab=players')">
+            <UButton class="btn-secondary" icon="i-heroicons-users" @click="navigateToPlayers">
               Start with Players
             </UButton>
           </div>

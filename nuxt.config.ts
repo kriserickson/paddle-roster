@@ -1,5 +1,7 @@
+import type { NuxtConfig } from 'nuxt/schema';
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
-export default defineNuxtConfig({
+export default {
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
 
@@ -70,6 +72,7 @@ export default defineNuxtConfig({
   // Add app configuration for default locale
   app: {
     head: {
+      title: 'Paddle Roster',
       htmlAttrs: {
         lang: 'en'
       },
@@ -94,4 +97,4 @@ export default defineNuxtConfig({
     fallback: 'light',
     storageKey: 'color-mode'
   }
-});
+} satisfies NuxtConfig;
