@@ -8,7 +8,7 @@ export interface SimplePDFOptions {
  */
 export async function generatePDFFromHTML(htmlContent: string, options: SimplePDFOptions = {}): Promise<void> {
   // Check if we're running on the client side
-  if (typeof window === 'undefined') {
+  if (typeof globalThis.window === 'undefined') {
     throw new Error('PDF generation can only be performed on the client side');
   }
 

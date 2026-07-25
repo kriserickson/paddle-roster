@@ -26,7 +26,7 @@ async function signInWithGoogle() {
     const { error: authError } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${window.location.origin}/auth/callback`
+        redirectTo: `${globalThis.location.origin}/auth/callback`
       }
     });
 
@@ -35,7 +35,7 @@ async function signInWithGoogle() {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    console.error('Auth error:', err);
+    
   } finally {
     loading.value = false;
   }
@@ -58,7 +58,7 @@ async function signInWithEmail(email: string, password: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    console.error('Auth error:', err);
+    
   } finally {
     loading.value = false;
   }
@@ -73,7 +73,7 @@ async function signUpWithEmail(email: string, password: string) {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback`
+        emailRedirectTo: `${globalThis.location.origin}/auth/callback`
       }
     });
 
@@ -85,7 +85,7 @@ async function signUpWithEmail(email: string, password: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    console.error('Auth error:', err);
+    
   } finally {
     loading.value = false;
   }
@@ -97,7 +97,7 @@ async function resetPassword(email: string) {
     error.value = '';
 
     const { error: authError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/auth/reset-password`
+      redirectTo: `${globalThis.location.origin}/auth/reset-password`
     });
 
     if (authError) {
@@ -107,7 +107,7 @@ async function resetPassword(email: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    console.error('Password reset error:', err);
+    
   } finally {
     loading.value = false;
   }

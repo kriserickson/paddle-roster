@@ -51,7 +51,7 @@ export const useGameStore = defineStore('game', () => {
         courtDiversityPriority: normalizePriority(parsed.courtDiversityPriority)
       };
     } catch (error) {
-      console.warn('Failed to load local advanced preferences:', error);
+      console.error('Error loading local advanced preferences:', error);
       return {};
     }
   }
@@ -69,7 +69,7 @@ export const useGameStore = defineStore('game', () => {
         })
       );
     } catch (error) {
-      console.warn('Failed to save local advanced preferences:', error);
+      console.error('Error saving local advanced preferences:', error);
     }
   }
 
@@ -106,7 +106,7 @@ export const useGameStore = defineStore('game', () => {
   }); /**
    * Actions
    */
-  async function generateSchedule(eventLabel: string = ''): Promise<GameSchedule | null> {
+  async function generateSchedule(eventLabel = ''): Promise<GameSchedule | null> {
     const playerStore = usePlayerStore();
 
     try {
@@ -181,7 +181,7 @@ export const useGameStore = defineStore('game', () => {
     // Automatically save preferences to Supabase
     try {
       await saveUserPreferences();
-    } catch (error) {
+    } catch  {
       console.warn('Failed to auto-save user preferences:', error);
       // Continue without throwing to avoid breaking the UI
     }
@@ -192,7 +192,7 @@ export const useGameStore = defineStore('game', () => {
       const resetPrefs = await preferencesApi.resetUserPreferences();
       matchingOptions.value = { ...defaultOptions, ...resetPrefs.matchingOptions };
       saveLocalAdvancedPreferences(matchingOptions.value);
-    } catch (error) {
+    } catch  {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
       matchingOptions.value = { ...defaultOptions };

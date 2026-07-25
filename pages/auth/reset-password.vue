@@ -48,7 +48,7 @@ async function updatePassword() {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    console.error('Password update error:', err);
+    
   } finally {
     loading.value = false;
   }

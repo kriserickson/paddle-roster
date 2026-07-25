@@ -235,7 +235,7 @@ watch(
 
             <UFormField label="Configuration">
               <div id="configuration-container"
-                class="space-y-4 bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
+                class="space-y-4 bg-linear-to-br from-blue-50 to-blue-100 p-4 rounded-xl">
                 <!-- Layout and Display Options -->
                 <div class="space-y-3">
                   <div class="flex items-center space-x-3">

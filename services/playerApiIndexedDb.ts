@@ -14,7 +14,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Initialize the IndexedDB database
    */
-  async initialize(): Promise<ApiResponse> {
+  public async initialize(): Promise<ApiResponse> {
     if (!import.meta.client) {
       return { success: true, message: 'IndexedDB not available on server. Skipping initialization.' };
     }
@@ -56,7 +56,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Get all players from IndexedDB
    */
-  async getPlayers(): Promise<ApiResponse<Player[]>> {
+  public async getPlayers(): Promise<ApiResponse<Player[]>> {
     if (!import.meta.client) {
       return { success: true, data: [], message: 'IndexedDB not available on server.' };
     }
@@ -89,7 +89,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Create a new player
    */
-  async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
+  public async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
     if (!import.meta.client) {
       return { success: false, message: 'Cannot create player on server.' };
     }
@@ -127,7 +127,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Update an existing player
    */
-  async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
+  public async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
     if (!import.meta.client) {
       return { success: false, message: 'Cannot update player on server.' };
     }
@@ -176,7 +176,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Delete a player
    */
-  async deletePlayer(id: string): Promise<ApiResponse> {
+  public async deletePlayer(id: string): Promise<ApiResponse> {
     if (!import.meta.client) {
       return { success: false, message: 'Cannot delete player on server.' };
     }
@@ -208,7 +208,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Bulk import players
    */
-  async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
+  public async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
     if (!import.meta.client) {
       return { success: false, message: 'Cannot import players on server.' };
     }
@@ -244,7 +244,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
   /**
    * Clear all players
    */
-  async clearAllPlayers(): Promise<ApiResponse> {
+  public async clearAllPlayers(): Promise<ApiResponse> {
     if (!import.meta.client) {
       return { success: false, message: 'Cannot clear all players on server.' };
     }

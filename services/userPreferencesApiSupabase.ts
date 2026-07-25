@@ -15,7 +15,7 @@ export class UserPreferencesApiSupabase {
   /**
    * Get user's preferences (both matching and print options)
    */
-  async getUserPreferences(): Promise<UserPreferences> {
+  public async getUserPreferences(): Promise<UserPreferences> {
     const { data, error } = await this.supabase.from('user_preferences').select('*').single();
 
     if (error) {
@@ -58,7 +58,7 @@ export class UserPreferencesApiSupabase {
   /**
    * Save user's preferences (both matching and print options)
    */
-  async saveUserPreferences(preferences: UserPreferences): Promise<void> {
+  public async saveUserPreferences(preferences: UserPreferences): Promise<void> {
     const rowData = this.mapUserPreferencesToRow(preferences);
 
     // @ts-expect-error: Supabase generic type inference limitation in VS Code
@@ -74,7 +74,7 @@ export class UserPreferencesApiSupabase {
   /**
    * Reset user preferences to defaults
    */
-  async resetUserPreferences(): Promise<UserPreferences> {
+  public async resetUserPreferences(): Promise<UserPreferences> {
     const defaultPreferences: UserPreferences = {
       matchingOptions: {
         numberOfCourts: 3,

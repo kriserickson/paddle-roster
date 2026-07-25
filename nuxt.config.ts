@@ -65,7 +65,7 @@ export default {
     },
     optimizeDeps: {
       // Pre-bundle deps that were shown re-optimizing in logs to avoid a second slow optimization pass
-      include: ['zod', 'jspdf', 'html2canvas']
+      include: ['@vue/devtools-core', '@vue/devtools-kit', 'html2canvas', 'jspdf', 'zod']
     }
   },
 

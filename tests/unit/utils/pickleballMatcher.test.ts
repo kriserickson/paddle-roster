@@ -285,7 +285,7 @@ describe('PickleballMatcher', () => {
       testOptions: MatchingOptions,
       maxAvoidablePairs: number,
       testName: string,
-      maxEncounterSlack: number = 1
+      maxEncounterSlack = 1
     ): void {
       it(`should limit opponent encounters - ${testName}`, async () => {
         const matcher = new PickleballMatcher(testPlayers, testOptions);

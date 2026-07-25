@@ -34,7 +34,7 @@ When testing fixes, DOT NOT RUN npm build as that will break the current running
 - Always use `async/await` for asynchronous operations
 - Always use braces and semicolons for clarity even with short control statements
 - Use descriptive variable and function names
-- Ue functions for methods and and arrow functions for computed properties 
+- Ue functions for methods and and arrow functions for computed properties
 - Use template syntax for declarative rendering.
 - In Vue files have the script first, then the template, and finally the style section.
 - The functions should use function declarations rather than constants with lambdas.

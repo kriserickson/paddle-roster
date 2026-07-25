@@ -2,7 +2,7 @@
 import { vi } from 'vitest';
 
 // Mock LocalStorage for tests
-Object.defineProperty(window, 'localStorage', {
+Object.defineProperty(globalThis, 'localStorage', {
   value: {
     getItem: vi.fn(),
     setItem: vi.fn(),
@@ -44,7 +44,7 @@ const mockIDBFactory = {
   cmp: vi.fn()
 };
 
-Object.defineProperty(window, 'indexedDB', {
+Object.defineProperty(globalThis, 'indexedDB', {
   value: mockIDBFactory,
   writable: true
 });

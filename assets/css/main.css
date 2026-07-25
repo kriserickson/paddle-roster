@@ -1,5 +1,5 @@
-@import "tailwindcss";
-@import "@nuxt/ui";
+@import 'tailwindcss';
+@import '@nuxt/ui';
 
 /* Brand Colors and Custom Styles */
 :root {
@@ -86,7 +86,7 @@ body {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
 }
 
-.dark #configuration-container button[role="checkbox"] {
+.dark #configuration-container button[role='checkbox'] {
   --tw-ring-color: #4dd8de;
 }
 
@@ -255,10 +255,10 @@ body {
 }
 
 /* UInput and Form Fields */
-.dark input[type="text"],
-.dark input[type="number"],
-.dark input[type="email"],
-.dark input[type="password"],
+.dark input[type='text'],
+.dark input[type='number'],
+.dark input[type='email'],
+.dark input[type='password'],
 .dark textarea,
 .dark select {
   background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
@@ -279,28 +279,28 @@ body {
 }
 
 /* Checkbox and Radio */
-.dark input[type="checkbox"],
-.dark input[type="radio"] {
+.dark input[type='checkbox'],
+.dark input[type='radio'] {
   border-color: rgba(58, 182, 187, 0.4);
 }
 
-.dark input[type="checkbox"]:checked,
-.dark input[type="radio"]:checked {
+.dark input[type='checkbox']:checked,
+.dark input[type='radio']:checked {
   background-color: #3ab6bb;
   border-color: #3ab6bb;
 }
 
 /* Slider/Range */
-.dark input[type="range"] {
+.dark input[type='range'] {
   background: rgba(51, 65, 85, 0.5);
 }
 
-.dark input[type="range"]::-webkit-slider-thumb {
+.dark input[type='range']::-webkit-slider-thumb {
   background: #3ab6bb;
   box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
 }
 
-.dark input[type="range"]::-moz-range-thumb {
+.dark input[type='range']::-moz-range-thumb {
   background: #3ab6bb;
   box-shadow: 0 2px 8px rgba(58, 182, 187, 0.4);
 }

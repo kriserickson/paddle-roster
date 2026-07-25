@@ -1,0 +1,25 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "unicorn", "oxc", "vue"],
+  "categories": {
+    "correctness": "error"
+  },
+  "rules": {
+    "no-console": "off",
+    "unicorn/no-empty-file": "off"
+  },
+  "ignorePatterns": [".nuxt/**", ".output/**", "dist/**", "coverage/**", "playwright-report/**", "test-results/**"],
+  "env": {
+    "builtin": true
+  },
+  "globals": {
+    "$fetch": "readonly",
+    "defineNuxtConfig": "readonly",
+    "navigateTo": "readonly",
+    "useHead": "readonly",
+    "useState": "readonly"
+  },
+  "options": {
+    "reportUnusedDisableDirectives": "error"
+  }
+}

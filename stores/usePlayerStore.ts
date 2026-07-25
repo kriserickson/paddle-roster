@@ -90,6 +90,7 @@ export const usePlayerStore = defineStore('player', () => {
       return { success: true, message: 'No saved players found' };
     } catch (error) {
       console.error('PlayerStore: Error loading players:', error);
+      
       return {
         success: false,
         message: 'Failed to load players'
@@ -139,7 +140,7 @@ export const usePlayerStore = defineStore('player', () => {
 
       throw new Error(result.message || 'Failed to add player');
     } catch (error) {
-      console.error('Error adding player:', error);
+      console.error('PlayerStore: Error adding player:', error);
       return null;
     }
   }
@@ -174,7 +175,7 @@ export const usePlayerStore = defineStore('player', () => {
       }
       return false;
     } catch (error) {
-      console.error('Error updating player:', error);
+      console.error('PlayerStore: Error updating player:', error);
       return false;
     }
   }
@@ -202,8 +203,9 @@ export const usePlayerStore = defineStore('player', () => {
         return true;
       }
       return false;
-    } catch (error) {
+    } catch  (error) {
       console.error('Error removing player:', error);
+      
       return false;
     }
   }
@@ -245,7 +247,7 @@ export const usePlayerStore = defineStore('player', () => {
       }
       return { success: false, message: result.message || 'Failed to import players' };
     } catch (error) {
-      console.error('Error importing players:', error);
+      console.error('Error importing players:', error);      
       return {
         success: false,
         message: `Error importing players: ${error instanceof Error ? error.message : 'Unknown error'}`

@@ -78,7 +78,7 @@ function handleCancel(): void {
  */
 function onSkillLevelBlur(event: Event): void {
   const input = event.target as HTMLInputElement;
-  const num = parseFloat(input.value);
+  const num = Number(input.value);
   if (!Number.isNaN(num)) {
     let rounded = Math.round(Math.min(Math.max(num, 1), 5) * 4) / 4;
     rounded = Number(rounded.toFixed(2));

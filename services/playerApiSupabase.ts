@@ -10,7 +10,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   private supabase = useSupabaseClient<Database>();
   private userId: string | null;
 
-  constructor() {
+  public constructor() {
     const user = useSupabaseUser();
     this.userId = user.value?.id || user.value?.sub || null;
   }
@@ -60,7 +60,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   } /**
    * Initialize the API (setup database connection, etc.)
    */
-  async initialize(): Promise<ApiResponse> {
+  public async initialize(): Promise<ApiResponse> {
     // Supabase initialization is handled by Nuxt module
     return { success: true, message: 'Supabase API initialized' };
   }
@@ -68,7 +68,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Load all players for the current user
    */
-  async getPlayers(): Promise<ApiResponse<Player[]>> {
+  public async getPlayers(): Promise<ApiResponse<Player[]>> {
     try {
       //console.log('PlayerApiSupabase: Starting getPlayers...');
 
@@ -112,7 +112,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Legacy method to maintain backwards compatibility
    */
-  async loadPlayers(): Promise<Player[]> {
+  public async loadPlayers(): Promise<Player[]> {
     const result = await this.getPlayers();
     if (!result.success) {
       throw new Error(result.error || result.message);
@@ -121,7 +121,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   } /**
    * Save a player (create or update)
    */
-  async savePlayer(player: Player): Promise<Player> {
+  public async savePlayer(player: Player): Promise<Player> {
     const result = await this.updatePlayer(player.id, player);
     if (!result.success) {
       throw new Error(result.error || result.message);
@@ -132,7 +132,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Create a new player
    */
-  async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
+  public async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
     try {
       // User must be authenticated to create players (user_id is a required UUID field)
       const insertData = this.mapPlayerToInsert(player);
@@ -160,7 +160,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Update an existing player
    */
-  async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
+  public async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
     try {
       // Allow updating players even without authentication (temporary for data recovery)
       if (!id || id === '') {
@@ -199,7 +199,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Delete a player
    */
-  async deletePlayer(id: string): Promise<ApiResponse> {
+  public async deletePlayer(id: string): Promise<ApiResponse> {
     try {
       // Allow deleting players even without authentication (temporary for data recovery)
       let query = this.supabase.from('players').delete().eq('id', id);
@@ -225,7 +225,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Bulk import players
    */
-  async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
+  public async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
     try {
       if (!this.userId) {
         return { success: false, message: 'User not authenticated' };
@@ -256,7 +256,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Clear all players for the current user
    */
-  async clearAllPlayers(): Promise<ApiResponse> {
+  public async clearAllPlayers(): Promise<ApiResponse> {
     try {
       if (!this.userId) {
         return { success: false, message: 'User not authenticated' };
@@ -279,7 +279,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   /**
    * Legacy method to maintain backwards compatibility
    */
-  async clearPlayers(): Promise<void> {
+  public async clearPlayers(): Promise<void> {
     const result = await this.clearAllPlayers();
     if (!result.success) {
       throw new Error(result.error || result.message);

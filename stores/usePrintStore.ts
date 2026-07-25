@@ -101,7 +101,7 @@ export const usePrintStore = defineStore('print', () => {
         let prefixLen = 0;
         let resolved = false;
         while (!resolved) {
-          prefixLen++;
+          prefixLen += 1;
           const seen = new Set(
             ids.map(id => {
               const last = idToNameParts.get(id)?.last;
@@ -361,7 +361,7 @@ export const usePrintStore = defineStore('print', () => {
 
     // Header row
     html += '<thead><tr><th>Round</th>';
-    for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
+    for (let court = 1; court <= schedule.options.numberOfCourts; court += 1) {
       html += `<th>Court ${court}</th>`;
     }
     if (hasRestingPlayers) {
@@ -370,14 +370,14 @@ export const usePrintStore = defineStore('print', () => {
     html += '</tr></thead><tbody>';
 
     // Data rows
-    for (let roundIndex = 0; roundIndex < schedule.rounds.length; roundIndex++) {
+    for (let roundIndex = 0; roundIndex < schedule.rounds.length; roundIndex += 1) {
       const round = schedule.rounds[roundIndex];
       const restingPlayers = schedule.restingPlayers[roundIndex];
 
       html += `<tr><td class="round-header">Round ${roundIndex + 1}</td>`;
 
       // Games for each court
-      for (let court = 1; court <= schedule.options.numberOfCourts; court++) {
+      for (let court = 1; court <= schedule.options.numberOfCourts; court += 1) {
         const game = round?.find(g => g.court === court);
 
         html += '<td class="game-cell">';
@@ -427,10 +427,9 @@ export const usePrintStore = defineStore('print', () => {
 
     let html = '<div class="game-holder">';
 
+    html += `<div class="team team1">`;
     if (options.compactLayout) {
       // Compact layout: players on same line with &, line divider instead of "vs"
-      html += `<div class="team team1">`;
-
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team1[0]);
         const skill2 = getPlayerSkill(game.team1[1]);
@@ -448,10 +447,8 @@ export const usePrintStore = defineStore('print', () => {
       } else {
         html += `${team2Player1} & ${team2Player2}`;
       }
-      html += '</div>';
     } else {
       // Standard layout: separate lines for each player, "vs" divider
-      html += `<div class="team team1">`;
       if (options.showRatings) {
         const skill1 = getPlayerSkill(game.team1[0]);
         const skill2 = getPlayerSkill(game.team1[1]);
@@ -471,8 +468,8 @@ export const usePrintStore = defineStore('print', () => {
       } else {
         html += `${team2Player1}<br>${team2Player2}`;
       }
-      html += '</div>';
     }
+    html += '</div>';
 
     html += '</div>';
 
@@ -545,8 +542,9 @@ export const usePrintStore = defineStore('print', () => {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
       printOptions.value = { ...userPrefs.printOptions };
-    } catch (error) {
+    } catch  (error) {
       console.error('Error loading user print preferences:', error);
+      
       // Fall back to default options if loading fails
       printOptions.value = { ...defaultPrintOptions };
     } finally {
