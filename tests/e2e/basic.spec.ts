@@ -15,7 +15,7 @@ test.describe('Basic Application Test', () => {
     await expect(page).toHaveTitle(/Paddle Roster/);
     await expect(page.getByText('Welcome back!', { exact: true })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'Enter your email' })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Sign In', exact: true }).last()).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: 'Sign In' }).last()).toBeVisible();
     expect(logs).toHaveLength(0);
   });
 
@@ -23,11 +23,11 @@ test.describe('Basic Application Test', () => {
     await page.goto('/');
     await page.waitForLoadState('networkidle');
 
-    await page.getByRole('button', { name: 'Sign Up', exact: true }).click();
+    await page.getByRole('button', { exact: true, name: 'Sign Up' }).click();
     await expect(page.getByText('Create your new account', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Create Account', exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { exact: true, name: 'Create Account' })).toBeVisible();
 
-    await page.getByRole('button', { name: 'Sign In', exact: true }).first().click();
+    await page.getByRole('button', { exact: true, name: 'Sign In' }).first().click();
     await expect(page.getByText('Welcome back!', { exact: true })).toBeVisible();
   });
 });

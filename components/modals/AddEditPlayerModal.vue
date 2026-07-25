@@ -27,8 +27,8 @@ const emit = defineEmits<Emits>();
 // Validation schema
 const playerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
-  skillLevel: z.number().min(1).max(5),
-  partnerId: z.string().optional()
+  partnerId: z.string().optional(),
+  skillLevel: z.number().min(1).max(5)
 });
 
 // Computed

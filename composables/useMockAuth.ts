@@ -1,8 +1,8 @@
 // Mock Supabase user for development when SUPABASE_URL is not configured
 export function useMockAuth() {
   const mockUser = ref({
-    id: 'mock-user-id',
     email: 'demo@example.com',
+    id: 'mock-user-id',
     user_metadata: {
       full_name: 'Demo User',
       name: 'Demo User'
@@ -24,7 +24,7 @@ export function useMockAuth() {
   });
 
   return {
-    mockUser,
-    isDemo
+    isDemo,
+    mockUser
   };
 }

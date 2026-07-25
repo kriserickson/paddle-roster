@@ -1,4 +1,7 @@
 export default defineAppConfig({
+  toaster: {
+    position: 'top-center' as const
+  },
   ui: {
     icons: {
       close: 'i-heroicons-x-mark'
@@ -6,8 +9,5 @@ export default defineAppConfig({
     notifications: {
       timeout: 2500 // Reduced from default ~5000ms to 2500ms (50% shorter)
     }
-  },
-  toaster: {
-    position: 'top-center' as const
   }
 });

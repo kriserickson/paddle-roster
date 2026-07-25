@@ -23,24 +23,24 @@ export class UserPreferencesApiSupabase {
         // No preferences found, return defaults and create them
         const defaultPreferences: UserPreferences = {
           matchingOptions: {
+            balanceSkillLevels: true,
+            courtDiversityPriority: 'balanced',
+            distributeRestEqually: true,
+            maxSkillDifference: 2.0,
             numberOfCourts: 3,
             numberOfRounds: 7,
-            balanceSkillLevels: true,
-            respectPartnerPreferences: true,
-            maxSkillDifference: 2.0,
-            distributeRestEqually: true,
             opponentDiversityPriority: 'balanced',
-            courtDiversityPriority: 'balanced'
+            respectPartnerPreferences: true
           },
           printOptions: {
-            eventTitle: '',
-            eventSubtitle: '',
+            colorMode: true,
+            compactLayout: false,
             eventDate: '',
+            eventSubtitle: '',
+            eventTitle: '',
             location: '',
             organizer: '',
             orientation: 'landscape',
-            compactLayout: false,
-            colorMode: true,
             showRatings: false
           }
         };
@@ -77,24 +77,24 @@ export class UserPreferencesApiSupabase {
   public async resetUserPreferences(): Promise<UserPreferences> {
     const defaultPreferences: UserPreferences = {
       matchingOptions: {
+        balanceSkillLevels: true,
+        courtDiversityPriority: 'balanced',
+        distributeRestEqually: true,
+        maxSkillDifference: 2.0,
         numberOfCourts: 3,
         numberOfRounds: 7,
-        balanceSkillLevels: true,
-        respectPartnerPreferences: true,
-        maxSkillDifference: 2.0,
-        distributeRestEqually: true,
         opponentDiversityPriority: 'balanced',
-        courtDiversityPriority: 'balanced'
+        respectPartnerPreferences: true
       },
       printOptions: {
-        eventTitle: '',
-        eventSubtitle: '',
+        colorMode: true,
+        compactLayout: false,
         eventDate: '',
+        eventSubtitle: '',
+        eventTitle: '',
         location: '',
         organizer: '',
         orientation: 'landscape',
-        compactLayout: false,
-        colorMode: true,
         showRatings: true
       }
     };
@@ -109,24 +109,24 @@ export class UserPreferencesApiSupabase {
   private mapRowToUserPreferences(row: UserPreferencesRow): UserPreferences {
     return {
       matchingOptions: {
+        balanceSkillLevels: row.balance_skill_levels,
+        courtDiversityPriority: 'balanced',
+        distributeRestEqually: row.distribute_rest_equally,
+        maxSkillDifference: row.max_skill_difference,
         numberOfCourts: row.number_of_courts,
         numberOfRounds: row.number_of_rounds,
-        balanceSkillLevels: row.balance_skill_levels,
-        respectPartnerPreferences: row.respect_partner_preferences,
-        maxSkillDifference: row.max_skill_difference,
-        distributeRestEqually: row.distribute_rest_equally,
         opponentDiversityPriority: 'balanced',
-        courtDiversityPriority: 'balanced'
+        respectPartnerPreferences: row.respect_partner_preferences
       },
       printOptions: {
-        eventTitle: row.print_event_title,
-        eventSubtitle: row.print_event_subtitle,
+        colorMode: row.print_color_mode,
+        compactLayout: row.print_compact_layout,
         eventDate: row.print_event_date,
+        eventSubtitle: row.print_event_subtitle,
+        eventTitle: row.print_event_title,
         location: row.print_location,
         organizer: row.print_organizer,
         orientation: row.print_orientation,
-        compactLayout: row.print_compact_layout,
-        colorMode: row.print_color_mode,
         showRatings: row.print_show_ratings
       }
     };
@@ -139,22 +139,22 @@ export class UserPreferencesApiSupabase {
     const user = useSupabaseUser();
 
     return {
-      user_id: user.value?.id,
+      balance_skill_levels: preferences.matchingOptions.balanceSkillLevels,
+      distribute_rest_equally: preferences.matchingOptions.distributeRestEqually,
+      max_skill_difference: preferences.matchingOptions.maxSkillDifference,
       number_of_courts: preferences.matchingOptions.numberOfCourts,
       number_of_rounds: preferences.matchingOptions.numberOfRounds,
-      balance_skill_levels: preferences.matchingOptions.balanceSkillLevels,
-      respect_partner_preferences: preferences.matchingOptions.respectPartnerPreferences,
-      max_skill_difference: preferences.matchingOptions.maxSkillDifference,
-      distribute_rest_equally: preferences.matchingOptions.distributeRestEqually,
-      print_event_title: preferences.printOptions.eventTitle,
-      print_event_subtitle: preferences.printOptions.eventSubtitle,
+      print_color_mode: preferences.printOptions.colorMode,
+      print_compact_layout: preferences.printOptions.compactLayout,
       print_event_date: preferences.printOptions.eventDate,
+      print_event_subtitle: preferences.printOptions.eventSubtitle,
+      print_event_title: preferences.printOptions.eventTitle,
       print_location: preferences.printOptions.location,
       print_organizer: preferences.printOptions.organizer,
       print_orientation: preferences.printOptions.orientation,
-      print_compact_layout: preferences.printOptions.compactLayout,
-      print_color_mode: preferences.printOptions.colorMode,
-      print_show_ratings: preferences.printOptions.showRatings
+      print_show_ratings: preferences.printOptions.showRatings,
+      respect_partner_preferences: preferences.matchingOptions.respectPartnerPreferences,
+      user_id: user.value?.id
     };
   }
 }

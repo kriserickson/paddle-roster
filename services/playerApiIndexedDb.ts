@@ -16,11 +16,11 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async initialize(): Promise<ApiResponse> {
     if (!import.meta.client) {
-      return { success: true, message: 'IndexedDB not available on server. Skipping initialization.' };
+      return { message: 'IndexedDB not available on server. Skipping initialization.', success: true };
     }
     try {
       if (this.db) {
-        return { success: true, message: 'Database already initialized' };
+        return { message: 'Database already initialized', success: true };
       }
 
       await new Promise<void>((resolve, reject) => {
@@ -46,10 +46,10 @@ export class PlayerApiIndexedDb implements IPlayerApi {
         };
       });
 
-      return { success: true, message: 'Database initialized successfully' };
+      return { message: 'Database initialized successfully', success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to initialize database', error: message };
+      return { error: message, message: 'Failed to initialize database', success: false };
     }
   }
 
@@ -58,7 +58,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async getPlayers(): Promise<ApiResponse<Player[]>> {
     if (!import.meta.client) {
-      return { success: true, data: [], message: 'IndexedDB not available on server.' };
+      return { data: [], message: 'IndexedDB not available on server.', success: true };
     }
     try {
       await this.ensureInitialized();
@@ -76,13 +76,13 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       return {
-        success: true,
         data: players,
-        message: `Retrieved ${players.length} players`
+        message: `Retrieved ${players.length} players`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to get players', error: message };
+      return { error: message, message: 'Failed to get players', success: false };
     }
   }
 
@@ -91,7 +91,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async createPlayer(player: Omit<Player, 'id'>): Promise<ApiResponse<Player>> {
     if (!import.meta.client) {
-      return { success: false, message: 'Cannot create player on server.' };
+      return { message: 'Cannot create player on server.', success: false };
     }
     try {
       await this.ensureInitialized();
@@ -114,13 +114,13 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       return {
-        success: true,
         data: newPlayer,
-        message: `Player ${newPlayer.name} created successfully`
+        message: `Player ${newPlayer.name} created successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to create player', error: message };
+      return { error: message, message: 'Failed to create player', success: false };
     }
   }
 
@@ -129,7 +129,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async updatePlayer(id: string, updates: Partial<Omit<Player, 'id'>>): Promise<ApiResponse<Player>> {
     if (!import.meta.client) {
-      return { success: false, message: 'Cannot update player on server.' };
+      return { message: 'Cannot update player on server.', success: false };
     }
     try {
       await this.ensureInitialized();
@@ -163,13 +163,13 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       return {
-        success: true,
         data: updatedPlayer,
-        message: `Player ${updatedPlayer.name} updated successfully`
+        message: `Player ${updatedPlayer.name} updated successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to update player', error: message };
+      return { error: message, message: 'Failed to update player', success: false };
     }
   }
 
@@ -178,7 +178,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async deletePlayer(id: string): Promise<ApiResponse> {
     if (!import.meta.client) {
-      return { success: false, message: 'Cannot delete player on server.' };
+      return { message: 'Cannot delete player on server.', success: false };
     }
     try {
       await this.ensureInitialized();
@@ -196,12 +196,12 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       return {
-        success: true,
-        message: 'Player deleted successfully'
+        message: 'Player deleted successfully',
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to delete player', error: message };
+      return { error: message, message: 'Failed to delete player', success: false };
     }
   }
 
@@ -210,7 +210,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
     if (!import.meta.client) {
-      return { success: false, message: 'Cannot import players on server.' };
+      return { message: 'Cannot import players on server.', success: false };
     }
     try {
       await this.ensureInitialized();
@@ -231,13 +231,13 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       }
 
       return {
-        success: true,
         data: players,
-        message: `Imported ${players.length} players successfully`
+        message: `Imported ${players.length} players successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to import players', error: message };
+      return { error: message, message: 'Failed to import players', success: false };
     }
   }
 
@@ -246,7 +246,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
    */
   public async clearAllPlayers(): Promise<ApiResponse> {
     if (!import.meta.client) {
-      return { success: false, message: 'Cannot clear all players on server.' };
+      return { message: 'Cannot clear all players on server.', success: false };
     }
     try {
       await this.ensureInitialized();
@@ -264,12 +264,12 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       return {
-        success: true,
-        message: 'All players cleared successfully'
+        message: 'All players cleared successfully',
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      return { success: false, message: 'Failed to clear players', error: message };
+      return { error: message, message: 'Failed to clear players', success: false };
     }
   }
 

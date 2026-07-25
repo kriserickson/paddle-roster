@@ -1,8 +1,8 @@
 <script setup lang="ts">
 // SEO
 useHead({
-  title: 'Getting Started - Paddle Roster',
-  meta: [{ name: 'description', content: 'Learn how to use Paddle Roster for managing your pickleball league' }]
+  meta: [{ content: 'Learn how to use Paddle Roster for managing your pickleball league', name: 'description' }],
+  title: 'Getting Started - Paddle Roster'
 });
 
 // Navigation function

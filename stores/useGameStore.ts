@@ -15,14 +15,14 @@ export const useGameStore = defineStore('game', () => {
    * Default matching options (fallback)
    */
   const defaultOptions: MatchingOptions = {
+    balanceSkillLevels: true,
+    courtDiversityPriority: 'balanced',
+    distributeRestEqually: true,
+    maxSkillDifference: 2.0,
     numberOfCourts: 3,
     numberOfRounds: 7,
-    balanceSkillLevels: true,
-    respectPartnerPreferences: true,
-    maxSkillDifference: 2.0,
-    distributeRestEqually: true,
     opponentDiversityPriority: 'balanced',
-    courtDiversityPriority: 'balanced'
+    respectPartnerPreferences: true
   };
 
   const matchingOptions = ref<MatchingOptions>({ ...defaultOptions });
@@ -47,8 +47,8 @@ export const useGameStore = defineStore('game', () => {
       }
       const parsed = JSON.parse(raw) as Partial<MatchingOptions>;
       return {
-        opponentDiversityPriority: normalizePriority(parsed.opponentDiversityPriority),
-        courtDiversityPriority: normalizePriority(parsed.courtDiversityPriority)
+        courtDiversityPriority: normalizePriority(parsed.courtDiversityPriority),
+        opponentDiversityPriority: normalizePriority(parsed.opponentDiversityPriority)
       };
     } catch (error) {
       console.error('Error loading local advanced preferences:', error);
@@ -64,8 +64,8 @@ export const useGameStore = defineStore('game', () => {
       localStorage.setItem(
         advancedPreferenceStorageKey,
         JSON.stringify({
-          opponentDiversityPriority: normalizePriority(options.opponentDiversityPriority),
-          courtDiversityPriority: normalizePriority(options.courtDiversityPriority)
+          courtDiversityPriority: normalizePriority(options.courtDiversityPriority),
+          opponentDiversityPriority: normalizePriority(options.opponentDiversityPriority)
         })
       );
     } catch (error) {
@@ -92,16 +92,16 @@ export const useGameStore = defineStore('game', () => {
     const maxRests = calculateMaxRests(schedule);
 
     return {
-      totalGames,
-      totalRounds,
-      playersPerRound,
-      restingPerRound,
       averageSkillDifference: calculateAverageSkillDifference(schedule),
-      duplicatePartners,
       duplicateOpponents,
+      duplicatePartners,
+      generatedAt: schedule.generatedAt,
       maxOpponentRepeats,
       maxRests,
-      generatedAt: schedule.generatedAt
+      playersPerRound,
+      restingPerRound,
+      totalGames,
+      totalRounds
     };
   }); /**
    * Actions
@@ -181,7 +181,7 @@ export const useGameStore = defineStore('game', () => {
     // Automatically save preferences to Supabase
     try {
       await saveUserPreferences();
-    } catch  {
+    } catch {
       console.warn('Failed to auto-save user preferences:', error);
       // Continue without throwing to avoid breaking the UI
     }
@@ -192,7 +192,7 @@ export const useGameStore = defineStore('game', () => {
       const resetPrefs = await preferencesApi.resetUserPreferences();
       matchingOptions.value = { ...defaultOptions, ...resetPrefs.matchingOptions };
       saveLocalAdvancedPreferences(matchingOptions.value);
-    } catch  {
+    } catch {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
       matchingOptions.value = { ...defaultOptions };
@@ -241,8 +241,8 @@ export const useGameStore = defineStore('game', () => {
     }
 
     return {
-      valid: errors.length === 0,
       errors,
+      valid: errors.length === 0,
       warnings
     };
   }

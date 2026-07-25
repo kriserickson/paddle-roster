@@ -38,15 +38,15 @@ export const usePlayerStore = defineStore('player', () => {
 
     if (selectedPlayersList.length < minPlayers) {
       return {
-        valid: false,
-        message: `Need at least ${minPlayers} selected players for ${numberOfCourts} court(s). Currently have ${selectedPlayersList.length}.`
+        message: `Need at least ${minPlayers} selected players for ${numberOfCourts} court(s). Currently have ${selectedPlayersList.length}.`,
+        valid: false
       };
     }
 
     if (selectedPlayersList.length > maxPlayers) {
       return {
-        valid: false,
-        message: `Too many players for ${numberOfCourts} court(s). Maximum ${maxPlayers} players, currently have ${selectedPlayersList.length}.`
+        message: `Too many players for ${numberOfCourts} court(s). Maximum ${maxPlayers} players, currently have ${selectedPlayersList.length}.`,
+        valid: false
       };
     }
 
@@ -83,17 +83,17 @@ export const usePlayerStore = defineStore('player', () => {
         //  `PlayerStore: Successfully loaded ${result.data.length} players:`,
         //  result.data.map(p => p.name)
         //);
-        return { success: true, message: `Loaded ${result.data.length} players` };
+        return { message: `Loaded ${result.data.length} players`, success: true };
       }
       players.value = []; // Ensure it's reset if no data
       //console.log('PlayerStore: No players found in API response');
-      return { success: true, message: 'No saved players found' };
+      return { message: 'No saved players found', success: true };
     } catch (error) {
       console.error('PlayerStore: Error loading players:', error);
-      
+
       return {
-        success: false,
-        message: 'Failed to load players'
+        message: 'Failed to load players',
+        success: false
       };
     }
   }
@@ -127,8 +127,8 @@ export const usePlayerStore = defineStore('player', () => {
     try {
       const result = await playerApi.createPlayer({
         name: name.trim(),
-        skillLevel: Math.max(1, Math.min(5, skillLevel)), // Clamp between 1-5
-        partnerId
+        partnerId,
+        skillLevel: Math.max(1, Math.min(5, skillLevel)) // Clamp between 1-5
       });
 
       if (result.success && result.data) {
@@ -203,9 +203,9 @@ export const usePlayerStore = defineStore('player', () => {
         return true;
       }
       return false;
-    } catch  (error) {
+    } catch (error) {
       console.error('Error removing player:', error);
-      
+
       return false;
     }
   }
@@ -243,14 +243,14 @@ export const usePlayerStore = defineStore('player', () => {
         // For simplicity, let's reload all players after import, or merge carefully
         await loadPlayers();
         // loadPlayers already sorts, so no need to sort again
-        return { success: true, message: `Imported ${result.data.length} players.` };
+        return { message: `Imported ${result.data.length} players.`, success: true };
       }
-      return { success: false, message: result.message || 'Failed to import players' };
+      return { message: result.message || 'Failed to import players', success: false };
     } catch (error) {
-      console.error('Error importing players:', error);      
+      console.error('Error importing players:', error);
       return {
-        success: false,
-        message: `Error importing players: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Error importing players: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        success: false
       };
     }
   }

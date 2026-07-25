@@ -29,26 +29,26 @@ const importData = ref('');
 // Player form
 const playerForm = ref({
   name: '',
-  skillLevel: 3.0,
-  partnerId: 'none'
+  partnerId: 'none',
+  skillLevel: 3.0
 });
 
 const columns: TableColumn<Player>[] = [
   {
-    id: 'name',
-    header: 'Name'
+    header: 'Name',
+    id: 'name'
   },
   {
-    id: 'skillLevel',
-    header: 'Skill Level'
+    header: 'Skill Level',
+    id: 'skillLevel'
   },
   {
-    id: 'partnerId',
-    header: 'Partner'
+    header: 'Partner',
+    id: 'partnerId'
   },
   {
-    id: 'actions',
-    header: 'Actions'
+    header: 'Actions',
+    id: 'actions'
   }
 ];
 
@@ -105,8 +105,8 @@ function handleAddPlayer(): void {
   editingPlayer.value = null;
   playerForm.value = {
     name: '',
-    skillLevel: 3.0,
-    partnerId: 'none'
+    partnerId: 'none',
+    skillLevel: 3.0
   };
   showAddPlayer.value = true;
 }
@@ -120,8 +120,8 @@ function editPlayer(player: Player): void {
 
   playerForm.value = {
     name: player.name,
-    skillLevel: player.skillLevel,
-    partnerId: isPartnerAvailable ? currentPartnerId : 'none'
+    partnerId: isPartnerAvailable ? currentPartnerId : 'none',
+    skillLevel: player.skillLevel
   };
   showAddPlayer.value = true;
 }
@@ -143,15 +143,15 @@ async function deletePlayer(): Promise<void> {
 
     if (success) {
       toast.add({
-        title: 'Player deleted',
+        color: 'success',
         description: `${playerToDelete.value.name} has been removed.`,
-        color: 'success'
+        title: 'Player deleted'
       });
     } else {
       toast.add({
-        title: 'Error',
+        color: 'error',
         description: 'Failed to delete player.',
-        color: 'error'
+        title: 'Error'
       });
     }
   }
@@ -165,8 +165,8 @@ async function savePlayer(): Promise<void> {
     if (editingPlayer.value) {
       const success = await playerStore.updatePlayer(editingPlayer.value.id, {
         name: playerForm.value.name,
-        skillLevel: playerForm.value.skillLevel,
-        partnerId: partnerIdToSave
+        partnerId: partnerIdToSave,
+        skillLevel: playerForm.value.skillLevel
       });
 
       if (success) {
@@ -179,9 +179,9 @@ async function savePlayer(): Promise<void> {
         }
 
         toast.add({
-          title: 'Player updated',
+          color: 'success',
           description: `${playerForm.value.name} has been updated.`,
-          color: 'success'
+          title: 'Player updated'
         });
       }
     } else {
@@ -197,9 +197,9 @@ async function savePlayer(): Promise<void> {
         }
 
         toast.add({
-          title: 'Player added',
+          color: 'success',
           description: `${playerForm.value.name} has been added.`,
-          color: 'success'
+          title: 'Player added'
         });
       } else {
         throw new Error('Failed to add player');
@@ -208,11 +208,10 @@ async function savePlayer(): Promise<void> {
 
     cancelPlayerForm();
   } catch (error) {
-    
     toast.add({
-      title: 'Error',
+      color: 'error',
       description: 'Failed to save player.',
-      color: 'error'
+      title: 'Error'
     });
   }
 }
@@ -222,8 +221,8 @@ function cancelPlayerForm(): void {
   editingPlayer.value = null;
   playerForm.value = {
     name: '',
-    skillLevel: 3.0,
-    partnerId: 'none'
+    partnerId: 'none',
+    skillLevel: 3.0
   };
 }
 
@@ -273,9 +272,9 @@ async function performImport(): Promise<void> {
 
     if (!importResult.success) {
       toast.add({
-        title: 'Import failed',
+        color: 'error',
         description: importResult.message,
-        color: 'error'
+        title: 'Import failed'
       });
       return;
     }
@@ -290,27 +289,26 @@ async function performImport(): Promise<void> {
           await playerStore.updatePlayer(player.id, { ...player, partnerId: partner.id });
         } else {
           toast.add({
-            title: 'Warning',
+            color: 'warning',
             description: `Partner "${playerData.partnerName}" not found for player "${playerData.name}".`,
-            color: 'warning'
+            title: 'Warning'
           });
         }
       }
     }
 
     toast.add({
-      title: 'Import successful',
+      color: 'success',
       description: importResult.message,
-      color: 'success'
+      title: 'Import successful'
     });
     showImportModal.value = false;
     importData.value = '';
   } catch (error) {
-    
     toast.add({
-      title: 'Import failed',
+      color: 'error',
       description: 'Invalid CSV format.',
-      color: 'error'
+      title: 'Import failed'
     });
   }
 }
@@ -354,16 +352,15 @@ function handleExportPlayers(): void {
     URL.revokeObjectURL(url);
 
     toast.add({
-      title: 'Export successful',
+      color: 'success',
       description: 'Players data has been downloaded as CSV.',
-      color: 'success'
+      title: 'Export successful'
     });
   } catch (error) {
-    
     toast.add({
-      title: 'Export failed',
+      color: 'error',
       description: 'Failed to export players.',
-      color: 'error'
+      title: 'Export failed'
     });
   }
 }

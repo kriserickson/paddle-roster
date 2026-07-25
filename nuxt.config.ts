@@ -25,21 +25,21 @@ export default {
   css: ['~/assets/css/main.css'],
 
   supabase: {
+    key: process.env.SUPABASE_ANON_KEY,
     redirectOptions: {
-      login: '/auth/login',
       callback: '/auth/callback',
-      exclude: []
+      exclude: [],
+      login: '/auth/login'
     },
-    url: process.env.SUPABASE_URL,
-    key: process.env.SUPABASE_ANON_KEY
+    url: process.env.SUPABASE_URL
   },
 
   runtimeConfig: {
     public: {
       enableGoogleAuth: process.env.ENABLE_GOOGLE_AUTH === 'true' || false,
       supabase: {
-        url: process.env.SUPABASE_URL,
-        key: process.env.SUPABASE_ANON_KEY
+        key: process.env.SUPABASE_ANON_KEY,
+        url: process.env.SUPABASE_URL
       }
     }
   },
@@ -51,6 +51,10 @@ export default {
 
   // Vite hints to reduce file-watcher scanning and pre-bundle known heavy deps
   vite: {
+    optimizeDeps: {
+      // Pre-bundle deps that were shown re-optimizing in logs to avoid a second slow optimization pass
+      include: ['@vue/devtools-core', '@vue/devtools-kit', 'html2canvas', 'jspdf', 'zod']
+    },
     server: {
       watch: {
         // Ignore large folders that don't contain source files to speed up chokidar scanning on Windows
@@ -62,39 +66,35 @@ export default {
           '**/tests/**'
         ]
       }
-    },
-    optimizeDeps: {
-      // Pre-bundle deps that were shown re-optimizing in logs to avoid a second slow optimization pass
-      include: ['@vue/devtools-core', '@vue/devtools-kit', 'html2canvas', 'jspdf', 'zod']
     }
   },
 
   // Add app configuration for default locale
   app: {
     head: {
-      title: 'Paddle Roster',
       htmlAttrs: {
         lang: 'en'
       },
       link: [
         {
+          href: '/32x32.png',
           rel: 'icon',
-          type: 'image/x-icon',
-          href: '/32x32.png'
+          type: 'image/x-icon'
         },
         {
+          href: '/apple-touch-icon.png',
           rel: 'apple-touch-icon',
-          sizes: '180x180',
-          href: '/apple-touch-icon.png'
+          sizes: '180x180'
         }
-      ]
+      ],
+      title: 'Paddle Roster'
     }
   },
 
   colorMode: {
     classSuffix: '',
-    preference: 'system',
     fallback: 'light',
+    preference: 'system',
     storageKey: 'color-mode'
   }
 } satisfies NuxtConfig;

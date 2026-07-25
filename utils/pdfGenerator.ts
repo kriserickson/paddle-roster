@@ -55,13 +55,13 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
 
     // Convert iframe content to canvas
     const canvas = await html2canvas(iframeDoc.body, {
-      scale: 2,
-      useCORS: true,
       allowTaint: false,
       backgroundColor: '#ffffff',
-      width: iframeDoc.body.scrollWidth,
       height: iframeDoc.body.scrollHeight,
-      logging: true
+      logging: true,
+      scale: 2,
+      useCORS: true,
+      width: iframeDoc.body.scrollWidth
     });
 
     // Clean up iframe
@@ -75,10 +75,10 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
     }
 
     const pdf = new jsPDF({
-      orientation: orientation,
-      unit: 'mm',
+      compress: true,
       format: 'a4',
-      compress: true
+      orientation: orientation,
+      unit: 'mm'
     });
 
     // Get page dimensions

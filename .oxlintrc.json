@@ -6,7 +6,13 @@
   },
   "rules": {
     "no-console": "off",
-    "unicorn/no-empty-file": "off"
+    "no-magic-numbers": ["warn", { "ignore": [0, 1, -1] }],
+    "no-ternary": "off",
+    "no-continue": "warn",
+    "unicorn/no-empty-file": "off",
+    "oxc/no-rest-spread-properties": "warn",
+    "sort-keys": ["warn", "asc", { "caseSensitive": false, "natural": true }],
+    "unicorn/consistent-existence-index-check": "warn"
   },
   "ignorePatterns": [".nuxt/**", ".output/**", "dist/**", "coverage/**", "playwright-report/**", "test-results/**"],
   "env": {

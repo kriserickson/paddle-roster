@@ -7,14 +7,14 @@ export const usePrintStore = defineStore('print', () => {
    * Default print options
    */
   const defaultPrintOptions: PrintOptions = {
-    eventTitle: '',
-    eventSubtitle: '',
+    colorMode: true,
+    compactLayout: false,
     eventDate: '',
+    eventSubtitle: '',
+    eventTitle: '',
     location: '',
     organizer: '',
-    compactLayout: false,
     orientation: 'landscape',
-    colorMode: true,
     showRatings: true
   };
 
@@ -542,9 +542,9 @@ export const usePrintStore = defineStore('print', () => {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
       printOptions.value = { ...userPrefs.printOptions };
-    } catch  (error) {
+    } catch (error) {
       console.error('Error loading user print preferences:', error);
-      
+
       // Fall back to default options if loading fails
       printOptions.value = { ...defaultPrintOptions };
     } finally {

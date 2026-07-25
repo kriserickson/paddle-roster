@@ -27,8 +27,8 @@ const printOptions = computed({
 // Save print options when modal closes
 watch(showPrintModal, isOpen => {
   if (!isOpen) {
-      printStore.saveUserPrintPreferences().catch(error => {
-        console.warn('Failed to save print preferences on modal close:', error);
+    printStore.saveUserPrintPreferences().catch(error => {
+      console.warn('Failed to save print preferences on modal close:', error);
     });
   }
 });
@@ -99,7 +99,7 @@ function formatDateTime(date: Date): string {
 
 function getGameForCourt(round: readonly Game[], courtNumber: number): Game | undefined {
   const game = round.find(game => game.court === courtNumber) as Game | undefined;
-    if (!game) {
+  if (!game) {
     console.log(
       `⚠️ No game found for court ${courtNumber}. Available courts in round:`,
       round.map(g => g.court)
@@ -117,9 +117,9 @@ function clearCurrentSchedule(): void {
   gameStore.clearSchedule();
   selectedRound.value = 1;
   toast.add({
-    title: 'Schedule Cleared',
+    color: 'primary',
     description: 'The current schedule has been cleared.',
-    color: 'primary'
+    title: 'Schedule Cleared'
   });
 }
 

@@ -14,20 +14,20 @@ const currentUser = computed(() => {
 // Tab configuration
 const tabs = [
   {
+    icon: 'i-heroicons-users',
     key: 'players',
-    label: 'Players',
-    icon: 'i-heroicons-users'
+    label: 'Players'
   },
   {
+    icon: 'i-heroicons-cog-6-tooth',
     key: 'games',
-    label: 'Generate Games',
-    icon: 'i-heroicons-cog-6-tooth'
+    label: 'Generate Games'
   },
   {
-    key: 'schedule',
-    label: 'Schedule',
+    disabled: computed(() => !gameStore.currentSchedule),
     icon: 'i-heroicons-calendar-days',
-    disabled: computed(() => !gameStore.currentSchedule)
+    key: 'schedule',
+    label: 'Schedule'
   }
 ];
 
@@ -76,8 +76,8 @@ async function logout() {
 
 // SEO
 useHead({
-  title: 'Paddle Roster',
-  meta: [{ name: 'description', content: 'Intelligent player matching system for recreational pickleball leagues' }]
+  meta: [{ content: 'Intelligent player matching system for recreational pickleball leagues', name: 'description' }],
+  title: 'Paddle Roster'
 });
 
 // User display name

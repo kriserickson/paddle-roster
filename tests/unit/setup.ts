@@ -4,44 +4,44 @@ import { vi } from 'vitest';
 // Mock LocalStorage for tests
 Object.defineProperty(globalThis, 'localStorage', {
   value: {
+    clear: vi.fn(),
     getItem: vi.fn(),
-    setItem: vi.fn(),
     removeItem: vi.fn(),
-    clear: vi.fn()
+    setItem: vi.fn()
   },
   writable: true
 });
 
 // Mock IndexedDB for tests
 const mockIDBRequest = {
-  result: null,
-  error: null,
-  onsuccess: null,
-  onerror: null,
-  readyState: 'done',
   addEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+  error: null,
+  onerror: null,
+  onsuccess: null,
+  readyState: 'done',
   removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn()
+  result: null
 };
 
 const _mockIDBDatabase = {
-  name: 'test-db',
-  version: 1,
-  objectStoreNames: [],
+  addEventListener: vi.fn(),
+  close: vi.fn(),
   createObjectStore: vi.fn(),
   deleteObjectStore: vi.fn(),
-  transaction: vi.fn(),
-  close: vi.fn(),
-  addEventListener: vi.fn(),
+  dispatchEvent: vi.fn(),
+  name: 'test-db',
+  objectStoreNames: [],
   removeEventListener: vi.fn(),
-  dispatchEvent: vi.fn()
+  transaction: vi.fn(),
+  version: 1
 };
 
 const mockIDBFactory = {
-  open: vi.fn(() => mockIDBRequest),
-  deleteDatabase: vi.fn(() => mockIDBRequest),
+  cmp: vi.fn(),
   databases: vi.fn(() => Promise.resolve([])),
-  cmp: vi.fn()
+  deleteDatabase: vi.fn(() => mockIDBRequest),
+  open: vi.fn(() => mockIDBRequest)
 };
 
 Object.defineProperty(globalThis, 'indexedDB', {
@@ -61,15 +61,15 @@ vi.mock('#app', () => ({
 // Mock the player store to prevent database initialization
 vi.mock('~/stores/usePlayerStore', () => ({
   usePlayerStore: () => ({
+    addPlayer: vi.fn(),
+    deselectAllPlayers: vi.fn(),
+    isPlayerSelected: vi.fn(),
     players: [],
+    removePlayer: vi.fn(),
+    selectAllPlayers: vi.fn(),
     selectedPlayerIds: new Set(),
     selectedPlayers: [],
-    addPlayer: vi.fn(),
-    removePlayer: vi.fn(),
-    updatePlayer: vi.fn(),
     togglePlayerSelection: vi.fn(),
-    selectAllPlayers: vi.fn(),
-    deselectAllPlayers: vi.fn(),
-    isPlayerSelected: vi.fn()
+    updatePlayer: vi.fn()
   })
 }));

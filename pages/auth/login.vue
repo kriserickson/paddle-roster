@@ -24,10 +24,10 @@ async function signInWithGoogle() {
     error.value = '';
 
     const { error: authError } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
       options: {
         redirectTo: `${globalThis.location.origin}/auth/callback`
-      }
+      },
+      provider: 'google'
     });
 
     if (authError) {
@@ -35,7 +35,6 @@ async function signInWithGoogle() {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    
   } finally {
     loading.value = false;
   }
@@ -58,7 +57,6 @@ async function signInWithEmail(email: string, password: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    
   } finally {
     loading.value = false;
   }
@@ -71,10 +69,10 @@ async function signUpWithEmail(email: string, password: string) {
 
     const { error: authError } = await supabase.auth.signUp({
       email,
-      password,
       options: {
         emailRedirectTo: `${globalThis.location.origin}/auth/callback`
-      }
+      },
+      password
     });
 
     if (authError) {
@@ -85,7 +83,6 @@ async function signUpWithEmail(email: string, password: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    
   } finally {
     loading.value = false;
   }
@@ -107,7 +104,6 @@ async function resetPassword(email: string) {
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';
-    
   } finally {
     loading.value = false;
   }

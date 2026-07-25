@@ -38,12 +38,12 @@ export class PlayerApiSupabase implements IPlayerApi {
       throw new Error('User must be authenticated to create players');
     }
     return {
-      user_id: this.userId,
-      name: player.name,
-      skill_level: player.skillLevel,
-      partner_id: player.partnerId || null,
       created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
+      name: player.name,
+      partner_id: player.partnerId || null,
+      skill_level: player.skillLevel,
+      updated_at: new Date().toISOString(),
+      user_id: this.userId
     };
   }
 
@@ -53,8 +53,8 @@ export class PlayerApiSupabase implements IPlayerApi {
   private mapPlayerToUpdate(player: Player): PlayerUpdate {
     return {
       name: player.name,
-      skill_level: player.skillLevel,
       partner_id: player.partnerId || null,
+      skill_level: player.skillLevel,
       updated_at: new Date().toISOString()
     };
   } /**
@@ -62,7 +62,7 @@ export class PlayerApiSupabase implements IPlayerApi {
    */
   public async initialize(): Promise<ApiResponse> {
     // Supabase initialization is handled by Nuxt module
-    return { success: true, message: 'Supabase API initialized' };
+    return { message: 'Supabase API initialized', success: true };
   }
 
   /**
@@ -90,7 +90,7 @@ export class PlayerApiSupabase implements IPlayerApi {
 
       if (error) {
         console.error('Supabase error:', error);
-        return { success: false, message: 'Failed to load players', error: error.message };
+        return { error: error.message, message: 'Failed to load players', success: false };
       }
 
       //console.log('Raw data from Supabase:', data);
@@ -98,14 +98,14 @@ export class PlayerApiSupabase implements IPlayerApi {
       //console.log('Mapped players:', players);
 
       return {
-        success: true,
         data: players,
-        message: `Retrieved ${players.length} players`
+        message: `Retrieved ${players.length} players`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error loading players:', error);
-      return { success: false, message: 'Failed to load players', error: message };
+      return { error: message, message: 'Failed to load players', success: false };
     }
   }
 
@@ -141,19 +141,19 @@ export class PlayerApiSupabase implements IPlayerApi {
       const { data, error } = await this.supabase.from('players').insert([insertData]).select().single();
 
       if (error) {
-        return { success: false, message: 'Failed to create player', error: error.message };
+        return { error: error.message, message: 'Failed to create player', success: false };
       }
 
       const newPlayer = this.mapRowToPlayer(data);
       return {
-        success: true,
         data: newPlayer,
-        message: `Player ${newPlayer.name} created successfully`
+        message: `Player ${newPlayer.name} created successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error creating player:', error);
-      return { success: false, message: 'Failed to create player', error: message };
+      return { error: message, message: 'Failed to create player', success: false };
     }
   }
 
@@ -181,19 +181,19 @@ export class PlayerApiSupabase implements IPlayerApi {
       const { data, error } = await query.select().single();
 
       if (error) {
-        return { success: false, message: 'Failed to update player', error: error.message };
+        return { error: error.message, message: 'Failed to update player', success: false };
       }
 
       const updatedPlayer = this.mapRowToPlayer(data);
       return {
-        success: true,
         data: updatedPlayer,
-        message: `Player ${updatedPlayer.name} updated successfully`
+        message: `Player ${updatedPlayer.name} updated successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error updating player:', error);
-      return { success: false, message: 'Failed to update player', error: message };
+      return { error: message, message: 'Failed to update player', success: false };
     }
   }
   /**
@@ -212,14 +212,14 @@ export class PlayerApiSupabase implements IPlayerApi {
       const { error } = await query;
 
       if (error) {
-        return { success: false, message: 'Failed to delete player', error: error.message };
+        return { error: error.message, message: 'Failed to delete player', success: false };
       }
 
-      return { success: true, message: 'Player deleted successfully' };
+      return { message: 'Player deleted successfully', success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error deleting player:', error);
-      return { success: false, message: 'Failed to delete player', error: message };
+      return { error: message, message: 'Failed to delete player', success: false };
     }
   }
   /**
@@ -228,7 +228,7 @@ export class PlayerApiSupabase implements IPlayerApi {
   public async importPlayers(players: Player[]): Promise<ApiResponse<Player[]>> {
     try {
       if (!this.userId) {
-        return { success: false, message: 'User not authenticated' };
+        return { message: 'User not authenticated', success: false };
       }
 
       const insertData = players.map(player => this.mapPlayerToInsert(player));
@@ -237,19 +237,19 @@ export class PlayerApiSupabase implements IPlayerApi {
       const { data, error } = await this.supabase.from('players').insert(insertData).select();
 
       if (error) {
-        return { success: false, message: 'Failed to import players', error: error.message };
+        return { error: error.message, message: 'Failed to import players', success: false };
       }
 
       const importedPlayers = (data || []).map(row => this.mapRowToPlayer(row));
       return {
-        success: true,
         data: importedPlayers,
-        message: `Imported ${importedPlayers.length} players successfully`
+        message: `Imported ${importedPlayers.length} players successfully`,
+        success: true
       };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error importing players:', error);
-      return { success: false, message: 'Failed to import players', error: message };
+      return { error: message, message: 'Failed to import players', success: false };
     }
   }
 
@@ -259,20 +259,20 @@ export class PlayerApiSupabase implements IPlayerApi {
   public async clearAllPlayers(): Promise<ApiResponse> {
     try {
       if (!this.userId) {
-        return { success: false, message: 'User not authenticated' };
+        return { message: 'User not authenticated', success: false };
       }
 
       const { error } = await this.supabase.from('players').delete().eq('user_id', this.userId);
 
       if (error) {
-        return { success: false, message: 'Failed to clear players', error: error.message };
+        return { error: error.message, message: 'Failed to clear players', success: false };
       }
 
-      return { success: true, message: 'All players cleared successfully' };
+      return { message: 'All players cleared successfully', success: true };
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       console.error('Error clearing players:', error);
-      return { success: false, message: 'Failed to clear players', error: message };
+      return { error: message, message: 'Failed to clear players', success: false };
     }
   }
 

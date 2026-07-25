@@ -21,31 +21,31 @@ function validateAllGamesHavePlayers(schedule: GameSchedule): void {
 describe('PickleballMatcher', () => {
   // Create test players with various skill levels (16 players total)
   const players: Player[] = [
-    { id: '1', name: 'Alice', skillLevel: 2.75, partnerId: '2' },
-    { id: '2', name: 'Bob', skillLevel: 3.25, partnerId: '1' },
-    { id: '3', name: 'Charlie', skillLevel: 3.0, partnerId: '4' },
-    { id: '4', name: 'Diana', skillLevel: 3.25, partnerId: '3' },
-    { id: '5', name: 'Eve', skillLevel: 3.5, partnerId: undefined },
-    { id: '6', name: 'Frank', skillLevel: 3.25, partnerId: undefined },
-    { id: '7', name: 'Grace', skillLevel: 3.0, partnerId: '8' },
-    { id: '8', name: 'Henry', skillLevel: 2.75, partnerId: '7' },
-    { id: '9', name: 'Ivy', skillLevel: 3.5, partnerId: undefined },
-    { id: '10', name: 'Jack', skillLevel: 3.75, partnerId: undefined },
-    { id: '11', name: 'Kate', skillLevel: 3.5, partnerId: undefined },
-    { id: '12', name: 'Liam', skillLevel: 3.0, partnerId: undefined },
-    { id: '13', name: 'Mia', skillLevel: 3.5, partnerId: undefined },
-    { id: '14', name: 'Noah', skillLevel: 3.75, partnerId: undefined },
-    { id: '15', name: 'Olivia', skillLevel: 2.75, partnerId: '16' },
-    { id: '16', name: 'Peter', skillLevel: 3.0, partnerId: '15' }
+    { id: '1', name: 'Alice', partnerId: '2', skillLevel: 2.75 },
+    { id: '2', name: 'Bob', partnerId: '1', skillLevel: 3.25 },
+    { id: '3', name: 'Charlie', partnerId: '4', skillLevel: 3.0 },
+    { id: '4', name: 'Diana', partnerId: '3', skillLevel: 3.25 },
+    { id: '5', name: 'Eve', partnerId: undefined, skillLevel: 3.5 },
+    { id: '6', name: 'Frank', partnerId: undefined, skillLevel: 3.25 },
+    { id: '7', name: 'Grace', partnerId: '8', skillLevel: 3.0 },
+    { id: '8', name: 'Henry', partnerId: '7', skillLevel: 2.75 },
+    { id: '9', name: 'Ivy', partnerId: undefined, skillLevel: 3.5 },
+    { id: '10', name: 'Jack', partnerId: undefined, skillLevel: 3.75 },
+    { id: '11', name: 'Kate', partnerId: undefined, skillLevel: 3.5 },
+    { id: '12', name: 'Liam', partnerId: undefined, skillLevel: 3.0 },
+    { id: '13', name: 'Mia', partnerId: undefined, skillLevel: 3.5 },
+    { id: '14', name: 'Noah', partnerId: undefined, skillLevel: 3.75 },
+    { id: '15', name: 'Olivia', partnerId: '16', skillLevel: 2.75 },
+    { id: '16', name: 'Peter', partnerId: '15', skillLevel: 3.0 }
   ];
 
   const defaultOptions: MatchingOptions = {
+    balanceSkillLevels: false,
+    distributeRestEqually: true,
+    maxSkillDifference: 1.5,
     numberOfCourts: 3,
     numberOfRounds: 8,
-    balanceSkillLevels: false,
-    respectPartnerPreferences: false,
-    maxSkillDifference: 1.5,
-    distributeRestEqually: true
+    respectPartnerPreferences: false
   };
 
   describe('constructor', () => {
@@ -370,11 +370,11 @@ describe('PickleballMatcher', () => {
       const testPlayers = players.slice(0, 8);
       const options: MatchingOptions = {
         ...defaultOptions,
+        balanceSkillLevels: false,
+        distributeRestEqually: false,
         numberOfCourts: 2,
         numberOfRounds: 2,
-        balanceSkillLevels: false,
-        respectPartnerPreferences: false,
-        distributeRestEqually: false
+        respectPartnerPreferences: false
       };
       const matcher = new PickleballMatcher(testPlayers, options);
 
@@ -390,37 +390,37 @@ describe('PickleballMatcher', () => {
         const team1SkillLevel = (skillsById.get(team1[0]) || 0) + (skillsById.get(team1[1]) || 0);
         const team2SkillLevel = (skillsById.get(team2[0]) || 0) + (skillsById.get(team2[1]) || 0);
         return {
+          court,
           id,
           round,
-          court,
+          skillDifference: Math.abs(team1SkillLevel - team2SkillLevel),
           team1,
-          team2,
           team1SkillLevel,
-          team2SkillLevel,
-          skillDifference: Math.abs(team1SkillLevel - team2SkillLevel)
+          team2,
+          team2SkillLevel
         };
       };
 
       const partnerRepeatSchedule: GameSchedule = {
+        eventLabel: 'Partner Repeat',
+        generatedAt: new Date(),
+        options,
+        restingPlayers: [[], []],
         rounds: [
           [createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']), createGame('g-1-2', 1, 2, ['5', '6'], ['7', '8'])],
           [createGame('g-2-1', 2, 1, ['1', '2'], ['5', '7']), createGame('g-2-2', 2, 2, ['3', '4'], ['6', '8'])]
-        ],
-        restingPlayers: [[], []],
-        eventLabel: 'Partner Repeat',
-        options,
-        generatedAt: new Date()
+        ]
       };
 
       const opponentRepeatSchedule: GameSchedule = {
+        eventLabel: 'Opponent Repeat',
+        generatedAt: new Date(),
+        options,
+        restingPlayers: [[], []],
         rounds: [
           [createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']), createGame('g-1-2', 1, 2, ['5', '6'], ['7', '8'])],
           [createGame('g-2-1', 2, 1, ['1', '5'], ['2', '3']), createGame('g-2-2', 2, 2, ['4', '7'], ['6', '8'])]
-        ],
-        restingPlayers: [[], []],
-        eventLabel: 'Opponent Repeat',
-        options,
-        generatedAt: new Date()
+        ]
       };
 
       const partnerPenalty =
@@ -750,8 +750,8 @@ describe('PickleballMatcher', () => {
     it('should respect firstRoundSitters option when specified', async () => {
       const optionsWithSitters: MatchingOptions = {
         ...defaultOptions,
-        numberOfRounds: 7,
-        firstRoundSitters: ['1', '2', '3', '4']
+        firstRoundSitters: ['1', '2', '3', '4'],
+        numberOfRounds: 7
       };
 
       const matcher = new PickleballMatcher(players, optionsWithSitters);
@@ -781,8 +781,8 @@ describe('PickleballMatcher', () => {
     it('should work with fewer than 4 first round sitters', async () => {
       const optionsWithFewerSitters: MatchingOptions = {
         ...defaultOptions,
-        numberOfRounds: 7,
-        firstRoundSitters: ['5', '6']
+        firstRoundSitters: ['5', '6'],
+        numberOfRounds: 7
       };
 
       const matcher = new PickleballMatcher(players, optionsWithFewerSitters);

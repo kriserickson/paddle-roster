@@ -16,7 +16,7 @@ export function useAuthErrorHandler() {
       // Redirect to login page
       navigateTo('/auth/login');
 
-      return { success: false, message: 'Your session has expired. Please log in again.' };
+      return { message: 'Your session has expired. Please log in again.', success: false };
     }
 
     // Handle other errors

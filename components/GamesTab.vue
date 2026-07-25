@@ -15,8 +15,8 @@ const toast = useToast();
 const eventLabel = ref('');
 const matchingOptions = ref<MatchingOptions>({
   ...gameStore.matchingOptions,
-  opponentDiversityPriority: gameStore.matchingOptions.opponentDiversityPriority || 'balanced',
-  courtDiversityPriority: gameStore.matchingOptions.courtDiversityPriority || 'balanced'
+  courtDiversityPriority: gameStore.matchingOptions.courtDiversityPriority || 'balanced',
+  opponentDiversityPriority: gameStore.matchingOptions.opponentDiversityPriority || 'balanced'
 });
 const isSavingPreferences = ref(false);
 const showAdvancedPreferences = ref(false);
@@ -62,8 +62,8 @@ function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
 function withPreferenceDefaults(options: MatchingOptions): MatchingOptions {
   return {
     ...options,
-    opponentDiversityPriority: options.opponentDiversityPriority || 'balanced',
-    courtDiversityPriority: options.courtDiversityPriority || 'balanced'
+    courtDiversityPriority: options.courtDiversityPriority || 'balanced',
+    opponentDiversityPriority: options.opponentDiversityPriority || 'balanced'
   };
 }
 
@@ -106,18 +106,17 @@ watch(
         if (Math.random() < 0.3) {
           // 30% chance to show success message
           toast.add({
-            title: 'Preferences Saved',
+            color: 'success',
             description: 'Your preferences have been automatically saved.',
-            color: 'success'
+            title: 'Preferences Saved'
           });
         }
       } catch (error) {
-        
         // Always show error toast
         toast.add({
-          title: 'Save Failed',
+          color: 'error',
           description: 'Failed to save your preferences. Please try again.',
-          color: 'error'
+          title: 'Save Failed'
         });
       } finally {
         isSavingPreferences.value = false;
@@ -280,16 +279,16 @@ function clearAllFilters(): void {
 
 function toggleFirstRoundSitter(playerId: string): void {
   const index = firstRoundSitters.value.indexOf(playerId);
-  if (index > -1) {
+  if (index !== -1) {
     firstRoundSitters.value.splice(index, 1);
   } else {
     if (firstRoundSitters.value.length < maxFirstRoundSitters.value) {
       firstRoundSitters.value.push(playerId);
     } else {
       toast.add({
-        title: 'Maximum Reached',
+        color: 'warning',
         description: `You can only select up to ${maxFirstRoundSitters.value} players to sit out in the first round.`,
-        color: 'warning'
+        title: 'Maximum Reached'
       });
     }
   }
@@ -304,20 +303,19 @@ async function generateSchedule(): Promise<void> {
     const schedule = await gameStore.generateSchedule(eventLabel.value);
     if (schedule) {
       toast.add({
-        title: 'Schedule Generated',
+        color: 'success',
         description: `Successfully created ${schedule.rounds.length} rounds with ${schedule.rounds.reduce((sum, round) => sum + round.length, 0)} total games.`,
-        color: 'success'
+        title: 'Schedule Generated'
       });
 
       // Switch to schedule tab after successful generation
       emit('switchTab', 'schedule');
     }
   } catch (error) {
-    
     toast.add({
-      title: 'Generation Failed',
+      color: 'error',
       description: error instanceof Error ? error.message : 'Failed to generate schedule',
-      color: 'error'
+      title: 'Generation Failed'
     });
   }
 }
@@ -331,9 +329,9 @@ function resetToDefaults(): void {
     isUpdatingFromStore.value = false;
   });
   toast.add({
-    title: 'Options Reset',
+    color: 'info',
     description: 'All options have been reset to default values.',
-    color: 'info'
+    title: 'Options Reset'
   });
 }
 
