@@ -1,2 +1,3 @@
 patchedDependencies:
   exsolve@1.1.0: patches/exsolve@1.1.0.patch
+  nuxt@4.5.0: patches/nuxt@4.5.0.patch

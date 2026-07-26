@@ -54,10 +54,6 @@ function openHelp(): void {
   navigateTo('/help');
 }
 
-function openSettings() {
-  navigateTo('/settings');
-}
-
 async function logout() {
   if (isDemo.value) {
     // In demo mode, just show an alert
@@ -102,7 +98,7 @@ const userDisplayName = computed(() => {
 
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <!-- Fixed Help/Settings Menu -->
+    <!-- Fixed Help/Account Menu -->
     <div class="fixed top-4 right-4 z-50">
       <UPopover mode="click" :content="{ side: 'bottom', align: 'start', sideOffset: 4 }" arrow>
         <UButton
@@ -120,15 +116,6 @@ const userDisplayName = computed(() => {
               @click="openHelp"
             >
               Help
-            </UButton>
-            <UButton
-              icon="i-heroicons-cog-6-tooth"
-              variant="ghost"
-              color="neutral"
-              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
-              @click="openSettings"
-            >
-              Settings
             </UButton>
             <UButton
               icon="i-heroicons-arrow-right-on-rectangle"

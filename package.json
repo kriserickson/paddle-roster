@@ -36,25 +36,25 @@
     "jspdf": "^4.2.1",
     "nuxt": "^4.5.0",
     "pinia": "^4.0.2",
-    "typescript": "^5.9.3",
-    "vue": "^3.5.40",
     "vue-router": "^5.2.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
-    "@iconify-json/lucide": "^1.2.119",
+    "@iconify-json/lucide": "^1.2.120",
     "@iconify-json/mdi": "^1.2.3",
     "@playwright/test": "^1.62.0",
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
-    "baseline-browser-mapping": "^2.11.3",
+    "baseline-browser-mapping": "^2.11.4",
     "happy-dom": "^20.11.1",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.75.0",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.8"
+    "vue-tsc": "^3.3.8",
+    "typescript": "^7.0.2",
+    "vue": "^3.5.40"    
   },
   "packageManager": "pnpm@10.29.3"
 }

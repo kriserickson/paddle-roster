@@ -20,6 +20,8 @@ const MAX_AVOIDABLE_OPPONENT_PAIRS_SEVEN = 7;
 const PARTNER_REPEAT_SCORE_WEIGHT = 2500;
 const OPPONENT_REPEAT_SCORE_WEIGHT = 320;
 const NINE_ROUND_COUNT = 9;
+const MAXIMALLY_SPACED_TEN_PLAYER_REST_GAP = 5;
+const MAX_COURT_USAGE_DIFFERENCE = 2;
 
 import { describe, expect, it } from 'vitest';
 import type { Game, GameSchedule, MatchingOptions, Player } from '../../../types';
@@ -683,6 +685,30 @@ describe('PickleballMatcher', () => {
 
       expect(partnerPenalty).toBeGreaterThan(opponentPenalty);
     });
+
+    it('should score tightly clustered rests worse than widely spaced rests', () => {
+      const testPlayers = players.slice(0, EIGHT_PLAYER_COUNT);
+      const options: MatchingOptions = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2,
+        numberOfRounds: 8
+      });
+      const matcher = new PickleballMatcher(testPlayers, options);
+      const emptyRounds = Array.from({ length: EIGHT_ROUND_COUNT }, () => [] as Game[]);
+      const makeSchedule = (restingPlayers: string[][]): GameSchedule => ({
+        eventLabel: '',
+        generatedAt: new Date(),
+        options,
+        restingPlayers,
+        rounds: emptyRounds
+      });
+      const clustered = makeSchedule([['1'], ['1'], [], [], [], [], [], []]);
+      const spaced = makeSchedule([['1'], [], [], [], [], [], [], ['1']]);
+      const scoreRestSpacing = (
+        matcher as unknown as { scoreRestSpacing: (schedule: GameSchedule) => number }
+      ).scoreRestSpacing.bind(matcher);
+
+      expect(scoreRestSpacing(clustered)).toBeGreaterThan(scoreRestSpacing(spaced));
+    });
   });
 
   describe('should ensure proper rest distribution', () => {
@@ -845,6 +871,44 @@ describe('PickleballMatcher', () => {
         }),
         '10 players, 2 courts, 12 rounds'
       );
+
+      it('should maximize rest spacing and keep court usage even in a 12-round rotation', async () => {
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 12
+        });
+        const matcher = new PickleballMatcher(tenPlayers, options);
+        const schedule = await matcher.generateSchedule();
+        const restsByPlayer = new Map(tenPlayers.map(player => [player.id, [] as number[]]));
+
+        schedule.restingPlayers.forEach((restingPlayers, roundIdx) => {
+          restingPlayers.forEach(playerId => restsByPlayer.get(playerId)?.push(roundIdx));
+        });
+
+        const restCounts = Array.from(restsByPlayer.values(), rounds => rounds.length);
+        expect(Math.max(...restCounts) - Math.min(...restCounts)).toBeLessThanOrEqual(1);
+
+        for (const restRounds of restsByPlayer.values()) {
+          for (let idx = 1; idx < restRounds.length; idx += 1) {
+            expect((restRounds[idx] || 0) - (restRounds[idx - 1] || 0)).toBeGreaterThanOrEqual(
+              MAXIMALLY_SPACED_TEN_PLAYER_REST_GAP
+            );
+          }
+        }
+
+        const courtsByPlayer = new Map(tenPlayers.map(player => [player.id, [0, 0]]));
+        schedule.rounds.flat().forEach(game => {
+          [...game.team1, ...game.team2].forEach(playerId => {
+            const counts = courtsByPlayer.get(playerId);
+            if (counts) {
+              counts[game.court - 1] = (counts[game.court - 1] || 0) + 1;
+            }
+          });
+        });
+        for (const courtCounts of courtsByPlayer.values()) {
+          expect(Math.max(...courtCounts) - Math.min(...courtCounts)).toBeLessThanOrEqual(MAX_COURT_USAGE_DIFFERENCE);
+        }
+      });
     });
   });
 
@@ -1021,10 +1085,10 @@ describe('PickleballMatcher', () => {
         });
       });
 
-      // Each preferred partner pair should appear at least once
+      // Each preferred partner pair is honored once without becoming a repeated team.
       expectedPairs.forEach(pair => {
         const pairKey = pair.slice().sort().join('-');
-        expect(preferredPartnerPairings.get(pairKey) || 0).toBeGreaterThan(0);
+        expect(preferredPartnerPairings.get(pairKey) || 0).toBe(1);
       });
     });
   });

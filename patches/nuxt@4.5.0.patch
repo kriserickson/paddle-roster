@@ -1,0 +1,10 @@
+diff --git a/dist/pages/runtime/plugins/check-if-page-unused.js b/dist/pages/runtime/plugins/check-if-page-unused.js
+--- a/dist/pages/runtime/plugins/check-if-page-unused.js
++++ b/dist/pages/runtime/plugins/check-if-page-unused.js
+@@ -56,4 +56,5 @@ const plugin = defineNuxtPlugin({
+ 	env: { islands: false }
+ });
+ //#endregion
+-export { NESTED_PAGE_CONFIRMATION_DELAY, plugin as default, findUnrenderedNestedPage };
++export { NESTED_PAGE_CONFIRMATION_DELAY, findUnrenderedNestedPage };
++export default plugin;

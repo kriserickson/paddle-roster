@@ -402,13 +402,13 @@ onMounted(async () => {
                   </div>
                   <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm font-medium">{{ getPlayerName(game.team1[0]) }}</span>
+                      <span class="text-sm font-medium text-blue-950">{{ getPlayerName(game.team1[0]) }}</span>
                       <div class="player-skill-badge text-xs">
                         {{ getPlayerSkill(game.team1[0]) }}
                       </div>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="text-sm font-medium">{{ getPlayerName(game.team1[1]) }}</span>
+                      <span class="text-sm font-medium text-blue-950">{{ getPlayerName(game.team1[1]) }}</span>
                       <div class="player-skill-badge text-xs">
                         {{ getPlayerSkill(game.team1[1]) }}
                       </div>
@@ -436,13 +436,13 @@ onMounted(async () => {
                   </div>
                   <div class="space-y-2">
                     <div class="flex justify-between items-center">
-                      <span class="text-sm font-medium">{{ getPlayerName(game.team2[0]) }}</span>
+                      <span class="text-sm font-medium text-red-950">{{ getPlayerName(game.team2[0]) }}</span>
                       <div class="player-skill-badge text-xs">
                         {{ getPlayerSkill(game.team2[0]) }}
                       </div>
                     </div>
                     <div class="flex justify-between items-center">
-                      <span class="text-sm font-medium">{{ getPlayerName(game.team2[1]) }}</span>
+                      <span class="text-sm font-medium text-red-950">{{ getPlayerName(game.team2[1]) }}</span>
                       <div class="player-skill-badge text-xs">
                         {{ getPlayerSkill(game.team2[1]) }}
                       </div>
