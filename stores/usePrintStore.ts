@@ -1,3 +1,6 @@
+const TWO_DECIMAL_PLACES = 2;
+const WAIT_BEFORE_PRINT = 250;
+
 import { defineStore } from 'pinia';
 import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 import type { Game, GameSchedule, PrintOptions } from '~/types';
@@ -21,7 +24,7 @@ export const usePrintStore = defineStore('print', () => {
   /**
    * State
    */
-  const printOptions = ref<PrintOptions>({ ...defaultPrintOptions });
+  const printOptions = ref<PrintOptions>(Object.assign({}, defaultPrintOptions));
   const isLoadingPreferences = ref(false);
 
   /**
@@ -92,30 +95,32 @@ export const usePrintStore = defineStore('print', () => {
       // Resolve each group
       const nameMap = new Map<string, string>();
       for (const [firstName, ids] of byFirst) {
-        if (ids.length === 1) {
-          nameMap.set(ids[0] ?? '', firstName);
-          continue;
-        }
-        // Find the minimum last-name prefix length that makes all names unique
-        const maxLastLen = Math.max(...ids.map(id => idToNameParts.get(id)?.last.length || 0));
-        let prefixLen = 0;
-        let resolved = false;
-        while (!resolved) {
-          prefixLen += 1;
-          const seen = new Set(
-            ids.map(id => {
-              const last = idToNameParts.get(id)?.last;
-              return last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName;
-            })
-          );
-          resolved = seen.size === ids.length;
-          if (prefixLen >= maxLastLen) {
-            break;
+        nextIteration0: {
+          if (ids.length === 1) {
+            nameMap.set(ids[0] ?? '', firstName);
+            break nextIteration0;
           }
-        }
-        for (const id of ids) {
-          const last = idToNameParts.get(id)?.last;
-          nameMap.set(id, last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName);
+          // Find the minimum last-name prefix length that makes all names unique
+          const maxLastLen = Math.max(...ids.map(id => idToNameParts.get(id)?.last.length || 0));
+          let prefixLen = 0;
+          let resolved = false;
+          while (!resolved) {
+            prefixLen += 1;
+            const seen = new Set(
+              ids.map(id => {
+                const last = idToNameParts.get(id)?.last;
+                return last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName;
+              })
+            );
+            resolved = seen.size === ids.length;
+            if (prefixLen >= maxLastLen) {
+              break;
+            }
+          }
+          for (const id of ids) {
+            const last = idToNameParts.get(id)?.last;
+            nameMap.set(id, last ? `${firstName} ${last.slice(0, prefixLen)}` : firstName);
+          }
         }
       }
 
@@ -135,7 +140,7 @@ export const usePrintStore = defineStore('print', () => {
     }
 
     function formatSkillLevel(level: number): string {
-      return level % 1 === 0 ? level.toString() : level.toFixed(2);
+      return level % 1 === 0 ? level.toString() : level.toFixed(TWO_DECIMAL_PLACES);
     }
 
     function getPlayerSkill(id: string): number {
@@ -481,7 +486,7 @@ export const usePrintStore = defineStore('print', () => {
     customOptions?: Partial<PrintOptions>,
     playerStore?: ReturnType<typeof usePlayerStore>
   ): void {
-    const options = { ...printOptions.value, ...customOptions };
+    const options = Object.assign({}, printOptions.value, customOptions);
     const html = generatePrintHTML(schedule, options, playerStore);
 
     // Create a new window for printing
@@ -495,7 +500,7 @@ export const usePrintStore = defineStore('print', () => {
         setTimeout(() => {
           printWindow.print();
           printWindow.close();
-        }, 250);
+        }, WAIT_BEFORE_PRINT);
       };
     } else {
       // Fallback: create a blob and open it
@@ -514,7 +519,7 @@ export const usePrintStore = defineStore('print', () => {
     customOptions?: Partial<PrintOptions>,
     playerStore?: ReturnType<typeof usePlayerStore>
   ): void {
-    const options = { ...printOptions.value, ...customOptions };
+    const options = Object.assign({}, printOptions.value, customOptions);
     const html = generatePrintHTML(schedule, options, playerStore);
 
     const blob = new Blob([html], { type: 'text/html' });
@@ -527,11 +532,11 @@ export const usePrintStore = defineStore('print', () => {
   }
 
   function updatePrintOptions(newOptions: Partial<PrintOptions>): void {
-    printOptions.value = { ...printOptions.value, ...newOptions };
+    printOptions.value = Object.assign({}, printOptions.value, newOptions);
   }
 
   function resetPrintOptions(): void {
-    printOptions.value = { ...defaultPrintOptions };
+    printOptions.value = Object.assign({}, defaultPrintOptions);
   }
 
   /**
@@ -541,12 +546,12 @@ export const usePrintStore = defineStore('print', () => {
     try {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
-      printOptions.value = { ...userPrefs.printOptions };
+      printOptions.value = Object.assign({}, userPrefs.printOptions);
     } catch (error) {
       console.error('Error loading user print preferences:', error);
 
       // Fall back to default options if loading fails
-      printOptions.value = { ...defaultPrintOptions };
+      printOptions.value = Object.assign({}, defaultPrintOptions);
     } finally {
       isLoadingPreferences.value = false;
     }
@@ -558,10 +563,9 @@ export const usePrintStore = defineStore('print', () => {
   async function saveUserPrintPreferences(): Promise<void> {
     try {
       const userPrefs = await preferencesApi.getUserPreferences();
-      const updatedPrefs = {
-        ...userPrefs,
-        printOptions: { ...printOptions.value }
-      };
+      const updatedPrefs = Object.assign({}, userPrefs, {
+        printOptions: Object.assign({}, printOptions.value)
+      });
       await preferencesApi.saveUserPreferences(updatedPrefs);
     } catch (error) {
       console.error('Error saving user print preferences:', error);
@@ -570,18 +574,17 @@ export const usePrintStore = defineStore('print', () => {
   }
 
   return {
+    defaultPrintOptions,
+    downloadScheduleHTML,
+    generatePrintHTML,
+    isLoadingPreferences,
+    loadUserPrintPreferences,
     // State
     printOptions: readonly(printOptions),
-    defaultPrintOptions,
-    isLoadingPreferences,
-
     // Actions
     printSchedule,
-    downloadScheduleHTML,
-    updatePrintOptions,
     resetPrintOptions,
-    loadUserPrintPreferences,
     saveUserPrintPreferences,
-    generatePrintHTML
+    updatePrintOptions
   };
 });

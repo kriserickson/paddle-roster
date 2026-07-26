@@ -1,0 +1,2 @@
+patchedDependencies:
+  exsolve@1.1.0: patches/exsolve@1.1.0.patch

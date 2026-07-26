@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const MININUM_NUMBER_OF_CSV_ROWS = 2;
+
 import type { TableColumn } from '@nuxt/ui';
 import AddEditPlayerModal from '~/components/modals/AddEditPlayerModal.vue';
 import DeletePlayerModal from '~/components/modals/DeletePlayerModal.vue';
@@ -230,7 +232,7 @@ async function performImport(): Promise<void> {
   try {
     // Parse CSV
     const lines = importData.value.trim().split('\n');
-    if (lines.length < 2) {
+    if (lines.length < MININUM_NUMBER_OF_CSV_ROWS) {
       throw new Error('CSV must have a header and at least one row.');
     }
     const headers = (lines[0] || '').split(',').map(h => h.trim());
@@ -286,7 +288,12 @@ async function performImport(): Promise<void> {
         const partner = playerStore.players.find(p => p.name === playerData.partnerName);
 
         if (player && partner) {
-          await playerStore.updatePlayer(player.id, { ...player, partnerId: partner.id });
+          await playerStore.updatePlayer(
+            player.id,
+            Object.assign({}, player, {
+              partnerId: partner.id
+            })
+          );
         } else {
           toast.add({
             color: 'warning',

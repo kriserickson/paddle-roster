@@ -1,3 +1,7 @@
+const NUMBER_OF_PLAYERS_PER_COURT = 4;
+const MAX_SKILL_LEVEL = 5;
+const NUMBER_OF_PLAYERS_PER_SIDE = 2;
+
 import { defineStore } from 'pinia';
 import { computed, ref } from 'vue';
 import { usePlayerApi } from '~/composables/usePlayerApi';
@@ -33,8 +37,8 @@ export const usePlayerStore = defineStore('player', () => {
 
   function canGenerateGames(numberOfCourts: number): { valid: boolean; message?: string } {
     const selectedPlayersList = selectedPlayers.value;
-    const minPlayers = numberOfCourts * 4; // 4 players per court
-    const maxPlayers = numberOfCourts * 4 + 4; // Allow up to 4 to sit out
+    const minPlayers = numberOfCourts * NUMBER_OF_PLAYERS_PER_COURT; // 4 players per court
+    const maxPlayers = numberOfCourts * NUMBER_OF_PLAYERS_PER_COURT + NUMBER_OF_PLAYERS_PER_COURT; // Allow up to 4 to sit out
 
     if (selectedPlayersList.length < minPlayers) {
       return {
@@ -128,7 +132,7 @@ export const usePlayerStore = defineStore('player', () => {
       const result = await playerApi.createPlayer({
         name: name.trim(),
         partnerId,
-        skillLevel: Math.max(1, Math.min(5, skillLevel)) // Clamp between 1-5
+        skillLevel: Math.max(1, Math.min(MAX_SKILL_LEVEL, skillLevel)) // Clamp between 1-5
       });
 
       if (result.success && result.data) {
@@ -152,7 +156,7 @@ export const usePlayerStore = defineStore('player', () => {
     try {
       // Validate skill level if being updated
       if (updates.skillLevel !== undefined) {
-        updates.skillLevel = Math.max(1, Math.min(5, updates.skillLevel));
+        updates.skillLevel = Math.max(1, Math.min(MAX_SKILL_LEVEL, updates.skillLevel));
       }
 
       // Trim name if being updated
@@ -165,7 +169,7 @@ export const usePlayerStore = defineStore('player', () => {
       if (result.success && result.data) {
         const index = players.value.findIndex(p => p.id === id);
         if (index !== -1) {
-          players.value[index] = { ...players.value[index], ...result.data };
+          players.value[index] = Object.assign({}, players.value[index], result.data);
           // If name was updated, re-sort to maintain alphabetical order
           if (updates.name !== undefined) {
             players.value.sort((a, b) => a.name.localeCompare(b.name));
@@ -234,7 +238,7 @@ export const usePlayerStore = defineStore('player', () => {
   async function importPlayers(playersData: Player[]): Promise<{ success: boolean; message: string }> {
     try {
       const validPlayers = playersData.filter(
-        p => p.name && typeof p.skillLevel === 'number' && p.skillLevel >= 1 && p.skillLevel <= 5
+        p => p.name && typeof p.skillLevel === 'number' && p.skillLevel >= 1 && p.skillLevel <= MAX_SKILL_LEVEL
       );
 
       const result = await playerApi.importPlayers(validPlayers);
@@ -261,12 +265,25 @@ export const usePlayerStore = defineStore('player', () => {
    * Export players as JSON string
    */
   function exportPlayers(): string {
-    return JSON.stringify(players.value, null, 2);
+    return JSON.stringify(players.value, null, NUMBER_OF_PLAYERS_PER_SIDE);
   }
   return {
+    addPlayer,
+    canGenerateGames,
+    clearAllPlayers,
+    deselectAllPlayers,
+    exportPlayers,
+    getAvailablePartners,
+    getPlayer,
+    importPlayers,
+    isPlayerSelected,
+    // Actions
+    loadPlayers,
     // State: Expose the ref directly, or use a computed for readonly access
     // Option 1: Expose ref directly (actions within store modify it)
     players,
+    removePlayer,
+    selectAllPlayers,
     selectedPlayerIds,
     // Option 2 (Safer for consumers): Expose a readonly computed property
     // allPlayers: computed(() => players.value),
@@ -276,23 +293,8 @@ export const usePlayerStore = defineStore('player', () => {
 
     // Getters
     selectedPlayers,
-    getPlayer,
-    getAvailablePartners,
-    canGenerateGames,
-
     // Selection management
     togglePlayerSelection,
-    selectAllPlayers,
-    deselectAllPlayers,
-    isPlayerSelected,
-
-    // Actions
-    loadPlayers,
-    addPlayer,
-    updatePlayer,
-    removePlayer,
-    clearAllPlayers,
-    importPlayers,
-    exportPlayers
+    updatePlayer
   };
 });

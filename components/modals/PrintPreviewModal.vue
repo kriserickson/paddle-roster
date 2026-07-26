@@ -1,4 +1,6 @@
 <script setup lang="ts">
+const PREVIEW_RENDER_DELAY_MS = 1000;
+
 import type { GameSchedule, PrintOptions } from '~/types';
 import { generatePDFFromHTML } from '~/utils/pdfGenerator';
 
@@ -29,14 +31,14 @@ const printPreviewRef = ref<HTMLElement>();
 const generatedPreviewHTML = ref<string>('');
 
 // Local copy of print options that can be modified
-const localPrintOptions = ref<PrintOptions>({ ...props.printOptions });
+const localPrintOptions = ref<PrintOptions>(Object.assign({}, props.printOptions));
 
 // Update local copy when modal opens
 watch(
   () => props.open,
   isOpen => {
     if (isOpen) {
-      localPrintOptions.value = { ...props.printOptions };
+      localPrintOptions.value = Object.assign({}, props.printOptions);
     }
   }
 );
@@ -45,7 +47,7 @@ watch(
 watch(
   localPrintOptions,
   newOptions => {
-    emit('update:print-options', { ...newOptions });
+    emit('update:print-options', Object.assign({}, newOptions));
   },
   { deep: true }
 );
@@ -128,7 +130,7 @@ async function downloadPdf(): Promise<void> {
     }
 
     // Wait for preview to fully render and DOM to update
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, PREVIEW_RENDER_DELAY_MS));
 
     // Check if the preview element exists and has content
     const previewElement = document.getElementById('print-preview-element');
@@ -211,7 +213,7 @@ watch(
     <template #body>
       <div class="flex gap-6 h-full min-h-[80vh]">
         <!-- Configuration Panel (Left Side) -->
-        <div class="w-80 flex-shrink-0 space-y-6 overflow-y-auto pr-4 border-r border-gray-200">
+        <div class="w-80 shrink-0 space-y-6 overflow-y-auto pr-4 border-r border-gray-200">
           <!-- Header Configuration -->
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Event Information</h3>

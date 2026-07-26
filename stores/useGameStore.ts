@@ -1,3 +1,9 @@
+const PLAYERS_PER_COURT = 4;
+const MAX_NUMBER_OF_COURTS = 4;
+const MAX_NUMBER_OF_ROUNDS = 15;
+const SKILL_DIFFERENCE_LIMIT = 8;
+const PERCENT = 100;
+
 import { defineStore } from 'pinia';
 import { UserPreferencesApiSupabase } from '~/services/userPreferencesApiSupabase';
 import type { Game, GameSchedule, MatchingOptions } from '~/types';
@@ -25,7 +31,7 @@ export const useGameStore = defineStore('game', () => {
     respectPartnerPreferences: true
   };
 
-  const matchingOptions = ref<MatchingOptions>({ ...defaultOptions });
+  const matchingOptions = ref<MatchingOptions>(Object.assign({}, defaultOptions));
   const preferencesApi = new UserPreferencesApiSupabase();
   const advancedPreferenceStorageKey = 'paddleroster-advanced-matching-preferences';
 
@@ -84,7 +90,7 @@ export const useGameStore = defineStore('game', () => {
     const schedule = currentSchedule.value;
     const totalGames = schedule.rounds.reduce((sum, round) => sum + round.length, 0);
     const totalRounds = schedule.rounds.length;
-    const playersPerRound = (schedule.rounds[0]?.length || 0) * 4;
+    const playersPerRound = (schedule.rounds[0]?.length || 0) * PLAYERS_PER_COURT;
     const restingPerRound = schedule.restingPlayers[0]?.length || 0;
     const duplicatePartners = countDuplicatePartnerOccurrences(schedule);
     const duplicateOpponents = countDuplicateOpponentOccurrences(schedule);
@@ -114,11 +120,13 @@ export const useGameStore = defineStore('game', () => {
 
       const selectedPlayersValue = playerStore.selectedPlayers;
 
-      const maxCourts = Math.floor(selectedPlayersValue.length / 4);
+      const maxCourts = Math.floor(selectedPlayersValue.length / PLAYERS_PER_COURT);
       const actualCourts = Math.min(matchingOptions.value.numberOfCourts, maxCourts);
 
       // Adjust options for generation
-      const generationOptions = { ...matchingOptions.value, numberOfCourts: actualCourts };
+      const generationOptions = Object.assign({}, matchingOptions.value, {
+        numberOfCourts: actualCourts
+      });
 
       // Create matcher instance
       const matcher = new PickleballMatcher(selectedPlayersValue, generationOptions);
@@ -143,15 +151,16 @@ export const useGameStore = defineStore('game', () => {
     try {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
-      matchingOptions.value = {
-        ...defaultOptions,
-        ...userPrefs.matchingOptions,
-        ...loadLocalAdvancedPreferences()
-      };
+      matchingOptions.value = Object.assign(
+        {},
+        defaultOptions,
+        userPrefs.matchingOptions,
+        loadLocalAdvancedPreferences()
+      );
     } catch (error) {
       console.error('Error loading user preferences:', error);
       // Fall back to default options if loading fails
-      matchingOptions.value = { ...defaultOptions, ...loadLocalAdvancedPreferences() };
+      matchingOptions.value = Object.assign({}, defaultOptions, loadLocalAdvancedPreferences());
     } finally {
       isLoadingPreferences.value = false;
     }
@@ -163,10 +172,9 @@ export const useGameStore = defineStore('game', () => {
   async function saveUserPreferences(): Promise<void> {
     try {
       const userPrefs = await preferencesApi.getUserPreferences();
-      const updatedPrefs = {
-        ...userPrefs,
-        matchingOptions: { ...matchingOptions.value }
-      };
+      const updatedPrefs = Object.assign({}, userPrefs, {
+        matchingOptions: Object.assign({}, matchingOptions.value)
+      });
       await preferencesApi.saveUserPreferences(updatedPrefs);
     } catch (error) {
       console.error('Error saving user preferences:', error);
@@ -175,13 +183,13 @@ export const useGameStore = defineStore('game', () => {
   }
 
   async function updateOptions(newOptions: Partial<MatchingOptions>): Promise<void> {
-    matchingOptions.value = { ...matchingOptions.value, ...newOptions };
+    matchingOptions.value = Object.assign({}, matchingOptions.value, newOptions);
     saveLocalAdvancedPreferences(matchingOptions.value);
 
     // Automatically save preferences to Supabase
     try {
       await saveUserPreferences();
-    } catch {
+    } catch (error) {
       console.warn('Failed to auto-save user preferences:', error);
       // Continue without throwing to avoid breaking the UI
     }
@@ -190,12 +198,12 @@ export const useGameStore = defineStore('game', () => {
   async function resetOptions(): Promise<void> {
     try {
       const resetPrefs = await preferencesApi.resetUserPreferences();
-      matchingOptions.value = { ...defaultOptions, ...resetPrefs.matchingOptions };
+      matchingOptions.value = Object.assign({}, defaultOptions, resetPrefs.matchingOptions);
       saveLocalAdvancedPreferences(matchingOptions.value);
-    } catch {
+    } catch (error) {
       console.error('Error resetting preferences:', error);
       // Fall back to local defaults if reset fails
-      matchingOptions.value = { ...defaultOptions };
+      matchingOptions.value = Object.assign({}, defaultOptions);
       saveLocalAdvancedPreferences(matchingOptions.value);
     }
   }
@@ -207,10 +215,10 @@ export const useGameStore = defineStore('game', () => {
     const selectedPlayersValue = playerStore.selectedPlayers;
 
     // Check minimum players for at least one court
-    if (selectedPlayersValue.length < 4) {
+    if (selectedPlayersValue.length < PLAYERS_PER_COURT) {
       errors.push('Need at least 4 selected players');
     } else {
-      const maxCourts = Math.floor(selectedPlayersValue.length / 4);
+      const maxCourts = Math.floor(selectedPlayersValue.length / PLAYERS_PER_COURT);
       if (maxCourts < matchingOptions.value.numberOfCourts) {
         warnings.push(
           `Not enough players for ${matchingOptions.value.numberOfCourts} courts. ` +
@@ -220,24 +228,27 @@ export const useGameStore = defineStore('game', () => {
     }
 
     // Check maximum players (allowing up to 4 to sit out per round)
-    const maxPlayers = matchingOptions.value.numberOfCourts * 4 + 4;
+    const maxPlayers = matchingOptions.value.numberOfCourts * PLAYERS_PER_COURT + PLAYERS_PER_COURT;
     if (selectedPlayersValue.length > maxPlayers) {
       errors.push(`Too many players for ${matchingOptions.value.numberOfCourts} courts. Maximum ${maxPlayers} players`);
     }
 
     // Check court count
-    if (matchingOptions.value.numberOfCourts < 1 || matchingOptions.value.numberOfCourts > 4) {
-      errors.push('Number of courts must be between 1 and 4');
+    if (matchingOptions.value.numberOfCourts < 1 || matchingOptions.value.numberOfCourts > MAX_NUMBER_OF_COURTS) {
+      errors.push(`Number of courts must be between 1 and ${MAX_NUMBER_OF_COURTS}`);
     }
 
     // Check round count
-    if (matchingOptions.value.numberOfRounds < 1 || matchingOptions.value.numberOfRounds > 15) {
-      errors.push('Number of rounds must be between 1 and 15');
+    if (matchingOptions.value.numberOfRounds < 1 || matchingOptions.value.numberOfRounds > MAX_NUMBER_OF_ROUNDS) {
+      errors.push(`Number of rounds must be between 1 and ${MAX_NUMBER_OF_ROUNDS}`);
     }
 
     // Check skill difference
-    if (matchingOptions.value.maxSkillDifference < 0 || matchingOptions.value.maxSkillDifference > 8) {
-      errors.push('Maximum skill difference must be between 0 and 8');
+    if (
+      matchingOptions.value.maxSkillDifference < 0 ||
+      matchingOptions.value.maxSkillDifference > SKILL_DIFFERENCE_LIMIT
+    ) {
+      errors.push(`Maximum skill difference must be between 0 and ${SKILL_DIFFERENCE_LIMIT}`);
     }
 
     return {
@@ -254,7 +265,7 @@ export const useGameStore = defineStore('game', () => {
     }
 
     const totalDifference = allGames.reduce((sum, game) => sum + game.skillDifference, 0);
-    return Math.round((totalDifference / allGames.length) * 100) / 100;
+    return Math.round((totalDifference / allGames.length) * PERCENT) / PERCENT;
   }
 
   function clearSchedule(): void {
@@ -330,25 +341,23 @@ export const useGameStore = defineStore('game', () => {
   }
 
   return {
+    clearSchedule,
     // State
     currentSchedule,
-    matchingOptions,
-    isGenerating,
-    isLoadingPreferences,
     defaultOptions,
-
-    // Getters
-    scheduleStats,
-
     // Actions
     generateSchedule,
-    loadUserPreferences,
-    saveUserPreferences,
-    updateOptions,
-    resetOptions,
-    validateOptions,
-    clearSchedule,
     getGamesForRound,
-    getRestingPlayersForRound
+    getRestingPlayersForRound,
+    isGenerating,
+    isLoadingPreferences,
+    loadUserPreferences,
+    matchingOptions,
+    resetOptions,
+    saveUserPreferences,
+    // Getters
+    scheduleStats,
+    updateOptions,
+    validateOptions
   };
 });

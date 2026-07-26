@@ -96,10 +96,9 @@ export class PlayerApiIndexedDb implements IPlayerApi {
     try {
       await this.ensureInitialized();
 
-      const newPlayer: Player = {
-        ...player,
+      const newPlayer: Player = Object.assign({}, player, {
         id: crypto.randomUUID()
-      };
+      });
 
       const transaction = this.db?.transaction([this.storeName], 'readwrite');
       if (!transaction) {
@@ -154,7 +153,7 @@ export class PlayerApiIndexedDb implements IPlayerApi {
       });
 
       // Update player
-      const updatedPlayer: Player = { ...existingPlayer, ...updates };
+      const updatedPlayer: Player = Object.assign({}, existingPlayer, updates);
 
       await new Promise<void>((resolve, reject) => {
         const request = store.put(updatedPlayer);

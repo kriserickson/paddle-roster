@@ -1,0 +1,13 @@
+diff --git a/dist/index.mjs b/dist/index.mjs
+index 1220177a4a92b1bb9bf49f94df4577963c13c675..a80964ee8d4217685ecdd81cd5841a717b12a6d5 100644
+--- a/dist/index.mjs
++++ b/dist/index.mjs
+@@ -666,7 +666,7 @@ function packageExportsResolve(packageJsonUrl, packageSubpath, packageConfig, ba
+ 		const key = keys[i];
+ 		const patternIndex = key.indexOf("*");
+ 		if (patternIndex !== -1 && packageSubpath.startsWith(key.slice(0, patternIndex))) {
+-			if (packageSubpath.endsWith("/")) emitTrailingSlashPatternDeprecation(packageSubpath, packageJsonUrl, base);
++			if (packageSubpath !== "./" && packageSubpath.endsWith("/")) emitTrailingSlashPatternDeprecation(packageSubpath, packageJsonUrl, base);
+ 			const patternTrailer = key.slice(patternIndex + 1);
+ 			if (packageSubpath.length >= key.length && packageSubpath.endsWith(patternTrailer) && patternKeyCompare(bestMatch, key) === 1 && key.lastIndexOf("*") === patternIndex) {
+ 				bestMatch = key;

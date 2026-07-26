@@ -1,4 +1,11 @@
 <script setup lang="ts">
+const FIVE_SECONDS_IN_MILLISECONDS = 5_000;
+const ONE_AND_HALF_SECONDS_IN_MILLISECONDS = 1500;
+const SKILL_LEVEL_BEGINNER = 2.75;
+const SKILL_LEVEL_INTERMEDIATE = 3.5;
+const SKILL_LEVEL_ADVANCED = 5.0;
+const NUMBER_OF_PLAYERS = 4;
+
 import type { MatchingOptions, Player } from '~/types';
 
 // Define emits
@@ -13,11 +20,12 @@ const toast = useToast();
 
 // Local reactive state
 const eventLabel = ref('');
-const matchingOptions = ref<MatchingOptions>({
-  ...gameStore.matchingOptions,
-  courtDiversityPriority: gameStore.matchingOptions.courtDiversityPriority || 'balanced',
-  opponentDiversityPriority: gameStore.matchingOptions.opponentDiversityPriority || 'balanced'
-});
+const matchingOptions = ref<MatchingOptions>(
+  Object.assign({}, gameStore.matchingOptions, {
+    courtDiversityPriority: gameStore.matchingOptions.courtDiversityPriority || 'balanced',
+    opponentDiversityPriority: gameStore.matchingOptions.opponentDiversityPriority || 'balanced'
+  })
+);
 const isSavingPreferences = ref(false);
 const showAdvancedPreferences = ref(false);
 
@@ -36,6 +44,26 @@ const previousOptions = ref<MatchingOptions | null>(null);
 
 // Debounced save function to avoid saving on every keystroke
 let saveTimeout: NodeJS.Timeout | null = null;
+let successToastTimeout: NodeJS.Timeout | null = null;
+
+function clearSuccessToastTimeout(): void {
+  if (successToastTimeout) {
+    clearTimeout(successToastTimeout);
+    successToastTimeout = null;
+  }
+}
+
+function debounceSuccessToast(): void {
+  clearSuccessToastTimeout();
+  successToastTimeout = setTimeout(() => {
+    toast.add({
+      color: 'success',
+      description: 'Your preferences have been automatically saved.',
+      title: 'Preferences Saved'
+    });
+    successToastTimeout = null;
+  }, FIVE_SECONDS_IN_MILLISECONDS);
+}
 
 // Helper function to compare MatchingOptions
 function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
@@ -60,11 +88,10 @@ function optionsAreEqual(a: MatchingOptions, b: MatchingOptions): boolean {
 }
 
 function withPreferenceDefaults(options: MatchingOptions): MatchingOptions {
-  return {
-    ...options,
+  return Object.assign({}, options, {
     courtDiversityPriority: options.courtDiversityPriority || 'balanced',
     opponentDiversityPriority: options.opponentDiversityPriority || 'balanced'
-  };
+  });
 }
 
 // Watch for changes and update the game generator
@@ -94,6 +121,7 @@ watch(
     if (saveTimeout) {
       clearTimeout(saveTimeout);
     }
+    clearSuccessToastTimeout();
 
     // Debounce the save operation
     saveTimeout = setTimeout(async () => {
@@ -102,16 +130,9 @@ watch(
         isSavingPreferences.value = true;
         await gameStore.updateOptions(newOptions);
         //console.log('✅ Preferences saved successfully');
-        // Only show success toast occasionally to avoid spam
-        if (Math.random() < 0.3) {
-          // 30% chance to show success message
-          toast.add({
-            color: 'success',
-            description: 'Your preferences have been automatically saved.',
-            title: 'Preferences Saved'
-          });
-        }
+        debounceSuccessToast();
       } catch (error) {
+        clearSuccessToastTimeout();
         // Always show error toast
         toast.add({
           color: 'error',
@@ -121,20 +142,26 @@ watch(
       } finally {
         isSavingPreferences.value = false;
       }
-    }, 1500); // 1.5 second debounce
+    }, ONE_AND_HALF_SECONDS_IN_MILLISECONDS); // 1.5 second debounce
   },
   { deep: true }
 );
+
+onBeforeUnmount(() => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  clearSuccessToastTimeout();
+});
 
 // Watch for changes to firstRoundSitters and update matchingOptions
 watch(
   firstRoundSitters,
   newSitters => {
     // Create a new options object to ensure reactivity triggers
-    matchingOptions.value = {
-      ...matchingOptions.value,
+    matchingOptions.value = Object.assign({}, matchingOptions.value, {
       firstRoundSitters: newSitters.length > 0 ? [...newSitters] : undefined
-    };
+    });
   },
   { deep: true }
 );
@@ -144,7 +171,7 @@ watch(
   () => gameStore.matchingOptions,
   newStoreOptions => {
     isUpdatingFromStore.value = true;
-    matchingOptions.value = withPreferenceDefaults({ ...newStoreOptions });
+    matchingOptions.value = withPreferenceDefaults(Object.assign({}, newStoreOptions));
     nextTick(() => {
       isUpdatingFromStore.value = false;
     });
@@ -183,11 +210,11 @@ const filteredPlayers = computed(() => {
       const skill = player.skillLevel;
       switch (skillLevelFilter.value) {
         case 'beginner':
-          return skill >= 1.0 && skill <= 2.0;
+          return skill >= 1.0 && skill <= SKILL_LEVEL_BEGINNER;
         case 'intermediate':
-          return skill > 2.0 && skill <= 3.5;
+          return skill > SKILL_LEVEL_BEGINNER && skill <= SKILL_LEVEL_INTERMEDIATE;
         case 'advanced':
-          return skill > 3.5 && skill <= 5.0;
+          return skill > SKILL_LEVEL_INTERMEDIATE && skill <= SKILL_LEVEL_ADVANCED;
         default:
           return true;
       }
@@ -201,7 +228,7 @@ const filteredPlayers = computed(() => {
 });
 
 const playersPerRound = computed(() => {
-  return matchingOptions.value.numberOfCourts * 4;
+  return matchingOptions.value.numberOfCourts * NUMBER_OF_PLAYERS;
 });
 
 const restingPerRound = computed(() => {
@@ -209,17 +236,22 @@ const restingPerRound = computed(() => {
 });
 
 const maxFirstRoundSitters = computed(() => {
-  return Math.min(4, restingPerRound.value);
+  return Math.min(NUMBER_OF_PLAYERS, restingPerRound.value);
 });
 
 // Format ALL selected players for USelectMenu (needs specific format)
 const allPlayersForSittingOptions = computed(() => {
   // Include ALL selected players so v-model can find both selected and unselected
-  const options = selectedPlayers.value.map(player => ({
-    label: player.name,
-    value: player.id,
-    ...player // Include all player properties
-  }));
+  const options = selectedPlayers.value.map(player =>
+    Object.assign(
+      {},
+      {
+        label: player.name,
+        value: player.id
+      },
+      player
+    )
+  );
   return options;
 });
 
@@ -323,7 +355,7 @@ async function generateSchedule(): Promise<void> {
 function resetToDefaults(): void {
   isUpdatingFromStore.value = true;
   gameStore.resetOptions();
-  matchingOptions.value = withPreferenceDefaults({ ...gameStore.matchingOptions });
+  matchingOptions.value = withPreferenceDefaults(Object.assign({}, gameStore.matchingOptions));
   firstRoundSitters.value = [];
   nextTick(() => {
     isUpdatingFromStore.value = false;
@@ -338,7 +370,7 @@ function resetToDefaults(): void {
 // Initialize with current options
 onMounted(() => {
   isUpdatingFromStore.value = true;
-  matchingOptions.value = withPreferenceDefaults({ ...gameStore.matchingOptions });
+  matchingOptions.value = withPreferenceDefaults(Object.assign({}, gameStore.matchingOptions));
   firstRoundSitters.value = [...(gameStore.matchingOptions.firstRoundSitters || [])];
   nextTick(() => {
     isUpdatingFromStore.value = false;

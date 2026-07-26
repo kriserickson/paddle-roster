@@ -1,3 +1,26 @@
+const PAIR_SIZE = 2;
+const SIX_ROUND_COUNT = 6;
+const DEFAULT_COURT_COUNT = 3;
+const THREE_ROUND_COUNT = 3;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_TWO = 2;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_THREE = 3;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_FOUR = 4;
+const MAX_PARTNERSHIP_REPEAT_COUNT = 2;
+const EIGHT_PLAYER_COUNT = 8;
+const EIGHT_ROUND_COUNT = 8;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_EIGHT = 8;
+const TEN_PLAYER_COUNT = 10;
+const TEN_ROUND_COUNT = 10;
+const TWELVE_PLAYER_COUNT = 12;
+const TWELVE_ROUND_COUNT = 12;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_TWELVE = 12;
+const PLAYERS_PER_GAME = 4;
+const SEVEN_ROUND_COUNT = 7;
+const MAX_AVOIDABLE_OPPONENT_PAIRS_SEVEN = 7;
+const PARTNER_REPEAT_SCORE_WEIGHT = 2500;
+const OPPONENT_REPEAT_SCORE_WEIGHT = 320;
+const NINE_ROUND_COUNT = 9;
+
 import { describe, expect, it } from 'vitest';
 import type { Game, GameSchedule, MatchingOptions, Player } from '../../../types';
 import { PickleballMatcher } from '../../../utils/pickleballMatcher';
@@ -8,8 +31,12 @@ import { PickleballMatcher } from '../../../utils/pickleballMatcher';
 function validateAllGamesHavePlayers(schedule: GameSchedule): void {
   schedule.rounds.forEach((round: Game[], roundIndex: number) => {
     round.forEach((game: Game, gameIndex: number) => {
-      expect(game.team1, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1 should have 2 players`).toHaveLength(2);
-      expect(game.team2, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2 should have 2 players`).toHaveLength(2);
+      expect(game.team1, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1 should have 2 players`).toHaveLength(
+        PAIR_SIZE
+      );
+      expect(game.team2, `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2 should have 2 players`).toHaveLength(
+        PAIR_SIZE
+      );
       expect(game.team1[0], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1[0] should be defined`).toBeDefined();
       expect(game.team1[1], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team1[1] should be defined`).toBeDefined();
       expect(game.team2[0], `Round ${roundIndex + 1}, Game ${gameIndex + 1}: team2[0] should be defined`).toBeDefined();
@@ -58,12 +85,14 @@ describe('PickleballMatcher', () => {
   describe('should generate a valid schedule', () => {
     describe('16 players on 3 courts', () => {
       it('should generate valid schedule for 6 rounds', async () => {
-        const options = { ...defaultOptions, numberOfRounds: 6 };
+        const options = Object.assign({}, defaultOptions, {
+          numberOfRounds: 6
+        });
         const matcher = new PickleballMatcher(players, options);
         const schedule = await matcher.generateSchedule('Test Event');
 
-        expect(schedule.rounds).toHaveLength(6);
-        expect(schedule.rounds[0]).toHaveLength(3);
+        expect(schedule.rounds).toHaveLength(SIX_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(DEFAULT_COURT_COUNT);
         expect(schedule.eventLabel).toBe('Test Event');
         expect(schedule.options).toEqual(options);
         expect(schedule.generatedAt).toBeInstanceOf(Date);
@@ -74,48 +103,55 @@ describe('PickleballMatcher', () => {
         const matcher = new PickleballMatcher(players, defaultOptions);
         const schedule = await matcher.generateSchedule('Test Event');
 
-        expect(schedule.rounds).toHaveLength(8);
-        expect(schedule.rounds[0]).toHaveLength(3);
+        expect(schedule.rounds).toHaveLength(EIGHT_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(DEFAULT_COURT_COUNT);
         expect(schedule.eventLabel).toBe('Test Event');
         expect(schedule.options).toEqual(defaultOptions);
         expect(schedule.generatedAt).toBeInstanceOf(Date);
       });
 
       it('should generate valid schedule for 10 rounds', async () => {
-        const options = { ...defaultOptions, numberOfRounds: 10 };
+        const options = Object.assign({}, defaultOptions, {
+          numberOfRounds: 10
+        });
         const matcher = new PickleballMatcher(players, options);
         const schedule = await matcher.generateSchedule('Test Event');
 
-        expect(schedule.rounds).toHaveLength(10);
-        expect(schedule.rounds[0]).toHaveLength(3);
+        expect(schedule.rounds).toHaveLength(TEN_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(DEFAULT_COURT_COUNT);
       });
 
       it('should generate valid schedule for 12 rounds', async () => {
-        const options = { ...defaultOptions, numberOfRounds: 12 };
+        const options = Object.assign({}, defaultOptions, {
+          numberOfRounds: 12
+        });
         const matcher = new PickleballMatcher(players, options);
         const schedule = await matcher.generateSchedule('Test Event');
 
-        expect(schedule.rounds).toHaveLength(12);
-        expect(schedule.rounds[0]).toHaveLength(3);
+        expect(schedule.rounds).toHaveLength(TWELVE_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(DEFAULT_COURT_COUNT);
       });
     });
     describe('12 players on 2 courts', () => {
       it('should generate valid schedule for 6 rounds', async () => {
-        const twelvePlayers = players.slice(0, 12);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 };
+        const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 6
+        });
         const matcher = new PickleballMatcher(twelvePlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(6);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(SIX_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
         // 12 players, 8 playing per round (2 courts * 4 players), 4 resting
         schedule.rounds.forEach((round: Game[], index: number) => {
-          expect(round.length).toBe(2);
-          expect(schedule.restingPlayers[index]).toHaveLength(4);
+          expect(round.length).toBe(PAIR_SIZE);
+          expect(schedule.restingPlayers[index]).toHaveLength(PLAYERS_PER_GAME);
           // Ensure every game has 4 players
           round.forEach((game: Game) => {
-            expect(game.team1).toHaveLength(2);
-            expect(game.team2).toHaveLength(2);
+            expect(game.team1).toHaveLength(PAIR_SIZE);
+            expect(game.team2).toHaveLength(PAIR_SIZE);
             expect(game.team1[0]).toBeDefined();
             expect(game.team1[1]).toBeDefined();
             expect(game.team2[0]).toBeDefined();
@@ -125,53 +161,65 @@ describe('PickleballMatcher', () => {
       });
 
       it('should generate valid schedule for 8 rounds', async () => {
-        const twelvePlayers = players.slice(0, 12);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 };
+        const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 8
+        });
         const matcher = new PickleballMatcher(twelvePlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(8);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(EIGHT_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
 
       it('should generate valid schedule for 10 rounds', async () => {
-        const twelvePlayers = players.slice(0, 12);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 };
+        const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 10
+        });
         const matcher = new PickleballMatcher(twelvePlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(10);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(TEN_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
 
       it('should generate valid schedule for 12 rounds', async () => {
-        const twelvePlayers = players.slice(0, 12);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 };
+        const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 12
+        });
         const matcher = new PickleballMatcher(twelvePlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(12);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(TWELVE_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
     });
 
     describe('10 players on 2 courts', () => {
       it('should generate valid schedule for 6 rounds', async () => {
-        const tenPlayers = players.slice(0, 10);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 6 };
+        const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 6
+        });
         const matcher = new PickleballMatcher(tenPlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(6);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(SIX_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
         // 10 players, 8 playing per round (2 courts * 4 players), 2 resting
         schedule.rounds.forEach((round: Game[], index: number) => {
-          expect(round.length).toBe(2);
-          expect(schedule.restingPlayers[index]).toHaveLength(2);
+          expect(round.length).toBe(PAIR_SIZE);
+          expect(schedule.restingPlayers[index]).toHaveLength(PAIR_SIZE);
           // Ensure every game has 4 players
           round.forEach((game: Game) => {
-            expect(game.team1).toHaveLength(2);
-            expect(game.team2).toHaveLength(2);
+            expect(game.team1).toHaveLength(PAIR_SIZE);
+            expect(game.team2).toHaveLength(PAIR_SIZE);
             expect(game.team1[0]).toBeDefined();
             expect(game.team1[1]).toBeDefined();
             expect(game.team2[0]).toBeDefined();
@@ -181,33 +229,42 @@ describe('PickleballMatcher', () => {
       });
 
       it('should generate valid schedule for 8 rounds', async () => {
-        const tenPlayers = players.slice(0, 10);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 8 };
+        const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 8
+        });
         const matcher = new PickleballMatcher(tenPlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(8);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(EIGHT_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
 
       it('should generate valid schedule for 10 rounds', async () => {
-        const tenPlayers = players.slice(0, 10);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 10 };
+        const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 10
+        });
         const matcher = new PickleballMatcher(tenPlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(10);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(TEN_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
 
       it('should generate valid schedule for 12 rounds', async () => {
-        const tenPlayers = players.slice(0, 10);
-        const options = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 12 };
+        const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+        const options = Object.assign({}, defaultOptions, {
+          numberOfCourts: 2,
+          numberOfRounds: 12
+        });
         const matcher = new PickleballMatcher(tenPlayers, options);
         const schedule = await matcher.generateSchedule();
 
-        expect(schedule.rounds).toHaveLength(12);
-        expect(schedule.rounds[0]).toHaveLength(2);
+        expect(schedule.rounds).toHaveLength(TWELVE_ROUND_COUNT);
+        expect(schedule.rounds[0]).toHaveLength(PAIR_SIZE);
       });
     });
   });
@@ -254,28 +311,128 @@ describe('PickleballMatcher', () => {
     }
 
     describe('16 players on 3 courts', () => {
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 6 }, 1, 0, '16 players, 3 courts, 6 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 8 }, 1, 0, '16 players, 3 courts, 8 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 10 }, 1, 1, '16 players, 3 courts, 10 rounds');
-      testPartnerships(players, { ...defaultOptions, numberOfRounds: 12 }, 1, 3, '16 players, 3 courts, 12 rounds');
+      testPartnerships(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 6
+        }),
+        1,
+        0,
+        '16 players, 3 courts, 6 rounds'
+      );
+      testPartnerships(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 8
+        }),
+        1,
+        0,
+        '16 players, 3 courts, 8 rounds'
+      );
+      testPartnerships(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 10
+        }),
+        1,
+        1,
+        '16 players, 3 courts, 10 rounds'
+      );
+      testPartnerships(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 12
+        }),
+        1,
+        DEFAULT_COURT_COUNT,
+        '16 players, 3 courts, 12 rounds'
+      );
     });
 
     describe('12 players on 2 courts', () => {
-      const twelvePlayers = players.slice(0, 12);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testPartnerships(twelvePlayers, { ...options, numberOfRounds: 6 }, 2, 0, '12 players, 2 courts, 6 rounds');
-      testPartnerships(twelvePlayers, { ...options, numberOfRounds: 8 }, 2, 0, '12 players, 2 courts, 8 rounds');
-      testPartnerships(twelvePlayers, { ...options, numberOfRounds: 10 }, 2, 0, '12 players, 2 courts, 10 rounds');
-      testPartnerships(twelvePlayers, { ...options, numberOfRounds: 12 }, 2, 0, '12 players, 2 courts, 12 rounds');
+      const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testPartnerships(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        MAX_PARTNERSHIP_REPEAT_COUNT,
+        0,
+        '12 players, 2 courts, 6 rounds'
+      );
+      testPartnerships(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        PAIR_SIZE,
+        0,
+        '12 players, 2 courts, 8 rounds'
+      );
+      testPartnerships(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        PAIR_SIZE,
+        0,
+        '12 players, 2 courts, 10 rounds'
+      );
+      testPartnerships(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        PAIR_SIZE,
+        0,
+        '12 players, 2 courts, 12 rounds'
+      );
     });
 
     describe('10 players on 2 courts', () => {
-      const tenPlayers = players.slice(0, 10);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testPartnerships(tenPlayers, { ...options, numberOfRounds: 6 }, 2, 0, '10 players, 2 courts, 6 rounds');
-      testPartnerships(tenPlayers, { ...options, numberOfRounds: 8 }, 2, 1, '10 players, 2 courts, 8 rounds');
-      testPartnerships(tenPlayers, { ...options, numberOfRounds: 10 }, 2, 1, '10 players, 2 courts, 10 rounds');
-      testPartnerships(tenPlayers, { ...options, numberOfRounds: 12 }, 2, 1, '10 players, 2 courts, 12 rounds');
+      const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testPartnerships(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        PAIR_SIZE,
+        0,
+        '10 players, 2 courts, 6 rounds'
+      );
+      testPartnerships(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        PAIR_SIZE,
+        1,
+        '10 players, 2 courts, 8 rounds'
+      );
+      testPartnerships(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        PAIR_SIZE,
+        1,
+        '10 players, 2 courts, 10 rounds'
+      );
+      testPartnerships(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        PAIR_SIZE,
+        1,
+        '10 players, 2 courts, 12 rounds'
+      );
     });
   });
 
@@ -307,14 +464,14 @@ describe('PickleballMatcher', () => {
         const counts = Array.from(opponentPairCounts.values());
         const maxEncounter = Math.max(...counts);
         const totalMatchups = counts.reduce((sum, count) => sum + count, 0);
-        const totalUniquePairs = (testPlayers.length * (testPlayers.length - 1)) / 2;
+        const totalUniquePairs = (testPlayers.length * (testPlayers.length - 1)) / PAIR_SIZE;
         const theoreticalMinMax = Math.ceil(totalMatchups / totalUniquePairs);
 
         // Some pairs being above 2 encounters is unavoidable when matchups exceed 2× unique pairs.
         // minimumPairsAboveTwo is the minimum number of distinct pairs that MUST exceed 2 encounters
         // (achieved by spreading forced excess one encounter per pair at count=3).
-        const minimumPairsAboveTwo = Math.max(0, totalMatchups - totalUniquePairs * 2);
-        const pairsAboveTwo = counts.filter(count => count > 2).length;
+        const minimumPairsAboveTwo = Math.max(0, totalMatchups - totalUniquePairs * PAIR_SIZE);
+        const pairsAboveTwo = counts.filter(count => count > PAIR_SIZE).length;
         const avoidablePairsAboveTwo = pairsAboveTwo - minimumPairsAboveTwo;
 
         expect(
@@ -330,52 +487,132 @@ describe('PickleballMatcher', () => {
     }
 
     describe('16 players on 3 courts', () => {
-      testOpponentLimits(players, { ...defaultOptions, numberOfRounds: 6 }, 1, '16 players, 3 courts, 6 rounds');
-      testOpponentLimits(players, { ...defaultOptions, numberOfRounds: 8 }, 2, '16 players, 3 courts, 8 rounds');
-      testOpponentLimits(players, { ...defaultOptions, numberOfRounds: 10 }, 3, '16 players, 3 courts, 10 rounds');
-      testOpponentLimits(players, { ...defaultOptions, numberOfRounds: 12 }, 4, '16 players, 3 courts, 12 rounds');
+      testOpponentLimits(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 6
+        }),
+        1,
+        '16 players, 3 courts, 6 rounds'
+      );
+      testOpponentLimits(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 8
+        }),
+        PAIR_SIZE,
+        '16 players, 3 courts, 8 rounds'
+      );
+      testOpponentLimits(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 10
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_THREE,
+        '16 players, 3 courts, 10 rounds'
+      );
+      testOpponentLimits(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 12
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_FOUR,
+        '16 players, 3 courts, 12 rounds'
+      );
     });
 
     describe('12 players on 2 courts', () => {
-      const twelvePlayers = players.slice(0, 12);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testOpponentLimits(twelvePlayers, { ...options, numberOfRounds: 6 }, 1, '12 players, 2 courts, 6 rounds');
-      testOpponentLimits(twelvePlayers, { ...options, numberOfRounds: 8 }, 2, '12 players, 2 courts, 8 rounds');
+      const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
       testOpponentLimits(
         twelvePlayers,
-        { ...options, numberOfCourts: 2, numberOfRounds: 10 },
-        3,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        1,
+        '12 players, 2 courts, 6 rounds'
+      );
+      testOpponentLimits(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_TWO,
+        '12 players, 2 courts, 8 rounds'
+      );
+      testOpponentLimits(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfCourts: 2,
+          numberOfRounds: 10
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_THREE,
         '12 players, 2 courts, 10 rounds'
       );
       testOpponentLimits(
         twelvePlayers,
-        { ...options, numberOfCourts: 2, numberOfRounds: 12 },
-        8,
+        Object.assign({}, options, {
+          numberOfCourts: 2,
+          numberOfRounds: 12
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_EIGHT,
         '12 players, 2 courts, 12 rounds'
       );
     });
 
     describe('10 players on 2 courts', () => {
-      const tenPlayers = players.slice(0, 10);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testOpponentLimits(tenPlayers, { ...options, numberOfRounds: 6 }, 2, '10 players, 2 courts, 6 rounds');
-      testOpponentLimits(tenPlayers, { ...options, numberOfRounds: 8 }, 3, '10 players, 2 courts, 8 rounds');
-      testOpponentLimits(tenPlayers, { ...options, numberOfRounds: 10 }, 7, '10 players, 2 courts, 10 rounds');
-      testOpponentLimits(tenPlayers, { ...options, numberOfRounds: 12 }, 12, '10 players, 2 courts, 12 rounds', 2);
+      const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testOpponentLimits(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_TWO,
+        '10 players, 2 courts, 6 rounds'
+      );
+      testOpponentLimits(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_THREE,
+        '10 players, 2 courts, 8 rounds'
+      );
+      testOpponentLimits(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_SEVEN,
+        '10 players, 2 courts, 10 rounds'
+      );
+      testOpponentLimits(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        MAX_AVOIDABLE_OPPONENT_PAIRS_TWELVE,
+        '10 players, 2 courts, 12 rounds',
+        PAIR_SIZE
+      );
     });
   });
 
   describe('scoring priorities', () => {
     it('should penalize partner repeats more than comparable opponent repeats', () => {
-      const testPlayers = players.slice(0, 8);
-      const options: MatchingOptions = {
-        ...defaultOptions,
+      const testPlayers = players.slice(0, EIGHT_PLAYER_COUNT);
+      const options: MatchingOptions = Object.assign({}, defaultOptions, {
         balanceSkillLevels: false,
         distributeRestEqually: false,
         numberOfCourts: 2,
         numberOfRounds: 2,
         respectPartnerPreferences: false
-      };
+      });
       const matcher = new PickleballMatcher(testPlayers, options);
 
       const skillsById = new Map(testPlayers.map(player => [player.id, player.skillLevel]));
@@ -407,8 +644,14 @@ describe('PickleballMatcher', () => {
         options,
         restingPlayers: [[], []],
         rounds: [
-          [createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']), createGame('g-1-2', 1, 2, ['5', '6'], ['7', '8'])],
-          [createGame('g-2-1', 2, 1, ['1', '2'], ['5', '7']), createGame('g-2-2', 2, 2, ['3', '4'], ['6', '8'])]
+          [
+            createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']),
+            createGame('g-1-2', 1, PAIR_SIZE, ['5', '6'], ['7', '8'])
+          ],
+          [
+            createGame('g-2-1', PAIR_SIZE, 1, ['1', '2'], ['5', '7']),
+            createGame('g-2-2', PAIR_SIZE, PAIR_SIZE, ['3', '4'], ['6', '8'])
+          ]
         ]
       };
 
@@ -418,19 +661,25 @@ describe('PickleballMatcher', () => {
         options,
         restingPlayers: [[], []],
         rounds: [
-          [createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']), createGame('g-1-2', 1, 2, ['5', '6'], ['7', '8'])],
-          [createGame('g-2-1', 2, 1, ['1', '5'], ['2', '3']), createGame('g-2-2', 2, 2, ['4', '7'], ['6', '8'])]
+          [
+            createGame('g-1-1', 1, 1, ['1', '2'], ['3', '4']),
+            createGame('g-1-2', 1, PAIR_SIZE, ['5', '6'], ['7', '8'])
+          ],
+          [
+            createGame('g-2-1', PAIR_SIZE, 1, ['1', '5'], ['2', '3']),
+            createGame('g-2-2', PAIR_SIZE, PAIR_SIZE, ['4', '7'], ['6', '8'])
+          ]
         ]
       };
 
       const partnerPenalty =
         (matcher as unknown as { scorePartnerRepeats: (s: GameSchedule) => number }).scorePartnerRepeats(
           partnerRepeatSchedule
-        ) * 2500;
+        ) * PARTNER_REPEAT_SCORE_WEIGHT;
       const opponentPenalty =
         (matcher as unknown as { scoreOpponentRepeats: (s: GameSchedule) => number }).scoreOpponentRepeats(
           opponentRepeatSchedule
-        ) * 320;
+        ) * OPPONENT_REPEAT_SCORE_WEIGHT;
 
       expect(partnerPenalty).toBeGreaterThan(opponentPenalty);
     });
@@ -443,7 +692,7 @@ describe('PickleballMatcher', () => {
         const schedule = await matcher.generateSchedule();
 
         const totalPlayers = testPlayers.length;
-        const playersPerRound = testOptions.numberOfCourts * 4;
+        const playersPerRound = testOptions.numberOfCourts * PLAYERS_PER_GAME;
         const expectedRestingPerRound = Math.max(0, totalPlayers - playersPerRound);
 
         if (expectedRestingPerRound > 0) {
@@ -482,14 +731,14 @@ describe('PickleballMatcher', () => {
           });
 
           // For longer schedules, check rest period spacing
-          if (testOptions.numberOfRounds >= 8) {
+          if (testOptions.numberOfRounds >= EIGHT_ROUND_COUNT) {
             playerRestRounds.forEach((restRounds, playerId) => {
-              if (restRounds.length >= 2) {
+              if (restRounds.length >= PAIR_SIZE) {
                 const diff = Math.abs(restRounds[1] - restRounds[0]);
                 expect(
                   diff,
                   `Player ${playerId} rest periods too close together in ${testName}`
-                ).toBeGreaterThanOrEqual(2);
+                ).toBeGreaterThanOrEqual(PAIR_SIZE);
               }
             });
           }
@@ -498,28 +747,104 @@ describe('PickleballMatcher', () => {
     }
 
     describe('16 players on 3 courts', () => {
-      testRestDistribution(players, { ...defaultOptions, numberOfRounds: 6 }, '16 players, 3 courts, 6 rounds');
-      testRestDistribution(players, { ...defaultOptions, numberOfRounds: 8 }, '16 players, 3 courts, 8 rounds');
-      testRestDistribution(players, { ...defaultOptions, numberOfRounds: 10 }, '16 players, 3 courts, 10 rounds');
-      testRestDistribution(players, { ...defaultOptions, numberOfRounds: 12 }, '16 players, 3 courts, 12 rounds');
+      testRestDistribution(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 6
+        }),
+        '16 players, 3 courts, 6 rounds'
+      );
+      testRestDistribution(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 8
+        }),
+        '16 players, 3 courts, 8 rounds'
+      );
+      testRestDistribution(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 10
+        }),
+        '16 players, 3 courts, 10 rounds'
+      );
+      testRestDistribution(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 12
+        }),
+        '16 players, 3 courts, 12 rounds'
+      );
     });
 
     describe('12 players on 2 courts', () => {
-      const twelvePlayers = players.slice(0, 12);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testRestDistribution(twelvePlayers, { ...options, numberOfRounds: 6 }, '12 players, 2 courts, 6 rounds');
-      testRestDistribution(twelvePlayers, { ...options, numberOfRounds: 8 }, '12 players, 2 courts, 8 rounds');
-      testRestDistribution(twelvePlayers, { ...options, numberOfRounds: 10 }, '12 players, 2 courts, 10 rounds');
-      testRestDistribution(twelvePlayers, { ...options, numberOfRounds: 12 }, '12 players, 2 courts, 12 rounds');
+      const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testRestDistribution(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        '12 players, 2 courts, 6 rounds'
+      );
+      testRestDistribution(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        '12 players, 2 courts, 8 rounds'
+      );
+      testRestDistribution(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        '12 players, 2 courts, 10 rounds'
+      );
+      testRestDistribution(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        '12 players, 2 courts, 12 rounds'
+      );
     });
 
     describe('10 players on 2 courts', () => {
-      const tenPlayers = players.slice(0, 10);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testRestDistribution(tenPlayers, { ...options, numberOfRounds: 6 }, '10 players, 2 courts, 6 rounds');
-      testRestDistribution(tenPlayers, { ...options, numberOfRounds: 8 }, '10 players, 2 courts, 8 rounds');
-      testRestDistribution(tenPlayers, { ...options, numberOfRounds: 10 }, '10 players, 2 courts, 10 rounds');
-      testRestDistribution(tenPlayers, { ...options, numberOfRounds: 12 }, '10 players, 2 courts, 12 rounds');
+      const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testRestDistribution(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        '10 players, 2 courts, 6 rounds'
+      );
+      testRestDistribution(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        '10 players, 2 courts, 8 rounds'
+      );
+      testRestDistribution(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        '10 players, 2 courts, 10 rounds'
+      );
+      testRestDistribution(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        '10 players, 2 courts, 12 rounds'
+      );
     });
   });
 
@@ -557,35 +882,116 @@ describe('PickleballMatcher', () => {
     }
 
     describe('16 players on 3 courts', () => {
-      testSkillBalancing(players, { ...defaultOptions, numberOfRounds: 6 }, '16 players, 3 courts, 6 rounds');
-      testSkillBalancing(players, { ...defaultOptions, numberOfRounds: 8 }, '16 players, 3 courts, 8 rounds');
-      testSkillBalancing(players, { ...defaultOptions, numberOfRounds: 10 }, '16 players, 3 courts, 10 rounds');
-      testSkillBalancing(players, { ...defaultOptions, numberOfRounds: 12 }, '16 players, 3 courts, 12 rounds');
+      testSkillBalancing(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 6
+        }),
+        '16 players, 3 courts, 6 rounds'
+      );
+      testSkillBalancing(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 8
+        }),
+        '16 players, 3 courts, 8 rounds'
+      );
+      testSkillBalancing(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 10
+        }),
+        '16 players, 3 courts, 10 rounds'
+      );
+      testSkillBalancing(
+        players,
+        Object.assign({}, defaultOptions, {
+          numberOfRounds: 12
+        }),
+        '16 players, 3 courts, 12 rounds'
+      );
     });
 
     describe('12 players on 2 courts', () => {
-      const twelvePlayers = players.slice(0, 12);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testSkillBalancing(twelvePlayers, { ...options, numberOfRounds: 6 }, '12 players, 2 courts, 6 rounds');
-      testSkillBalancing(twelvePlayers, { ...options, numberOfRounds: 8 }, '12 players, 2 courts, 8 rounds');
-      testSkillBalancing(twelvePlayers, { ...options, numberOfRounds: 10 }, '12 players, 2 courts, 10 rounds');
-      testSkillBalancing(twelvePlayers, { ...options, numberOfRounds: 12 }, '12 players, 2 courts, 12 rounds');
+      const twelvePlayers = players.slice(0, TWELVE_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testSkillBalancing(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        '12 players, 2 courts, 6 rounds'
+      );
+      testSkillBalancing(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        '12 players, 2 courts, 8 rounds'
+      );
+      testSkillBalancing(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        '12 players, 2 courts, 10 rounds'
+      );
+      testSkillBalancing(
+        twelvePlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        '12 players, 2 courts, 12 rounds'
+      );
     });
 
     describe('10 players on 2 courts', () => {
-      const tenPlayers = players.slice(0, 10);
-      const options = { ...defaultOptions, numberOfCourts: 2 };
-      testSkillBalancing(tenPlayers, { ...options, numberOfRounds: 6 }, '10 players, 2 courts, 6 rounds');
-      testSkillBalancing(tenPlayers, { ...options, numberOfRounds: 8 }, '10 players, 2 courts, 8 rounds');
-      testSkillBalancing(tenPlayers, { ...options, numberOfRounds: 10 }, '10 players, 2 courts, 10 rounds');
-      testSkillBalancing(tenPlayers, { ...options, numberOfRounds: 12 }, '10 players, 2 courts, 12 rounds');
+      const tenPlayers = players.slice(0, TEN_PLAYER_COUNT);
+      const options = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2
+      });
+      testSkillBalancing(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 6
+        }),
+        '10 players, 2 courts, 6 rounds'
+      );
+      testSkillBalancing(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 8
+        }),
+        '10 players, 2 courts, 8 rounds'
+      );
+      testSkillBalancing(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 10
+        }),
+        '10 players, 2 courts, 10 rounds'
+      );
+      testSkillBalancing(
+        tenPlayers,
+        Object.assign({}, options, {
+          numberOfRounds: 12
+        }),
+        '10 players, 2 courts, 12 rounds'
+      );
     });
   });
 
   // Keep the remaining tests from the original file
   describe('partner preferences', () => {
     it('should respect partner preferences when enabled', async () => {
-      const matcher = new PickleballMatcher(players, { ...defaultOptions, respectPartnerPreferences: true });
+      const matcher = new PickleballMatcher(
+        players,
+        Object.assign({}, defaultOptions, {
+          respectPartnerPreferences: true
+        })
+      );
       const schedule = await matcher.generateSchedule();
 
       // Track partner pairings
@@ -625,18 +1031,24 @@ describe('PickleballMatcher', () => {
 
   describe('edge cases', () => {
     it('should handle minimum number of players (4)', async () => {
-      const minPlayers = players.slice(0, 4);
-      const minOptions = { ...defaultOptions, numberOfCourts: 1, numberOfRounds: 3 };
+      const minPlayers = players.slice(0, PLAYERS_PER_GAME);
+      const minOptions = Object.assign({}, defaultOptions, {
+        numberOfCourts: 1,
+        numberOfRounds: 3
+      });
       const matcher = new PickleballMatcher(minPlayers, minOptions);
       const schedule = await matcher.generateSchedule();
 
-      expect(schedule.rounds).toHaveLength(3);
+      expect(schedule.rounds).toHaveLength(THREE_ROUND_COUNT);
       expect(schedule.rounds[0]).toHaveLength(1); // Only 1 court for 4 players
     });
 
     it('should handle odd number of players', async () => {
-      const oddPlayers = players.slice(0, 8); // 9 Players
-      const opts = { ...defaultOptions, numberOfCourts: 2, numberOfRounds: 5 };
+      const oddPlayers = players.slice(0, EIGHT_PLAYER_COUNT); // 9 Players
+      const opts = Object.assign({}, defaultOptions, {
+        numberOfCourts: 2,
+        numberOfRounds: 5
+      });
       const matcher = new PickleballMatcher(oddPlayers, opts);
       const schedule = await matcher.generateSchedule();
 
@@ -646,7 +1058,9 @@ describe('PickleballMatcher', () => {
     });
 
     it('should handle zero rounds request', async () => {
-      const zeroRoundsOptions = { ...defaultOptions, numberOfRounds: 0 };
+      const zeroRoundsOptions = Object.assign({}, defaultOptions, {
+        numberOfRounds: 0
+      });
       const matcher = new PickleballMatcher(players, zeroRoundsOptions);
       const schedule = await matcher.generateSchedule();
 
@@ -658,14 +1072,18 @@ describe('PickleballMatcher', () => {
   describe('input validation and error handling', () => {
     it('should handle invalid skill levels', async () => {
       const invalidPlayers = [...players];
-      invalidPlayers[0] = { ...invalidPlayers[0], skillLevel: -1 }; // Invalid negative skill
-      invalidPlayers[1] = { ...invalidPlayers[1], skillLevel: 10 }; // Invalid high skill
+      invalidPlayers[0] = Object.assign({}, invalidPlayers[0], {
+        skillLevel: -1
+      }); // Invalid negative skill
+      invalidPlayers[1] = Object.assign({}, invalidPlayers[1], {
+        skillLevel: 10
+      }); // Invalid high skill
 
       const matcher = new PickleballMatcher(invalidPlayers, defaultOptions);
       const schedule = await matcher.generateSchedule();
 
       // Should still generate a schedule despite invalid skill levels
-      expect(schedule.rounds).toHaveLength(8);
+      expect(schedule.rounds).toHaveLength(EIGHT_ROUND_COUNT);
     });
   });
 
@@ -691,7 +1109,7 @@ describe('PickleballMatcher', () => {
       const schedule = await matcher.generateSchedule();
 
       // All rounds should have same number of courts when player count allows
-      const expectedCourts = Math.min(defaultOptions.numberOfCourts, Math.floor(players.length / 4));
+      const expectedCourts = Math.min(defaultOptions.numberOfCourts, Math.floor(players.length / PLAYERS_PER_GAME));
 
       schedule.rounds.forEach((round: Game[], index: number) => {
         expect(round.length).toBeLessThanOrEqual(expectedCourts);
@@ -699,8 +1117,8 @@ describe('PickleballMatcher', () => {
 
         // Each game should be properly formed
         round.forEach((game: Game) => {
-          expect(game.team1).toHaveLength(2);
-          expect(game.team2).toHaveLength(2);
+          expect(game.team1).toHaveLength(PAIR_SIZE);
+          expect(game.team2).toHaveLength(PAIR_SIZE);
           expect(game.court).toBeGreaterThan(0);
           expect(game.round).toBe(index + 1);
         });
@@ -709,23 +1127,22 @@ describe('PickleballMatcher', () => {
 
     it('should have exactly 4 resting players per round with 16 players, 3 courts, and 9 rounds', async () => {
       // Create test configuration with 16 players, 3 courts, and 9 rounds
-      const nineRoundsOptions = {
-        ...defaultOptions,
+      const nineRoundsOptions = Object.assign({}, defaultOptions, {
         numberOfRounds: 9
-      };
+      });
 
       const matcher = new PickleballMatcher(players, nineRoundsOptions);
       const schedule = await matcher.generateSchedule();
 
       // Verify we have 9 rounds
-      expect(schedule.rounds).toHaveLength(9);
+      expect(schedule.rounds).toHaveLength(NINE_ROUND_COUNT);
 
       // Check each round's resting player count
       schedule.restingPlayers.forEach((restingPlayersInRound: string[], roundIndex: number) => {
         expect(
           restingPlayersInRound.length,
           `Round ${roundIndex + 1} should have exactly 4 resting players, but has ${restingPlayersInRound.length}`
-        ).toBe(4);
+        ).toBe(PLAYERS_PER_GAME);
       });
 
       // Verify the actual number of players playing in each round
@@ -734,10 +1151,10 @@ describe('PickleballMatcher', () => {
 
         round.forEach((_game: Game) => {
           // Each game has 4 players (2 per team)
-          playingPlayerCount += 4;
+          playingPlayerCount += PLAYERS_PER_GAME;
         });
 
-        const expectedPlaying = players.length - 4; // 16 - 4 = 12 players should be playing
+        const expectedPlaying = players.length - PLAYERS_PER_GAME; // 16 - 4 = 12 players should be playing
         expect(
           playingPlayerCount,
           `Round ${roundIndex + 1} has ${playingPlayerCount} playing players, expected ${expectedPlaying}`
@@ -748,11 +1165,10 @@ describe('PickleballMatcher', () => {
 
   describe('first round sitters', () => {
     it('should respect firstRoundSitters option when specified', async () => {
-      const optionsWithSitters: MatchingOptions = {
-        ...defaultOptions,
+      const optionsWithSitters: MatchingOptions = Object.assign({}, defaultOptions, {
         firstRoundSitters: ['1', '2', '3', '4'],
         numberOfRounds: 7
-      };
+      });
 
       const matcher = new PickleballMatcher(players, optionsWithSitters);
       const schedule = await matcher.generateSchedule();
@@ -779,11 +1195,10 @@ describe('PickleballMatcher', () => {
     });
 
     it('should work with fewer than 4 first round sitters', async () => {
-      const optionsWithFewerSitters: MatchingOptions = {
-        ...defaultOptions,
+      const optionsWithFewerSitters: MatchingOptions = Object.assign({}, defaultOptions, {
         firstRoundSitters: ['5', '6'],
         numberOfRounds: 7
-      };
+      });
 
       const matcher = new PickleballMatcher(players, optionsWithFewerSitters);
       const schedule = await matcher.generateSchedule();
@@ -804,18 +1219,17 @@ describe('PickleballMatcher', () => {
     });
 
     it('should work when firstRoundSitters is not specified', async () => {
-      const optionsWithoutSitters: MatchingOptions = {
-        ...defaultOptions,
+      const optionsWithoutSitters: MatchingOptions = Object.assign({}, defaultOptions, {
         numberOfRounds: 7
         // firstRoundSitters is undefined
-      };
+      });
 
       const matcher = new PickleballMatcher(players, optionsWithoutSitters);
       const schedule = await matcher.generateSchedule();
 
       // Just verify it generates a valid schedule
-      expect(schedule.rounds).toHaveLength(7);
-      expect(schedule.rounds[0]).toHaveLength(3); // 3 courts
+      expect(schedule.rounds).toHaveLength(SEVEN_ROUND_COUNT);
+      expect(schedule.rounds[0]).toHaveLength(DEFAULT_COURT_COUNT); // 3 courts
       validateAllGamesHavePlayers(schedule);
     });
   });

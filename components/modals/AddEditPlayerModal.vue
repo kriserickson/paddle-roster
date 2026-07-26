@@ -1,4 +1,8 @@
 <script setup lang="ts">
+const MAX_SKILL_LEVEL = 5;
+const NUMBER_OF_PLAYERS = 4;
+const PLAYERS_PER_SIDE = 2;
+
 import { z } from 'zod';
 import type { Player } from '~/types';
 
@@ -28,7 +32,7 @@ const emit = defineEmits<Emits>();
 const playerSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   partnerId: z.string().optional(),
-  skillLevel: z.number().min(1).max(5)
+  skillLevel: z.number().min(1).max(MAX_SKILL_LEVEL)
 });
 
 // Computed
@@ -56,11 +60,11 @@ watch(isOpen, async (val: boolean) => {
 function handleSave(): void {
   // Round skill level to nearest 0.25 on save
   const skillLevel = localPlayerForm.value.skillLevel;
-  const rounded = Math.round(Math.min(Math.max(skillLevel, 1), 5) * 4) / 4;
-  localPlayerForm.value = {
-    ...localPlayerForm.value,
+  const rounded =
+    Math.round(Math.min(Math.max(skillLevel, 1), MAX_SKILL_LEVEL) * NUMBER_OF_PLAYERS) / NUMBER_OF_PLAYERS;
+  localPlayerForm.value = Object.assign({}, localPlayerForm.value, {
     skillLevel: Number(rounded)
-  };
+  });
   emit('save');
 }
 
@@ -80,12 +84,11 @@ function onSkillLevelBlur(event: Event): void {
   const input = event.target as HTMLInputElement;
   const num = Number(input.value);
   if (!Number.isNaN(num)) {
-    let rounded = Math.round(Math.min(Math.max(num, 1), 5) * 4) / 4;
-    rounded = Number(rounded.toFixed(2));
-    localPlayerForm.value = {
-      ...localPlayerForm.value,
+    let rounded = Math.round(Math.min(Math.max(num, 1), MAX_SKILL_LEVEL) * NUMBER_OF_PLAYERS) / NUMBER_OF_PLAYERS;
+    rounded = Number(rounded.toFixed(PLAYERS_PER_SIDE));
+    localPlayerForm.value = Object.assign({}, localPlayerForm.value, {
       skillLevel: rounded
-    };
+    });
     input.value = rounded.toString();
   }
 }

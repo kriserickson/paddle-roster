@@ -22,11 +22,11 @@ export class PlayerApiSupabase implements IPlayerApi {
     return {
       id: row.id,
       name: row.name,
-      skillLevel: row.skill_level,
-      partnerId: row.partner_id || undefined
+      partnerId: row.partner_id || undefined,
       // createdAt: row.created_at,
       // updatedAt: row.updated_at,
       // userId: row.user_id
+      skillLevel: row.skill_level
     };
   }
 
@@ -168,7 +168,15 @@ export class PlayerApiSupabase implements IPlayerApi {
         return await this.createPlayer(updates as Omit<Player, 'id'>);
       }
 
-      const updateData = this.mapPlayerToUpdate({ id, ...updates } as Player);
+      const updateData = this.mapPlayerToUpdate(
+        Object.assign(
+          {},
+          {
+            id
+          },
+          updates
+        ) as Player
+      );
 
       // @ts-expect-error: Supabase generic type inference limitation in VS Code
       let query = this.supabase.from('players').update(updateData).eq('id', id);

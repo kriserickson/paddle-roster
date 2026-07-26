@@ -1,4 +1,7 @@
 <script setup lang="ts">
+const MININUM_PASSWORD_LENGTH = 8;
+const TWO_SECONDS_IN_MILLISECONDS = 2000;
+
 const supabase = useSupabaseClient();
 
 // State
@@ -28,7 +31,7 @@ async function updatePassword() {
     }
 
     // Validate password length
-    if (newPassword.value.length < 8) {
+    if (newPassword.value.length < MININUM_PASSWORD_LENGTH) {
       error.value = 'Password must be at least 8 characters long';
       return;
     }
@@ -44,7 +47,7 @@ async function updatePassword() {
       // Redirect to main app after successful password reset
       setTimeout(() => {
         navigateTo('/');
-      }, 2000);
+      }, TWO_SECONDS_IN_MILLISECONDS);
     }
   } catch (err) {
     error.value = 'An unexpected error occurred';

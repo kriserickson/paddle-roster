@@ -1,3 +1,8 @@
+const IFRAME_RENDER_DELAY_MS = 500;
+const MINIMUM_IMAGE_DATA_LENGTH = 100;
+const TOTAL_HORIZONTAL_MARGIN_MM = 20;
+const PAGE_MARGIN_MM = 10;
+
 export interface SimplePDFOptions {
   orientation?: 'portrait' | 'landscape';
   filename?: string;
@@ -46,7 +51,7 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
     });
 
     // Wait for content to render
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await new Promise(resolve => setTimeout(resolve, IFRAME_RENDER_DELAY_MS));
 
     const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
     if (!iframeDoc || !iframeDoc.body) {
@@ -70,7 +75,7 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
     // Create PDF
     const imgData = canvas.toDataURL('image/png', 1.0);
 
-    if (!imgData || imgData === 'data:,' || imgData.length < 100) {
+    if (!imgData || imgData === 'data:,' || imgData.length < MINIMUM_IMAGE_DATA_LENGTH) {
       throw new Error('Failed to generate image data from canvas');
     }
 
@@ -86,22 +91,22 @@ export async function generatePDFFromHTML(htmlContent: string, options: SimplePD
     const pageHeight = pdf.internal.pageSize.getHeight();
 
     // Calculate image dimensions to fit page
-    const imgWidth = pageWidth - 20; // 10mm margin on each side
+    const imgWidth = pageWidth - TOTAL_HORIZONTAL_MARGIN_MM; // 10mm margin on each side
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     let heightLeft = imgHeight;
     let position = 10; // 10mm top margin
 
     // Add first page
-    pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
-    heightLeft -= pageHeight - 20;
+    pdf.addImage(imgData, 'PNG', PAGE_MARGIN_MM, position, imgWidth, imgHeight, undefined, 'FAST');
+    heightLeft -= pageHeight - TOTAL_HORIZONTAL_MARGIN_MM;
 
     // Add additional pages if needed
     while (heightLeft >= 0) {
-      position = heightLeft - imgHeight + 10;
+      position = heightLeft - imgHeight + PAGE_MARGIN_MM;
       pdf.addPage();
-      pdf.addImage(imgData, 'PNG', 10, position, imgWidth, imgHeight, undefined, 'FAST');
-      heightLeft -= pageHeight - 20;
+      pdf.addImage(imgData, 'PNG', PAGE_MARGIN_MM, position, imgWidth, imgHeight, undefined, 'FAST');
+      heightLeft -= pageHeight - TOTAL_HORIZONTAL_MARGIN_MM;
     }
 
     // Save the PDF
