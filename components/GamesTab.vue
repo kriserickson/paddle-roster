@@ -7,6 +7,7 @@ const SKILL_LEVEL_ADVANCED = 5.0;
 const NUMBER_OF_PLAYERS = 4;
 
 import type { MatchingOptions, Player } from '~/types';
+import { copyMatchingOptions } from '~/utils/matchingOptions';
 
 // Define emits
 const emit = defineEmits<{
@@ -105,7 +106,7 @@ watch(
     }
 
     // Create a deep copy of the new options
-    const newOptionsCopy = structuredClone(newOptions);
+    const newOptionsCopy = copyMatchingOptions(newOptions);
 
     // Don't save if values haven't actually changed (deep comparison)
     if (previousOptions.value && optionsAreEqual(newOptionsCopy, previousOptions.value)) {
@@ -128,7 +129,7 @@ watch(
       try {
         //console.log('💾 Saving preferences to Supabase...');
         isSavingPreferences.value = true;
-        await gameStore.updateOptions(newOptions);
+        await gameStore.updateOptions(newOptionsCopy);
         //console.log('✅ Preferences saved successfully');
         debounceSuccessToast();
       } catch (error) {

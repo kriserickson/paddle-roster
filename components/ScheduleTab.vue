@@ -150,16 +150,16 @@ onMounted(async () => {
       <div class="content-card-header">
         <div class="flex justify-between items-center">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Icon name="mdi:calendar-month" class="text-paddle-teal text-3xl" />
+            <UIcon name="i-lucide-calendar-range" class="text-paddle-teal text-3xl" />
             Game Schedule
           </h2>
           <div v-if="gameStore.currentSchedule" class="flex gap-3">
-            <UButton icon="mdi:eye" class="btn-primary" @click="openPrintModal"> Preview </UButton>
-            <UButton icon="mdi:printer" class="btn-secondary" @click="openPrintModal"> Print </UButton>
+            <UButton icon="i-lucide-scan-eye" class="btn-primary" @click="openPrintModal"> Preview </UButton>
+            <UButton icon="i-lucide-printer" class="btn-secondary" @click="openPrintModal"> Print </UButton>
             <ClientOnly>
-              <UButton icon="mdi:file-pdf-box" class="btn-secondary" @click="openPrintModal"> Download PDF </UButton>
+              <UButton icon="i-lucide-file-down" class="btn-secondary" @click="openPrintModal"> Download PDF </UButton>
             </ClientOnly>
-            <UButton icon="mdi-trash" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
+            <UButton icon="i-lucide-trash-2" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
           </div>
         </div>
       </div>
@@ -167,11 +167,11 @@ onMounted(async () => {
     <!-- No Schedule Message -->
     <div v-if="!gameStore.currentSchedule" class="content-card" data-testid="no-schedule-message">
       <div class="p-16 text-center">
-        <Icon name="mdi:calendar-blank" class="text-8xl text-gray-300 mb-6 mx-auto" />
+        <UIcon name="i-lucide-calendar-off" class="text-8xl text-gray-300 mb-6 mx-auto" />
         <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-3">No Schedule Generated</h3>
         <p class="text-gray-600 mb-8 text-lg">Go to the "Generate Games" tab to create a new schedule.</p>
         <UButton to="#games" class="btn-primary" size="lg" data-testid="generate-schedule-link">
-          <Icon name="mdi:cog" class="mr-2" />
+          <UIcon name="i-lucide-wand-sparkles" class="mr-2" />
           Generate Schedule
         </UButton>
       </div>
@@ -183,7 +183,7 @@ onMounted(async () => {
         <div class="content-card-header">
           <div class="flex justify-between items-center">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Icon name="mdi:information" class="text-paddle-teal" />
+              <UIcon name="i-lucide-info" class="text-paddle-teal" />
               Schedule Information
             </h3>
             <div class="player-skill-badge" data-testid="total-rounds-count">
@@ -196,14 +196,14 @@ onMounted(async () => {
           <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-blue-50 to-blue-100">
-                <Icon name="mdi:tournament" class="text-3xl text-blue-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-trophy" class="text-3xl text-blue-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-blue-700">{{ totalGames }}</div>
                 <div class="text-sm font-medium text-blue-600">Total Games</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-paddle-teal/10 to-paddle-teal/20">
-                <Icon name="mdi:soccer-field" class="text-3xl text-paddle-teal mb-2 mx-auto" />
+                <UIcon name="i-lucide-layout-grid" class="text-3xl text-paddle-teal mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-paddle-teal">
                   {{ gameStore.currentSchedule.options.numberOfCourts }}
                 </div>
@@ -212,42 +212,42 @@ onMounted(async () => {
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-amber-50 to-amber-100">
-                <Icon name="mdi:scale-balance" class="text-3xl text-amber-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-scale" class="text-3xl text-amber-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-amber-700">{{ averageSkillDifference }}</div>
                 <div class="text-sm font-medium text-amber-600">Avg Skill Diff</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-purple-50 to-purple-100">
-                <Icon name="mdi:seat" class="text-3xl text-purple-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-armchair" class="text-3xl text-purple-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-purple-700">{{ restingPlayersPerRound }}</div>
                 <div class="text-sm font-medium text-purple-600">Resting per Round</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-rose-50 to-rose-100">
-                <Icon name="mdi:account-group" class="text-3xl text-rose-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-users-round" class="text-3xl text-rose-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-rose-700">{{ duplicatePartners }}</div>
                 <div class="text-sm font-medium text-rose-600">Duplicated Partners</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-emerald-50 to-emerald-100">
-                <Icon name="mdi:account-switch" class="text-3xl text-emerald-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-shuffle" class="text-3xl text-emerald-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-emerald-700">{{ duplicateOpponents }}</div>
                 <div class="text-sm font-medium text-emerald-600">Duplicated Opponents</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-emerald-50 to-emerald-100">
-                <Icon name="mdi:arrow-expand-up" class="text-3xl text-emerald-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-repeat-2" class="text-3xl text-emerald-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-emerald-700">{{ maxOpponentRepeats }}</div>
                 <div class="text-sm font-medium text-emerald-600">Max Opponent Repeats</div>
               </div>
             </div>
             <div class="content-card overflow-hidden">
               <div class="p-4 text-center bg-linear-to-br from-amber-50 to-orange-100">
-                <Icon name="mdi:seat" class="text-3xl text-orange-600 mb-2 mx-auto" />
+                <UIcon name="i-lucide-armchair" class="text-3xl text-orange-600 mb-2 mx-auto" />
                 <div class="text-2xl font-bold text-orange-700">{{ maxRests }}</div>
                 <div class="text-sm font-medium text-orange-600">Max Rests</div>
               </div>
@@ -259,7 +259,7 @@ onMounted(async () => {
               {{ gameStore.currentSchedule.eventLabel }}
             </div>
             <div class="text-sm text-gray-600 flex items-center justify-center gap-2">
-              <Icon name="mdi:clock-check" class="text-paddle-teal" />
+              <UIcon name="i-lucide-clock-3" class="text-paddle-teal" />
               Generated: {{ formatDateTime(gameStore.currentSchedule.generatedAt) }}
             </div>
           </div>
@@ -270,7 +270,7 @@ onMounted(async () => {
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Icon name="mdi:table" class="text-paddle-teal" />
+            <UIcon name="i-lucide-table-2" class="text-paddle-teal" />
             All Rounds Overview
           </h3>
         </div>
@@ -305,7 +305,7 @@ onMounted(async () => {
                 >
                   <td class="px-4 py-3 text-sm font-bold text-gray-900 dark:text-white bg-gray-50 dark:bg-slate-700">
                     <div class="flex items-center gap-2">
-                      <Icon name="mdi:numeric" class="text-paddle-teal dark:text-paddle-teal-light" />
+                      <UIcon name="i-lucide-circle-dot" class="text-paddle-teal dark:text-paddle-teal-light" />
                       Round {{ roundIndex + 1 }}
                     </div>
                   </td>
@@ -352,7 +352,7 @@ onMounted(async () => {
       <div class="content-card">
         <div class="content-card-header">
           <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Icon name="mdi:numeric" class="text-paddle-teal" />
+            <UIcon name="i-lucide-circle-dot" class="text-paddle-teal" />
             Select Round
           </h3>
         </div>
@@ -377,7 +377,7 @@ onMounted(async () => {
         <div class="content-card-header">
           <div class="flex justify-between items-center">
             <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-              <Icon name="mdi:gamepad-variant" class="text-paddle-teal" />
+              <UIcon name="i-lucide-swords" class="text-paddle-teal" />
               Round {{ selectedRound }} Games
             </h3>
             <div class="player-skill-badge">{{ selectedRoundGames.length }} Games</div>
@@ -397,7 +397,7 @@ onMounted(async () => {
               <div class="mb-3">
                 <div class="bg-linear-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-xl p-3">
                   <div class="text-sm font-bold text-blue-900 mb-2 flex items-center gap-2">
-                    <Icon name="mdi:account-group" class="text-blue-600" />
+                    <UIcon name="i-lucide-users-round" class="text-blue-600" />
                     Team 1
                   </div>
                   <div class="space-y-2">
@@ -422,16 +422,16 @@ onMounted(async () => {
 
               <!-- VS -->
               <div class="text-center text-lg font-bold text-paddle-teal mb-3 flex items-center justify-center gap-2">
-                <Icon name="mdi:sword-cross" class="text-paddle-red" />
+                <UIcon name="i-lucide-swords" class="text-paddle-red" />
                 VS
-                <Icon name="mdi:sword-cross" class="text-paddle-red" />
+                <UIcon name="i-lucide-swords" class="text-paddle-red" />
               </div>
 
               <!-- Team 2 -->
               <div class="mb-4">
                 <div class="bg-linear-to-br from-red-50 to-red-100 border-2 border-red-200 rounded-xl p-3">
                   <div class="text-sm font-bold text-red-900 mb-2 flex items-center gap-2">
-                    <Icon name="mdi:account-group" class="text-red-600" />
+                    <UIcon name="i-lucide-users-round" class="text-red-600" />
                     Team 2
                   </div>
                   <div class="space-y-2">
@@ -464,7 +464,7 @@ onMounted(async () => {
                     'bg-red-100 text-red-800': game.skillDifference > 2
                   }"
                 >
-                  <Icon name="mdi:scale-balance" />
+                  <UIcon name="i-lucide-scale" />
                   Diff: {{ game.skillDifference.toFixed(1) }}
                 </div>
               </div>
@@ -474,7 +474,7 @@ onMounted(async () => {
           <!-- Resting Players -->
           <div v-if="selectedRoundResting.length > 0" class="rest-players mt-6">
             <h4 class="rest-title flex items-center gap-2">
-              <Icon name="mdi:seat" class="text-amber-600" />
+              <UIcon name="i-lucide-armchair" class="text-amber-600" />
               Resting Players
             </h4>
             <div class="flex flex-wrap gap-3">
@@ -483,7 +483,7 @@ onMounted(async () => {
                 :key="playerId"
                 class="flex items-center gap-2 bg-amber-200 text-amber-800 px-3 py-1 rounded-full text-sm font-medium"
               >
-                <Icon name="mdi:account-clock" />
+                <UIcon name="i-lucide-user-round-minus" />
                 {{ getPlayerName(playerId) }}
               </div>
             </div>

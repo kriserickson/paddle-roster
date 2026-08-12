@@ -129,25 +129,22 @@ function handlePasswordReset() {
 </script>
 
 <template>
-  <div
-    class="flex items-center justify-center bg-gradient-to-br from-paddle-teal to-blue-600 dark:from-gray-900 dark:to-gray-800 p-4 min-h-screen"
-  >
+  <div class="auth-shell flex min-h-screen items-center justify-center p-4">
     <div class="max-w-md w-full">
-      <UCard class="p-8 shadow-2xl dark:bg-gray-900 dark:border-gray-700">
+      <UCard class="auth-card p-8">
         <div class="text-center mb-8">
-          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16 mx-auto mb-4" />
-          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-2">Paddle Roster</h1>
+          <div class="brand-mark auth-brand-mark mx-auto mb-4" aria-hidden="true">
+            <UIcon name="i-lucide-circle-dot-dashed" />
+          </div>
+          <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">Paddle Roster</h1>
+          <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">More play. Less clipboard.</p>
           <!-- Clear Mode Indicator -->
-          <div class="mb-6">
-            <div
-              class="inline-flex rounded-lg border-2 border-gray-500 dark:border-gray-600 p-1 bg-gray-300 dark:bg-gray-800"
-            >
+          <div class="auth-mode-switch mb-6">
+            <div class="inline-flex rounded-xl p-1">
               <button
                 :class="[
-                  'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
-                  !isSignUp && !showPasswordReset
-                    ? 'bg-white dark:bg-gray-900 text-paddle-teal dark:text-paddle-teal-light shadow-lg border-2 border-paddle-teal dark:border-paddle-teal-light scale-105 transform'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                  'px-6 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200',
+                  !isSignUp && !showPasswordReset ? 'active' : ''
                 ]"
                 @click="
                   isSignUp = false;
@@ -158,10 +155,8 @@ function handlePasswordReset() {
               </button>
               <button
                 :class="[
-                  'px-6 py-3 text-base font-semibold rounded-md transition-all duration-200',
-                  isSignUp && !showPasswordReset
-                    ? 'bg-white dark:bg-gray-900 text-paddle-teal dark:text-paddle-teal-light shadow-lg border-2 border-paddle-teal dark:border-paddle-teal-light scale-105 transform'
-                    : 'text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-50 dark:hover:bg-gray-700'
+                  'px-6 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200',
+                  isSignUp && !showPasswordReset ? 'active' : ''
                 ]"
                 @click="
                   isSignUp = true;

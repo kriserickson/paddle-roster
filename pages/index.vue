@@ -14,20 +14,26 @@ const currentUser = computed(() => {
 // Tab configuration
 const tabs = [
   {
-    icon: 'i-heroicons-users',
+    description: 'Manage your club roster',
+    icon: 'i-lucide-users-round',
     key: 'players',
-    label: 'Players'
+    label: 'Players',
+    step: '01'
   },
   {
-    icon: 'i-heroicons-cog-6-tooth',
+    description: 'Choose players and format',
+    icon: 'i-lucide-wand-sparkles',
     key: 'games',
-    label: 'Generate Games'
+    label: 'Build schedule',
+    step: '02'
   },
   {
+    description: 'Review, print and share',
     disabled: computed(() => !gameStore.currentSchedule),
-    icon: 'i-heroicons-calendar-days',
+    icon: 'i-lucide-calendar-range',
     key: 'schedule',
-    label: 'Schedule'
+    label: 'Schedule',
+    step: '03'
   }
 ];
 
@@ -97,31 +103,29 @@ const userDisplayName = computed(() => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
+  <div class="app-shell min-h-screen">
+    <div class="app-ambient app-ambient-one" aria-hidden="true" />
+    <div class="app-ambient app-ambient-two" aria-hidden="true" />
     <!-- Fixed Help/Account Menu -->
-    <div class="fixed top-4 right-4 z-50">
+    <div class="account-menu fixed top-5 right-5 z-50">
       <UPopover mode="click" :content="{ side: 'bottom', align: 'start', sideOffset: 4 }" arrow>
-        <UButton
-          icon="i-heroicons-bars-3"
-          variant="ghost"
-          class="text-teal-600 hover:bg-teal-100 p-2 text-2xl dark:text-paddle-teal-light dark:hover:bg-gray-800"
-        />
+        <UButton icon="i-lucide-ellipsis" variant="ghost" aria-label="Open account menu" class="icon-button" />
         <template #content>
-          <div class="p-1 space-y-1 bg-white dark:bg-gray-600 rounded-lg shadow-lg">
+          <div class="menu-panel space-y-1 p-1.5">
             <UButton
-              icon="i-heroicons-question-mark-circle"
+              icon="i-lucide-circle-help"
               variant="ghost"
               color="neutral"
-              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              class="w-full justify-start"
               @click="openHelp"
             >
               Help
             </UButton>
             <UButton
-              icon="i-heroicons-arrow-right-on-rectangle"
+              icon="i-lucide-log-out"
               variant="ghost"
               color="neutral"
-              class="w-full justify-start text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700"
+              class="w-full justify-start"
               @click="logout"
             >
               Logout
@@ -130,70 +134,64 @@ const userDisplayName = computed(() => {
         </template>
       </UPopover>
     </div>
-    <UContainer class="py-8">
+    <UContainer class="relative z-10 py-5 sm:py-8">
       <!-- Header -->
-      <div class="app-header rounded-2xl mb-8 p-8 text-center relative">
-        <h1 class="app-title text-5xl font-bold mb-3 flex items-center justify-center gap-4">
-          <img src="/paddle-roster-128x128.webp" alt="Paddle Roster" class="w-16 h-16" />
-          Paddle Roster
-        </h1>
-        <p class="text-xl text-white/90 mb-4 font-medium">
-          Intelligent player matching for recreational pickleball leagues
-        </p>
+      <header class="app-header mb-5">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">
+            <UIcon name="i-lucide-circle-dot-dashed" />
+          </div>
+          <div>
+            <h1 class="app-title">Paddle Roster</h1>
+            <p>Balanced games. More play. Less clipboard.</p>
+          </div>
+        </div>
 
-        <!-- User Info -->
-        <div v-if="currentUser" class="text-center text-white/80 text-sm">
-          Welcome back, {{ userDisplayName }}!
-          <span v-if="isDemo" class="block text-xs opacity-75 mt-1">
-            (Demo Mode - Set up Supabase for full functionality)
+        <div v-if="currentUser" class="user-greeting">
+          <span class="status-dot" aria-hidden="true" />
+          <span>
+            <span class="user-greeting-label">Signed in as</span>
+            <strong>{{ userDisplayName }}</strong>
           </span>
+        </div>
+      </header>
+
+      <!-- Demo Mode Banner -->
+      <div v-if="isDemo" class="demo-notice mb-5">
+        <UIcon name="i-lucide-sparkles" />
+        <div>
+          <strong>Demo workspace</strong>
+          <span>Changes are saved on this device.</span>
         </div>
       </div>
 
-      <!-- Demo Mode Banner -->
-      <div v-if="isDemo" class="mb-6">
-        <UAlert
-          icon="i-heroicons-information-circle"
-          color="info"
-          variant="soft"
-          title="Demo Mode Active"
-          description="You're using demo mode with localStorage. Set up Supabase for authentication and cloud storage."
-        />
+      <!-- Workflow Navigation -->
+      <div class="tab-nav mb-5">
+        <nav class="workflow-nav" aria-label="Schedule workflow">
+          <button
+            v-for="tab in tabs"
+            :key="tab.key"
+            :class="['tab-button', activeTab === tab.key ? 'active' : '', tab.disabled?.value ? 'disabled' : '']"
+            :disabled="tab.disabled?.value"
+            :aria-current="activeTab === tab.key ? 'step' : undefined"
+            @click="!tab.disabled?.value && (activeTab = tab.key)"
+          >
+            <span class="tab-icon"><UIcon :name="tab.icon" /></span>
+            <span class="tab-copy">
+              <span class="tab-kicker">Step {{ tab.step }}</span>
+              <strong>{{ tab.label }}</strong>
+              <small>{{ tab.description }}</small>
+            </span>
+          </button>
+        </nav>
       </div>
 
       <!-- Main Content -->
-      <div class="content-card bg-white dark:bg-gray-800 dark:text-gray-100">
-        <!-- Tab Navigation -->
-        <div class="tab-nav dark:bg-gray-800 dark:text-gray-100">
-          <nav class="flex">
-            <button
-              v-for="tab in tabs"
-              :key="tab.key"
-              :class="[
-                'tab-button flex-1 py-4 px-6 text-center font-medium text-sm flex items-center justify-center gap-3 transition-all duration-300',
-                activeTab === tab.key ? 'active' : '',
-                tab.disabled?.value ? 'disabled opacity-50 cursor-not-allowed' : ''
-              ]"
-              :disabled="tab.disabled?.value"
-              @click="!tab.disabled?.value && (activeTab = tab.key)"
-            >
-              <UIcon :name="tab.icon" class="w-5 h-5" />
-              <span class="hidden sm:inline">{{ tab.label }}</span>
-            </button>
-          </nav>
-        </div>
-
-        <!-- Tab Content -->
-        <div class="p-8">
-          <PlayersTab v-if="activeTab === 'players'" />
-          <GamesTab v-else-if="activeTab === 'games'" @switch-tab="switchToTab" />
-          <ScheduleTab v-else-if="activeTab === 'schedule'" />
-        </div>
-      </div>
+      <main class="workspace-panel">
+        <PlayersTab v-if="activeTab === 'players'" />
+        <GameBuilder v-else-if="activeTab === 'games'" @switch-tab="switchToTab" />
+        <ScheduleTab v-else-if="activeTab === 'schedule'" />
+      </main>
     </UContainer>
   </div>
 </template>
-
-<style>
-/* Add the same styles from the original app.vue */
-</style>

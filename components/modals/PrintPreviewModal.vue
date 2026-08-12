@@ -325,8 +325,14 @@ watch(
               id="print-preview-element"
               ref="printPreviewRef"
               class="bg-white shadow-lg print-preview-container min-w-[8.5in] min-h-[11in] w-full max-w-[11in]"
-              v-html="generatedPreviewHTML"
-            ></div>
+            >
+              <iframe
+                class="print-preview-document"
+                title="Printable schedule preview"
+                :srcdoc="generatedPreviewHTML"
+                sandbox=""
+              ></iframe>
+            </div>
 
             <div v-else class="flex items-center justify-center h-full min-h-[400px]">
               <div class="text-center text-gray-500">
@@ -405,6 +411,7 @@ watch(
 }
 
 .print-preview-container {
+  color-scheme: light;
   width: 100%;
   min-width: 8.5in;
   height: auto;
@@ -417,6 +424,15 @@ watch(
   line-height: 1.4;
   color: #000;
   background: white;
+}
+
+.print-preview-document {
+  display: block;
+  width: 100%;
+  min-height: 9.5in;
+  border: 0;
+  background: #fff;
+  color-scheme: light;
 }
 
 /* Ensure the preview looks like actual print output */
@@ -433,10 +449,6 @@ watch(
 .print-preview-container :deep(.header h1) {
   font-size: 20pt;
   margin-bottom: 6pt;
-}
-
-.dark .print-preview-container :deep(.header h1) {
-  color: #333 !important;
 }
 
 .print-preview-container :deep(.section h2) {

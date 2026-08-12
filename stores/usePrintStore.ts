@@ -227,13 +227,20 @@ export const usePrintStore = defineStore('print', () => {
             size: ${options.orientation};
             margin: 0.5in;
         }
+
+        html {
+            color-scheme: light;
+            background: #ffffff;
+        }
         
         body {
             font-family: Arial, sans-serif;
             font-size: ${options.compactLayout ? '14px' : '11px'};
             line-height: 1.2;
             margin: 0;
-            padding: 0;            
+            padding: 0;
+            color: #111827;
+            background: #ffffff;
         }
         
         .header {

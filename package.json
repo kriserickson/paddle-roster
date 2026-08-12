@@ -41,20 +41,21 @@
   },
   "devDependencies": {
     "@iconify-json/heroicons": "^1.2.3",
-    "@iconify-json/lucide": "^1.2.120",
+    "@iconify-json/lucide": "^1.2.119",
     "@iconify-json/mdi": "^1.2.3",
     "@playwright/test": "^1.62.0",
     "@vitest/coverage-v8": "^4.1.10",
     "@vitest/ui": "^4.1.10",
     "@vue/test-utils": "^2.4.11",
-    "baseline-browser-mapping": "^2.11.4",
+    "baseline-browser-mapping": "^2.11.3",
     "happy-dom": "^20.11.1",
     "oxfmt": "^0.60.0",
     "oxlint": "^1.75.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3",
     "vitest": "^4.1.10",
-    "vue-tsc": "^3.3.8",
-    "typescript": "^7.0.2",
-    "vue": "^3.5.40"    
+    "vue": "^3.5.40",
+    "vue-tsc": "^3.3.8"
   },
-  "packageManager": "pnpm@10.29.3"
+  "packageManager": "pnpm@11.17.0+sha512.cca3cea332ad254bb84145f966d19f4879615210346fc92c79a047f23a0d7b3cca3c3792f0076ba1f1831d277efbcf0a9119b31a9a60eca7fb3d6231f331ef72"
 }

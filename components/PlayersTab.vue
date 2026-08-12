@@ -374,125 +374,113 @@ function handleExportPlayers(): void {
 </script>
 
 <template>
-  <div class="space-y-6">
+  <div class="roster-page space-y-5">
     <!-- Player Management Header -->
-    <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-      <div class="content-card-header">
-        <div class="flex justify-between items-center">
-          <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
-            <Icon name="mdi:account-multiple" class="text-paddle-teal text-3xl" />
-            Player Management
-          </h2>
-          <div class="flex gap-3">
-            <UButton
-              icon="i-heroicons-plus"
-              class="btn-primary"
-              data-testid="add-player-button"
-              @click="handleAddPlayer"
-            >
-              Add Player
-            </UButton>
-            <UButton
-              icon="i-heroicons-arrow-up-tray"
-              class="btn-secondary"
-              data-testid="import-players-button"
-              @click="showImportModal = true"
-            >
-              Import
-            </UButton>
-            <UButton
-              icon="i-heroicons-arrow-down-tray"
-              class="btn-secondary"
-              data-testid="export-players-button"
-              @click="handleExportPlayers"
-            >
-              Export
-            </UButton>
-          </div>
-        </div>
+    <div class="section-intro roster-intro">
+      <div>
+        <span class="eyebrow">Club roster</span>
+        <h2>Your players, all in one place</h2>
+        <p>Add skill levels and preferred partners now, then build a balanced session in a few clicks.</p>
+      </div>
+      <div class="section-actions">
+        <UButton
+          icon="i-lucide-user-round-plus"
+          class="btn-primary"
+          data-testid="add-player-button"
+          @click="handleAddPlayer"
+        >
+          Add Player
+        </UButton>
+        <UButton
+          icon="i-lucide-file-up"
+          variant="outline"
+          color="neutral"
+          data-testid="import-players-button"
+          @click="showImportModal = true"
+        >
+          Import
+        </UButton>
+        <UButton
+          icon="i-lucide-download"
+          variant="ghost"
+          color="neutral"
+          data-testid="export-players-button"
+          @click="handleExportPlayers"
+        >
+          Export
+        </UButton>
       </div>
     </div>
     <!-- Players Summary -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
+    <div class="roster-stats">
+      <div class="roster-stat">
         <ClientOnly>
-          <div
-            class="p-6 text-center bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
-          >
-            <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-blue-700 dark:text-blue-300" data-testid="total-players-count">
-              {{ totalPlayers }}
+          <div class="roster-stat-content">
+            <span class="stat-icon mint"><UIcon name="i-lucide-users-round" /></span>
+            <div>
+              <strong data-testid="total-players-count">{{ totalPlayers }}</strong
+              ><span>Total players</span>
             </div>
-            <div class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Players</div>
           </div>
           <template #placeholder>
-            <div
-              class="p-6 text-center bg-linear-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/20"
-            >
-              <Icon name="mdi:account-group" class="text-4xl text-blue-600 dark:text-blue-400 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-blue-700 dark:text-blue-300">0</div>
-              <div class="text-sm font-medium text-blue-600 dark:text-blue-400">Total Players</div>
+            <div class="roster-stat-content">
+              <span class="stat-icon mint"><UIcon name="i-lucide-users-round" /></span>
+              <div><strong>0</strong><span>Total players</span></div>
             </div>
           </template>
         </ClientOnly>
       </div>
 
-      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
+      <div class="roster-stat">
         <ClientOnly>
-          <div
-            class="p-6 text-center bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
-          >
-            <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">{{ averageSkillLevel }}</div>
-            <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
+          <div class="roster-stat-content">
+            <span class="stat-icon amber"><UIcon name="i-lucide-gauge" /></span>
+            <div>
+              <strong>{{ averageSkillLevel }}</strong
+              ><span>Average skill</span>
+            </div>
           </div>
           <template #placeholder>
-            <div
-              class="p-6 text-center bg-linear-to-br from-amber-50 to-amber-100 dark:from-amber-900/30 dark:to-amber-800/20"
-            >
-              <Icon name="mdi:star" class="text-4xl text-amber-600 dark:text-amber-400 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-amber-700 dark:text-amber-300">0.0</div>
-              <div class="text-sm font-medium text-amber-600 dark:text-amber-400">Avg Skill Level</div>
+            <div class="roster-stat-content">
+              <span class="stat-icon amber"><UIcon name="i-lucide-gauge" /></span>
+              <div><strong>0.0</strong><span>Average skill</span></div>
             </div>
           </template>
         </ClientOnly>
       </div>
 
-      <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white overflow-hidden">
+      <div class="roster-stat">
         <ClientOnly>
-          <div
-            class="p-6 text-center bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
-          >
-            <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
-            <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">{{ playersWithPartners }}</div>
-            <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
+          <div class="roster-stat-content">
+            <span class="stat-icon coral"><UIcon name="i-lucide-heart-handshake" /></span>
+            <div>
+              <strong>{{ playersWithPartners }}</strong
+              ><span>Partnered players</span>
+            </div>
           </div>
           <template #placeholder>
-            <div
-              class="p-6 text-center bg-linear-to-br from-purple-50 to-purple-100 dark:from-purple-900/30 dark:to-purple-800/20"
-            >
-              <Icon name="mdi:account-heart" class="text-4xl text-purple-600 dark:text-purple-400 mb-2 mx-auto" />
-              <div class="text-3xl font-bold text-purple-700 dark:text-purple-300">0</div>
-              <div class="text-sm font-medium text-purple-600 dark:text-purple-400">With Partners</div>
+            <div class="roster-stat-content">
+              <span class="stat-icon coral"><UIcon name="i-lucide-heart-handshake" /></span>
+              <div><strong>0</strong><span>Partnered players</span></div>
             </div>
           </template>
         </ClientOnly>
       </div>
     </div>
     <!-- Players Table -->
-    <div class="content-card bg-white dark:bg-gray-800 text-gray-900 dark:text-white">
-      <div class="content-card-header">
+    <div class="panel roster-table-panel">
+      <div class="panel-heading roster-table-heading">
         <div class="flex justify-between items-center">
-          <h3 class="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-            <Icon name="mdi:format-list-bulleted" class="text-paddle-teal" />
-            Players List
-          </h3>
+          <div>
+            <span class="step-label">Roster directory</span>
+            <h3>Players</h3>
+          </div>
           <div class="flex items-center gap-3">
             <UInput
               v-model="searchQuery"
-              icon="i-heroicons-magnifying-glass"
+              icon="i-lucide-search"
               placeholder="Search players..."
-              class="w-64 form-input"
+              class="w-64"
               data-testid="player-search-input"
             />
           </div>
@@ -504,9 +492,7 @@ function handleExportPlayers(): void {
           <UTable :data="filteredPlayers" :columns="columns" class="w-full" data-testid="players-table">
             <template #name-cell="{ row }">
               <div class="flex items-center gap-3">
-                <div
-                  class="w-10 h-10 rounded-full bg-linear-to-br from-paddle-teal to-paddle-teal-light flex items-center justify-center text-white font-bold text-sm"
-                >
+                <div class="player-avatar">
                   {{ row.original.name.charAt(0).toUpperCase() }}
                 </div>
                 <div>
@@ -516,14 +502,14 @@ function handleExportPlayers(): void {
             </template>
 
             <template #skillLevel-cell="{ row }">
-              <div class="player-skill-badge">
+              <div class="skill-chip">
                 {{ row.original.skillLevel }}
               </div>
             </template>
 
             <template #partnerId-cell="{ row }">
               <div v-if="row.original.partnerId" class="flex items-center gap-2">
-                <Icon name="mdi:account-heart" class="text-paddle-red" />
+                <UIcon name="i-lucide-link" class="text-paddle-red" />
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
                   {{ getPlayerName(row.original.partnerId) }}
                 </span>
@@ -533,7 +519,7 @@ function handleExportPlayers(): void {
             <template #actions-cell="{ row }">
               <div class="flex gap-2 button-container">
                 <UButton
-                  icon="i-heroicons-pencil"
+                  icon="i-lucide-pencil"
                   variant="ghost"
                   color="primary"
                   size="sm"
@@ -542,7 +528,7 @@ function handleExportPlayers(): void {
                   @click="editPlayer(row.original)"
                 />
                 <UButton
-                  icon="i-heroicons-trash"
+                  icon="i-lucide-trash-2"
                   variant="ghost"
                   color="error"
                   size="sm"
@@ -555,7 +541,7 @@ function handleExportPlayers(): void {
           </UTable>
           <template #placeholder>
             <div class="p-8 text-center">
-              <Icon name="mdi:loading" class="text-4xl text-paddle-teal animate-spin mb-4 mx-auto" />
+              <UIcon name="i-lucide-loader-circle" class="text-4xl text-paddle-teal animate-spin mb-4 mx-auto" />
               <div class="text-gray-500 dark:text-gray-400">Loading players...</div>
             </div>
           </template>
