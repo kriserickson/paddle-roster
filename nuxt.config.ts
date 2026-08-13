@@ -10,9 +10,16 @@ export default {
       },
       link: [
         {
+          href: '/16x16.png',
+          rel: 'icon',
+          sizes: '16x16',
+          type: 'image/png'
+        },
+        {
           href: '/32x32.png',
           rel: 'icon',
-          type: 'image/x-icon'
+          sizes: '32x32',
+          type: 'image/png'
         },
         {
           href: '/apple-touch-icon.png',

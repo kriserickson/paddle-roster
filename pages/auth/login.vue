@@ -133,11 +133,14 @@ function handlePasswordReset() {
     <div class="max-w-md w-full">
       <UCard class="auth-card p-8">
         <div class="text-center mb-8">
-          <div class="brand-mark auth-brand-mark mx-auto mb-4" aria-hidden="true">
-            <UIcon name="i-lucide-circle-dot-dashed" />
-          </div>
+          <img
+            class="brand-mark auth-brand-mark mx-auto mb-4"
+            src="/paddle-roster-64x64.webp"
+            alt=""
+            aria-hidden="true"
+          />
           <h1 class="text-3xl font-bold text-gray-900 dark:text-white mb-1">Paddle Roster</h1>
-          <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">More play. Less clipboard.</p>
+          <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">Balanced games. More play.</p>
           <!-- Clear Mode Indicator -->
           <div class="auth-mode-switch mb-6">
             <div class="inline-flex rounded-xl p-1">

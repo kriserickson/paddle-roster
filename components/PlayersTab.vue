@@ -475,7 +475,7 @@ function handleExportPlayers(): void {
             <span class="step-label">Roster directory</span>
             <h3>Players</h3>
           </div>
-          <div class="flex items-center gap-3">
+          <div class="flex items-center gap-3 ml-1">
             <UInput
               v-model="searchQuery"
               icon="i-lucide-search"

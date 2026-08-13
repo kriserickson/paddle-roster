@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { useAuthErrorHandler } from '~/composables/useAuthErrorHandler';
+import { getInitialWorkflowTab } from '~/utils/workflow';
 
 const supabase = useSupabaseClient();
 const user = useSupabaseUser();
 const { isDemo, mockUser } = useMockAuth();
 const gameStore = useGameStore();
+const playerStore = usePlayerStore();
+let didChooseInitialTab = false;
 
 // Use mock user in demo mode
 const currentUser = computed(() => {
@@ -41,12 +44,17 @@ const tabs = [
 const route = useRoute();
 const activeTab = ref('players');
 
-// Initialize tab from URL parameter
+// Choose the initial step after the saved roster has finished loading.
 onMounted(() => {
-  const tabParam = route.query.tab as string;
-  if (tabParam && tabs.some(tab => tab.key === tabParam)) {
-    activeTab.value = tabParam;
-  }
+  watch(
+    () => playerStore.isInitialized,
+    isInitialized => {
+      if (!isInitialized || didChooseInitialTab) return;
+      didChooseInitialTab = true;
+      activeTab.value = getInitialWorkflowTab(route.query.tab, playerStore.players.length);
+    },
+    { immediate: true }
+  );
 });
 
 // Methods
@@ -138,12 +146,10 @@ const userDisplayName = computed(() => {
       <!-- Header -->
       <header class="app-header mb-5">
         <div class="brand-lockup">
-          <div class="brand-mark" aria-hidden="true">
-            <UIcon name="i-lucide-circle-dot-dashed" />
-          </div>
+          <img class="brand-mark" src="/paddle-roster-64x64.webp" alt="" aria-hidden="true" />
           <div>
             <h1 class="app-title">Paddle Roster</h1>
-            <p>Balanced games. More play. Less clipboard.</p>
+            <p>Balanced games. More play.</p>
           </div>
         </div>
 

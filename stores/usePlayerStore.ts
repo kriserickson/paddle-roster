@@ -18,6 +18,11 @@ export const usePlayerStore = defineStore('player', () => {
   const players = ref<Player[]>([]);
 
   /**
+   * State: Whether the initial player load has completed
+   */
+  const isInitialized = ref(false);
+
+  /**
    * State: Selected players for game generation
    */
   const selectedPlayerIds = ref<Set<string>>(new Set());
@@ -58,14 +63,18 @@ export const usePlayerStore = defineStore('player', () => {
   }
 
   async function initializeStore(): Promise<{ success: boolean; message: string }> {
-    //console.log('PlayerStore: initializeStore() starting...');
-    const initResult = await playerApi.initialize();
-    //console.log('PlayerStore: API initialize result:', initResult);
-    if (!initResult.success) {
-      return initResult;
-    } else {
-      //console.log('PlayerStore: API initialized successfully, now loading players...');
-      return await loadPlayers();
+    try {
+      //console.log('PlayerStore: initializeStore() starting...');
+      const initResult = await playerApi.initialize();
+      //console.log('PlayerStore: API initialize result:', initResult);
+      if (!initResult.success) {
+        return initResult;
+      } else {
+        //console.log('PlayerStore: API initialized successfully, now loading players...');
+        return await loadPlayers();
+      }
+    } finally {
+      isInitialized.value = true;
     }
   }
 
@@ -276,6 +285,7 @@ export const usePlayerStore = defineStore('player', () => {
     getAvailablePartners,
     getPlayer,
     importPlayers,
+    isInitialized,
     isPlayerSelected,
     // Actions
     loadPlayers,

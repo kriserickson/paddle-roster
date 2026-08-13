@@ -124,25 +124,17 @@ textarea {
 }
 
 .brand-mark {
-  display: inline-grid;
+  display: block;
   width: 3.25rem;
   height: 3.25rem;
   flex: 0 0 auto;
-  place-items: center;
   border: 1px solid rgb(255 255 255 / 60%);
   border-radius: 1.05rem;
-  background: linear-gradient(145deg, var(--paddle-teal-light), var(--paddle-teal-dark));
-  color: white;
   box-shadow:
     0 8px 20px rgb(20 125 120 / 20%),
     inset 0 1px rgb(255 255 255 / 22%);
+  object-fit: cover;
   transform: rotate(-4deg);
-}
-
-.brand-mark .iconify,
-.brand-mark svg {
-  width: 1.8rem;
-  height: 1.8rem;
 }
 
 .app-title {
