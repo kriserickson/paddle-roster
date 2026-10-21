@@ -217,7 +217,7 @@ watch(
           <!-- Header Configuration -->
           <div class="space-y-4">
             <h3 class="text-lg font-semibold text-gray-900">Event Information</h3>
-            <UFormField label="Event Name">
+            <UFormField label="Event Name" help="Cleared when you generate a new roster">
               <UInput
                 v-model="localPrintOptions.eventTitle"
                 placeholder="Pickleball League"

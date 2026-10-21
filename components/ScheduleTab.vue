@@ -35,6 +35,7 @@ watch(showPrintModal, isOpen => {
 
 // Computed properties
 const scheduleStats = computed(() => gameStore.scheduleStats);
+const canRegenerate = computed(() => gameStore.validateOptions().valid);
 
 const totalGames = computed(() => {
   return scheduleStats.value?.totalGames || 0;
@@ -113,14 +114,25 @@ function openPrintModal(): void {
   showPrintModal.value = true;
 }
 
-function clearCurrentSchedule(): void {
-  gameStore.clearSchedule();
-  selectedRound.value = 1;
-  toast.add({
-    color: 'primary',
-    description: 'The current schedule has been cleared.',
-    title: 'Schedule Cleared'
-  });
+async function regenerateSchedule(): Promise<void> {
+  if (!gameStore.currentSchedule || gameStore.isGenerating || !canRegenerate.value) return;
+
+  try {
+    const schedule = await gameStore.generateSchedule(gameStore.currentSchedule.eventLabel);
+    if (!schedule) return;
+    selectedRound.value = 1;
+    toast.add({
+      color: 'success',
+      description: 'Your new schedule is ready to preview and print.',
+      title: 'Schedule regenerated'
+    });
+  } catch (error) {
+    toast.add({
+      color: 'error',
+      description: error instanceof Error ? error.message : 'We could not regenerate this schedule.',
+      title: 'Generation failed'
+    });
+  }
 }
 
 // Watch for schedule changes and reset round selection
@@ -148,18 +160,26 @@ onMounted(async () => {
     <!-- Header -->
     <div class="content-card">
       <div class="content-card-header">
-        <div class="flex justify-between items-center">
+        <div class="flex flex-wrap justify-between items-center gap-3">
           <h2 class="text-2xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
             <UIcon name="i-lucide-calendar-range" class="text-paddle-teal text-3xl" />
             Game Schedule
           </h2>
-          <div v-if="gameStore.currentSchedule" class="flex gap-3">
+          <div v-if="gameStore.currentSchedule" class="flex flex-wrap gap-3">
             <UButton icon="i-lucide-scan-eye" class="btn-primary" @click="openPrintModal"> Preview </UButton>
             <UButton icon="i-lucide-printer" class="btn-secondary" @click="openPrintModal"> Print </UButton>
             <ClientOnly>
               <UButton icon="i-lucide-file-down" class="btn-secondary" @click="openPrintModal"> Download PDF </UButton>
             </ClientOnly>
-            <UButton icon="i-lucide-trash-2" class="btn-danger" @click="clearCurrentSchedule"> Clear </UButton>
+            <UButton
+              icon="i-lucide-refresh-cw"
+              class="btn-secondary"
+              :disabled="!canRegenerate || gameStore.isGenerating"
+              :loading="gameStore.isGenerating"
+              @click="regenerateSchedule"
+            >
+              Regenerate
+            </UButton>
           </div>
         </div>
       </div>

@@ -54,9 +54,9 @@ export interface MatchingOptions {
   respectPartnerPreferences: boolean;
   /** Maximum skill difference allowed between teams */
   maxSkillDifference: number;
-  /** Whether to ensure equal distribution of rest periods */
+  /** Legacy saved setting; rest totals are always balanced during generation. */
   distributeRestEqually: boolean;
-  /**  */
+  /** Player IDs required to rest in the first round. */
   firstRoundSitters?: readonly string[];
   /**
    * Outcome preference for reducing repeated opponents.

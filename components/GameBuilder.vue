@@ -60,9 +60,11 @@ const filteredPlayers = computed(() => {
 
 const hasActiveFilters = computed(() => playerSearchQuery.value.length > 0 || skillLevelFilter.value !== 'all');
 const playersPerRound = computed(() => matchingOptions.value.numberOfCourts * PLAYERS_PER_COURT);
-const restingPerRound = computed(() => Math.max(0, selectedPlayers.value.length - playersPerRound.value));
 const effectiveCourts = computed(() =>
   Math.min(matchingOptions.value.numberOfCourts, Math.floor(selectedPlayers.value.length / PLAYERS_PER_COURT))
+);
+const restingPerRound = computed(() =>
+  effectiveCourts.value > 0 ? selectedPlayers.value.length - effectiveCourts.value * PLAYERS_PER_COURT : 0
 );
 const estimatedGames = computed(() => effectiveCourts.value * matchingOptions.value.numberOfRounds);
 const averageSkillLevel = computed(() => {
@@ -79,21 +81,21 @@ const validationErrors = computed(() => validationResult.value.errors);
 const validationWarnings = computed(() => validationResult.value.warnings || []);
 const canGenerate = computed(() => validationResult.value.valid);
 const firstRoundSitters = computed({
-  get: () => matchingOptions.value.firstRoundSitters || [],
+  get: (): string[] => [...(matchingOptions.value.firstRoundSitters || [])],
   set: (value: string[]) => {
-    matchingOptions.value.firstRoundSitters = value.length ? value : undefined;
+    const sitters = value.filter(id => playerStore.isPlayerSelected(id)).slice(0, maxFirstRoundSitters.value);
+    matchingOptions.value.firstRoundSitters = sitters.length ? sitters : undefined;
   }
 });
 const maxFirstRoundSitters = computed(() => Math.min(PLAYERS_PER_COURT, restingPerRound.value));
 const firstRoundSitterOptions = computed(() =>
-  selectedPlayers.value.map(player => ({ label: player.name, value: player.id }))
+  selectedPlayers.value.map(player => ({
+    disabled:
+      firstRoundSitters.value.length >= maxFirstRoundSitters.value && !firstRoundSitters.value.includes(player.id),
+    label: player.name,
+    value: player.id
+  }))
 );
-const selectedFirstRoundSitterObjects = computed({
-  get: () => firstRoundSitterOptions.value.filter(option => firstRoundSitters.value.includes(option.value)),
-  set: (options: Array<{ label: string; value: string }>) => {
-    firstRoundSitters.value = options.slice(0, maxFirstRoundSitters.value).map(option => option.value);
-  }
-});
 const setupStatus = computed(() => {
   if (selectedPlayers.value.length < PLAYERS_PER_COURT) {
     const remaining = PLAYERS_PER_COURT - selectedPlayers.value.length;
@@ -130,10 +132,11 @@ watch(
   { immediate: true }
 );
 
-watch(restingPerRound, restCount => {
-  if (!restCount) firstRoundSitters.value = [];
-  else if (firstRoundSitters.value.length > restCount)
-    firstRoundSitters.value = firstRoundSitters.value.slice(0, restCount);
+watch([selectedPlayers, maxFirstRoundSitters], () => {
+  const sitters = firstRoundSitters.value
+    .filter(id => playerStore.isPlayerSelected(id))
+    .slice(0, maxFirstRoundSitters.value);
+  if (sitters.length !== firstRoundSitters.value.length) firstRoundSitters.value = sitters;
 });
 
 onBeforeUnmount(() => {
@@ -412,6 +415,22 @@ async function generateSchedule(): Promise<void> {
             </div>
           </div>
 
+          <UFormField
+            v-if="restingPerRound > 0"
+            label="First resting block (optional)"
+            :help="`Choose up to ${maxFirstRoundSitters} players to rest in round 1. Remaining spots are assigned automatically.`"
+          >
+            <USelectMenu
+              v-model="firstRoundSitters"
+              :items="firstRoundSitterOptions"
+              value-key="value"
+              multiple
+              aria-label="Players in the first resting block"
+              placeholder="Let Paddle Roster decide"
+              class="w-full"
+            />
+          </UFormField>
+
           <div class="preference-list">
             <label class="preference-row">
               <span class="preference-icon mint"><UIcon name="i-lucide-scale" /></span>
@@ -423,11 +442,11 @@ async function generateSchedule(): Promise<void> {
               <span><strong>Honor partners</strong><small>Pair requests at least once</small></span>
               <USwitch v-model="matchingOptions.respectPartnerPreferences" aria-label="Honor partner preferences" />
             </label>
-            <label class="preference-row">
+            <div class="preference-row">
               <span class="preference-icon amber"><UIcon name="i-lucide-armchair" /></span>
-              <span><strong>Share rest evenly</strong><small>Rotate sit-outs fairly</small></span>
-              <USwitch v-model="matchingOptions.distributeRestEqually" aria-label="Share rest evenly" />
-            </label>
+              <span><strong>Balanced rest</strong><small>Even totals, different rest partners</small></span>
+              <UIcon name="i-lucide-check" class="text-paddle-teal" aria-label="Always enabled" />
+            </div>
           </div>
 
           <button
@@ -456,19 +475,6 @@ async function generateSchedule(): Promise<void> {
               <USelect
                 v-model="matchingOptions.courtDiversityPriority"
                 :items="preferencePriorityOptions"
-                class="w-full"
-              />
-            </UFormField>
-            <UFormField
-              v-if="restingPerRound > 0"
-              label="First-round sit-outs"
-              :help="`Choose up to ${maxFirstRoundSitters}`"
-            >
-              <USelectMenu
-                v-model="selectedFirstRoundSitterObjects"
-                :items="firstRoundSitterOptions"
-                multiple
-                placeholder="Let Paddle Roster decide"
                 class="w-full"
               />
             </UFormField>

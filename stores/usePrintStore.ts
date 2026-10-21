@@ -553,12 +553,13 @@ export const usePrintStore = defineStore('print', () => {
     try {
       isLoadingPreferences.value = true;
       const userPrefs = await preferencesApi.getUserPreferences();
-      printOptions.value = Object.assign({}, userPrefs.printOptions);
+      // Only the current roster keeps its name while reusable print settings are loaded.
+      printOptions.value = Object.assign({}, userPrefs.printOptions, { eventTitle: printOptions.value.eventTitle });
     } catch (error) {
       console.error('Error loading user print preferences:', error);
 
       // Fall back to default options if loading fails
-      printOptions.value = Object.assign({}, defaultPrintOptions);
+      printOptions.value = Object.assign({}, defaultPrintOptions, { eventTitle: printOptions.value.eventTitle });
     } finally {
       isLoadingPreferences.value = false;
     }

@@ -12,6 +12,8 @@
     "unicorn/no-empty-file": "off",
     "oxc/no-rest-spread-properties": "warn",
     "sort-keys": ["warn", "asc", { "caseSensitive": false, "natural": true }],
+    "typescript/explicit-function-return-type": "warn", 
+  
     "unicorn/consistent-existence-index-check": "warn"
   },
   "ignorePatterns": [".nuxt/**", ".output/**", "dist/**", "coverage/**", "playwright-report/**", "test-results/**"],

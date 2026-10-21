@@ -123,7 +123,8 @@ export class UserPreferencesApiSupabase {
         compactLayout: row.print_compact_layout,
         eventDate: row.print_event_date,
         eventSubtitle: row.print_event_subtitle,
-        eventTitle: row.print_event_title,
+        // Event names belong to the current roster, rather than saved preferences.
+        eventTitle: '',
         location: row.print_location,
         organizer: row.print_organizer,
         orientation: row.print_orientation,
@@ -148,7 +149,7 @@ export class UserPreferencesApiSupabase {
       print_compact_layout: preferences.printOptions.compactLayout,
       print_event_date: preferences.printOptions.eventDate,
       print_event_subtitle: preferences.printOptions.eventSubtitle,
-      print_event_title: preferences.printOptions.eventTitle,
+      print_event_title: '',
       print_location: preferences.printOptions.location,
       print_organizer: preferences.printOptions.organizer,
       print_orientation: preferences.printOptions.orientation,

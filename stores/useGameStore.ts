@@ -114,6 +114,7 @@ export const useGameStore = defineStore('game', () => {
    */
   async function generateSchedule(eventLabel = ''): Promise<GameSchedule | null> {
     const playerStore = usePlayerStore();
+    const printStore = usePrintStore();
 
     try {
       isGenerating.value = true;
@@ -125,16 +126,24 @@ export const useGameStore = defineStore('game', () => {
 
       // Adjust options for generation
       const generationOptions = Object.assign({}, matchingOptions.value, {
+        distributeRestEqually: true,
         numberOfCourts: actualCourts
       });
 
-      // Create matcher instance
-      const matcher = new PickleballMatcher(selectedPlayersValue, generationOptions);
+      // Vary the search on each generation without changing the selected roster.
+      const generationPlayers = [...selectedPlayersValue];
+      for (let i = generationPlayers.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [generationPlayers[i], generationPlayers[j]] = [generationPlayers[j]!, generationPlayers[i]!];
+      }
+
+      const matcher = new PickleballMatcher(generationPlayers, generationOptions);
 
       // Generate schedule
-      const schedule = await matcher.generateSchedule(eventLabel);
+      const schedule = await matcher.generateSchedule(eventLabel, currentSchedule.value || undefined);
 
       currentSchedule.value = schedule;
+      printStore.updatePrintOptions({ eventTitle: '' });
       return schedule;
     } catch (error) {
       console.error('Error generating schedule:', error);

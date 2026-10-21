@@ -20,7 +20,7 @@ const MAX_AVOIDABLE_OPPONENT_PAIRS_SEVEN = 7;
 const PARTNER_REPEAT_SCORE_WEIGHT = 2500;
 const OPPONENT_REPEAT_SCORE_WEIGHT = 320;
 const NINE_ROUND_COUNT = 9;
-const MAXIMALLY_SPACED_TEN_PLAYER_REST_GAP = 5;
+const MIN_SPACED_TEN_PLAYER_REST_GAP = 4;
 const MAX_COURT_USAGE_DIFFERENCE = 2;
 
 import { describe, expect, it } from 'vitest';
@@ -756,8 +756,12 @@ describe('PickleballMatcher', () => {
             ).toBe(expectedRestingPerRound);
           });
 
-          // For longer schedules, check rest period spacing
-          if (testOptions.numberOfRounds >= EIGHT_ROUND_COUNT) {
+          const restCounts = Array.from(playerRestRounds.values(), restRounds => restRounds.length);
+          expect(Math.max(...restCounts) - Math.min(...restCounts)).toBeLessThanOrEqual(1);
+
+          // Two-person rests can stay well spaced while changing partners. Larger
+          // blocks sometimes need to overlap to avoid repeating rest partners.
+          if (expectedRestingPerRound === PAIR_SIZE && testOptions.numberOfRounds >= EIGHT_ROUND_COUNT) {
             playerRestRounds.forEach((restRounds, playerId) => {
               if (restRounds.length >= PAIR_SIZE) {
                 const diff = Math.abs(restRounds[1] - restRounds[0]);
@@ -872,7 +876,7 @@ describe('PickleballMatcher', () => {
         '10 players, 2 courts, 12 rounds'
       );
 
-      it('should maximize rest spacing and keep court usage even in a 12-round rotation', async () => {
+      it('should vary rest partners, space rests, and keep court usage even in a 12-round rotation', async () => {
         const options = Object.assign({}, defaultOptions, {
           numberOfCourts: 2,
           numberOfRounds: 12
@@ -887,11 +891,13 @@ describe('PickleballMatcher', () => {
 
         const restCounts = Array.from(restsByPlayer.values(), rounds => rounds.length);
         expect(Math.max(...restCounts) - Math.min(...restCounts)).toBeLessThanOrEqual(1);
+        const restPairs = schedule.restingPlayers.map(resting => JSON.stringify([...resting].sort()));
+        expect(new Set(restPairs).size).toBe(options.numberOfRounds);
 
         for (const restRounds of restsByPlayer.values()) {
           for (let idx = 1; idx < restRounds.length; idx += 1) {
             expect((restRounds[idx] || 0) - (restRounds[idx - 1] || 0)).toBeGreaterThanOrEqual(
-              MAXIMALLY_SPACED_TEN_PLAYER_REST_GAP
+              MIN_SPACED_TEN_PLAYER_REST_GAP
             );
           }
         }

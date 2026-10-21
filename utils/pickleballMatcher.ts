@@ -48,6 +48,8 @@ const MAX_COURT_RANGE_PENALTY = 1000000;
 const MAX_EXHAUSTIVE_COURT_ROUNDS = 16;
 
 import type { Game, GameSchedule, MatchingOptions, Player } from '~/types';
+import { createBalancedRestPlan } from '~/utils/restPlanner';
+import { getScheduleSignature } from '~/utils/scheduleSignature';
 
 const SEEDED_SHUFFLE_MULTIPLIER = 9_301;
 const SEEDED_SHUFFLE_INCREMENT = 49_297;
@@ -56,12 +58,16 @@ const SEEDED_SHUFFLE_INITIAL_OFFSET = 1;
 const ARRAY_INDEX_OFFSET = 1;
 const FIRST_ARRAY_INDEX = 0;
 const MAX_PASSES = 5;
+const REST_PLAN_VARIANTS = 32;
 
 /**
  * PickleballMatcher - Greedy constructive algorithm with local optimization
  * Builds schedules round-by-round using heuristics, then improves with local search
  */
 export class PickleballMatcher {
+  private previousScheduleSignature: string | undefined;
+  private restPlanCache = new Map<number, string[][]>();
+
   public constructor(
     private players: Player[],
     private opts: MatchingOptions
@@ -82,7 +88,9 @@ export class PickleballMatcher {
   /**
    * Generate the best schedule using greedy construction + local optimization.
    */
-  public async generateSchedule(eventLabel = ''): Promise<GameSchedule> {
+  public async generateSchedule(eventLabel = '', previousSchedule?: GameSchedule): Promise<GameSchedule> {
+    this.previousScheduleSignature = previousSchedule ? getScheduleSignature(previousSchedule) : undefined;
+    this.restPlanCache.clear();
     const activePlayers = this.players.filter(p => p.active !== false);
     // Small player pools with many rounds are harder — give them more search budget.
     // 2-court pools use exhaustive per-round construction (315 arrangements evaluated vs ~6
@@ -131,6 +139,12 @@ export class PickleballMatcher {
     bestSchedule = this.repairHotOpponentPairs(bestSchedule);
     bestSchedule = this.improveCourtAssignments(bestSchedule);
     bestSchedule.score = this.evaluateScore(bestSchedule);
+
+    if (this.previousScheduleSignature && getScheduleSignature(bestSchedule) === this.previousScheduleSignature) {
+      throw new Error(
+        'Could not find a different schedule. Try changing the players, rounds, or matching preferences.'
+      );
+    }
 
     return bestSchedule;
   }
@@ -257,34 +271,21 @@ export class PickleballMatcher {
   }
 
   /**
-   * Allocate consecutive rest slots around a seeded player ring.
-   *
-   * This guarantees that rest totals differ by at most one and that every
-   * player's rest gaps are either floor(players / sitters) or ceil(players / sitters),
-   * which is the widest achievable spacing for a fixed number of sitters per round.
+   * Reuse a varied pool of balanced rest plans while exploring game matchups.
    */
   private buildBalancedRestPlan(playerIds: string[], sittersPerRound: number, seed: number): string[][] {
-    if (sittersPerRound <= 0 || playerIds.length === 0) {
-      return Array.from({ length: this.opts.numberOfRounds }, () => []);
+    const planSeed = seed % REST_PLAN_VARIANTS;
+    let plan = this.restPlanCache.get(planSeed);
+    if (!plan) {
+      plan = createBalancedRestPlan(
+        this.shuffleWithSeed(playerIds, planSeed),
+        sittersPerRound,
+        this.opts.numberOfRounds,
+        this.opts.firstRoundSitters
+      );
+      this.restPlanCache.set(planSeed, plan);
     }
-
-    const playerSet = new Set(playerIds);
-    const specifiedFirstRound = Array.from(new Set(this.opts.firstRoundSitters || []))
-      .filter(id => playerSet.has(id))
-      .slice(0, sittersPerRound);
-    const shuffled = this.shuffleWithSeed(playerIds, seed);
-    const firstRound = [
-      ...specifiedFirstRound,
-      ...shuffled.filter(id => !specifiedFirstRound.includes(id)).slice(0, sittersPerRound - specifiedFirstRound.length)
-    ];
-    const ring = [...firstRound, ...shuffled.filter(id => !firstRound.includes(id))];
-
-    return Array.from({ length: this.opts.numberOfRounds }, (_, roundIdx) =>
-      Array.from({ length: sittersPerRound }, (__, sitterIdx) => {
-        const ringIdx = (roundIdx * sittersPerRound + sitterIdx) % ring.length;
-        return ring[ringIdx] as string;
-      })
-    );
+    return plan.map(round => [...round]);
   }
 
   /**
@@ -1069,6 +1070,9 @@ export class PickleballMatcher {
     return [
       this.scoreFirstRoundSitterViolations(schedule),
       this.scoreRestDistribution(schedule),
+      this.scoreRestPartnerRepeats(schedule),
+      // Keep both search and later optimizations from returning the previous matchups.
+      this.previousScheduleSignature && getScheduleSignature(schedule) === this.previousScheduleSignature ? 1 : 0,
       this.scoreRestSpacing(schedule),
       this.opts.respectPartnerPreferences ? this.scoreCouplesPreference(schedule) : 0,
       this.scorePartnerRepeats(schedule),
@@ -1114,10 +1118,9 @@ export class PickleballMatcher {
     // PRIORITY 0: First round sitters must be respected (if specified)
     // This is enforced during construction, so we don't penalize here
 
-    // PRIORITY 1: Even rest distribution (max difference of 1) - if enabled
-    if (this.opts.distributeRestEqually) {
-      score += this.scoreRestDistribution(schedule) * REST_DISTRIBUTION_WEIGHT;
-    }
+    // Rest fairness is mandatory, including for older saved preferences with it disabled.
+    score += this.scoreRestDistribution(schedule) * REST_DISTRIBUTION_WEIGHT;
+    score += this.scoreRestPartnerRepeats(schedule) * REST_DISTRIBUTION_WEIGHT;
 
     // PRIORITY 2: Rest spacing (maximize distance between rests)
     score += this.scoreRestSpacing(schedule) * BASE_SEARCH_ITERATIONS;
@@ -1180,6 +1183,16 @@ export class PickleballMatcher {
     const max = Math.max(...counts);
 
     return max - min; // 0 = perfect, higher = worse
+  }
+
+  private scoreRestPartnerRepeats(schedule: GameSchedule): number {
+    const counts: Record<string, number> = {};
+    for (const resting of schedule.restingPlayers) {
+      resting.forEach((first, index) => {
+        for (const second of resting.slice(index + 1)) PickleballMatcher.bump(counts, first, second);
+      });
+    }
+    return Object.values(counts).reduce((sum, count) => sum + (count * (count - 1)) / PAIR_SIZE, 0);
   }
 
   private scoreRestSpacing(schedule: GameSchedule): number {
